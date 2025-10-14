@@ -1,0 +1,53 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.build/
+build/
+dist/
+.eggs/
+*.egg-info/
+
+# Virtual environments
+.env
+.venv
+venv/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python cache
+.pytest_cache/
+
+# Local data & secrets
+*.sqlite3
+*.db
+.env.local
+
+# Generated data files
+*.csv
+*.xlsx
+*.parquet
+
+# Generated charts/images
+charts/
+output/
+results/
+*.png
+!heiken_ashi.png
+
+# Test files
+test_*.py
+debug_*.py
+test_period.py
+test_nasdaq_fetch.py
