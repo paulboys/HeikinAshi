@@ -80,6 +80,13 @@ Examples:
     )
     
     parser.add_argument(
+        '--limit',
+        type=int,
+        default=None,
+        help='Maximum number of tickers to screen (default: all ~5,120 NASDAQ stocks)'
+    )
+    
+    parser.add_argument(
         '--output',
         default='results/nasdaq_screen.csv',
         help='Output CSV file path (default: results/nasdaq_screen.csv)'
@@ -99,22 +106,45 @@ Examples:
         print(f"Minimum volume: {args.min_volume:,} shares/day")
     if args.changed_only:
         print("Filtering for color changes only")
+    if args.limit:
+        print(f"Limiting to first {args.limit} tickers")
     print()
     
     results = screen_nasdaq(
-        color=args.color,
+        color_filter=args.color,
         period=args.period,
         lookback=args.lookback,
         start=args.start,
         end=args.end,
         changed_only=args.changed_only,
         min_volume=args.min_volume,
-        output_file=args.output,
+        limit=args.limit,
         debug=args.debug
     )
     
-    print(f"\nFound {len(results)} stocks matching criteria")
-    print(f"Results saved to: {args.output}")
+    # Save results to CSV
+    if results:
+        import os
+        import pandas as pd
+        
+        os.makedirs(os.path.dirname(args.output), exist_ok=True)
+        
+        df = pd.DataFrame([{
+            'ticker': r.ticker,
+            'color': r.color,
+            'ha_open': r.ha_open,
+            'ha_close': r.ha_close,
+            'last_date': r.last_date,
+            'period': r.interval,
+            'color_changed': r.color_changed,
+            'avg_volume': r.avg_volume
+        } for r in results])
+        
+        df.to_csv(args.output, index=False)
+        print(f"\nFound {len(results)} stocks matching criteria")
+        print(f"Results saved to: {args.output}")
+    else:
+        print(f"\nNo stocks found matching criteria")
     
     return 0
 
