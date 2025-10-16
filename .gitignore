@@ -39,8 +39,9 @@ Thumbs.db
 *.xlsx
 *.parquet
 
-# Generated charts/images
-charts/
+# Generated charts/images (but not src/stockcharts/charts source code)
+/charts/
+/my_charts/
 output/
 results/
 *.png
