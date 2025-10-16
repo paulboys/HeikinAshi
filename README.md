@@ -197,8 +197,8 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Roadmap
 
-- [ ] Publish to PyPI
-- [ ] Add unit tests and CI/CD
+- [x] Publish to PyPI
+- [x] Add unit tests and CI/CD
 - [ ] Additional technical indicators (RSI, MACD, Bollinger Bands)
 - [ ] Multi-ticker comparison charts
 - [ ] Backtesting framework
