@@ -51,9 +51,13 @@ def plot_heiken_ashi(ticker: str, start: str | None, end: str | None, interval: 
     ax.xaxis.set_major_locator(mdates.AutoDateLocator())
     fig.autofmt_xdate()  # Rotate date labels for better readability
     
-    ax.set_title(f"Heiken Ashi: {ticker} ({interval})")
+    # Ensure dates are visible at the bottom
     ax.set_xlabel("Date")
+    plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha='right')
+    
+    ax.set_title(f"Heiken Ashi: {ticker} ({interval})")
     ax.set_ylabel("Price")
+    ax.grid(True, alpha=0.3)
 
     plt.tight_layout()
     output.parent.mkdir(parents=True, exist_ok=True)

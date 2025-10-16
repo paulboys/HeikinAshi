@@ -19,6 +19,9 @@ Example:
     
     # Export results to CSV with volume data
     python scripts/screen_nasdaq.py --color green --changed-only --lookback 3mo --period 1d --min-volume 500000 --output green_reversals.csv
+    
+    # Filter by minimum price (e.g., stocks above $10)
+    python scripts/screen_nasdaq.py --color green --changed-only --lookback 3mo --period 1d --min-volume 500000 --min-price 10
 """
 from __future__ import annotations
 
@@ -107,6 +110,13 @@ def main() -> None:
         help="Minimum average daily volume (in shares). Filters out low-volume stocks. "
              "Recommended: 500000 (500K) for swing trading, 1000000 (1M) for day trading."
     )
+    parser.add_argument(
+        "--min-price",
+        type=float,
+        default=None,
+        help="Minimum stock price (in dollars). Filters out stocks below this price. "
+             "Useful for avoiding penny stocks (e.g., --min-price 5 or --min-price 10)."
+    )
     
     args = parser.parse_args()
     
@@ -126,7 +136,8 @@ def main() -> None:
         start=args.start,
         end=args.end,
         debug=args.debug,
-        min_volume=args.min_volume
+        min_volume=args.min_volume,
+        min_price=args.min_price
     )
     
     if not results:
@@ -134,17 +145,18 @@ def main() -> None:
         sys.exit(0)
     
     # Display results
-    print(f"\n{'Ticker':<10} {'Color':<8} {'Previous':<10} {'Changed':<10} {'Avg Volume':<15} {'HA_Open':<12} {'HA_Close':<12} {'Last Date':<12}")
-    print("=" * 105)
+    print(f"\n{'Ticker':<10} {'Color':<8} {'Previous':<10} {'Changed':<10} {'Price':<10} {'Avg Volume':<15} {'HA_Open':<12} {'HA_Close':<12} {'Last Date':<12}")
+    print("=" * 115)
     
     for result in results:
         changed_symbol = "✓" if result.color_changed else ""
         volume_str = f"{result.avg_volume:,.0f}"
+        price_str = f"${result.ha_close:.2f}"
         print(f"{result.ticker:<10} {result.color:<8} {result.previous_color:<10} {changed_symbol:<10} "
-              f"{volume_str:<15} {result.ha_open:<12.2f} {result.ha_close:<12.2f} "
+              f"{price_str:<10} {volume_str:<15} {result.ha_open:<12.2f} {result.ha_close:<12.2f} "
               f"{result.last_date:<12}")
     
-    print("=" * 105)
+    print("=" * 115)
     changed_count = sum(1 for r in results if r.color_changed)
     print(f"Total: {len(results)} tickers with {args.color} candles ({changed_count} just changed)\n")
     
@@ -156,6 +168,7 @@ def main() -> None:
                 "color": r.color,
                 "previous_color": r.previous_color,
                 "color_changed": r.color_changed,
+                "price": r.ha_close,
                 "avg_volume": r.avg_volume,
                 "ha_open": r.ha_open,
                 "ha_close": r.ha_close,

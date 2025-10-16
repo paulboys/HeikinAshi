@@ -75,6 +75,9 @@ def plot_heiken_ashi_chart(ha: pd.DataFrame, ticker: str, interval: str):
     ax.xaxis.set_major_locator(mdates.AutoDateLocator())
     fig.autofmt_xdate()  # Rotate date labels for better readability
     
+    # Ensure dates are visible at the bottom
+    plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha='right')
+    
     ax.set_title(f"Heiken Ashi: {ticker} ({interval})", fontsize=14, fontweight='bold')
     ax.set_xlabel("Date", fontsize=12)
     ax.set_ylabel("Price", fontsize=12)

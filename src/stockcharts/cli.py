@@ -8,6 +8,7 @@ from stockcharts.screener.nasdaq import get_nasdaq_tickers
 from stockcharts.data.fetch import fetch_ohlc
 from stockcharts.charts.heiken_ashi import heiken_ashi
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 from matplotlib.patches import Rectangle
 
 
@@ -80,6 +81,13 @@ Examples:
     )
     
     parser.add_argument(
+        '--min-price',
+        type=float,
+        default=None,
+        help='Minimum stock price in dollars (e.g., 5.0 or 10.0 to filter out penny stocks)'
+    )
+    
+    parser.add_argument(
         '--limit',
         type=int,
         default=None,
@@ -104,6 +112,8 @@ Examples:
     print(f"Period: {args.period}, Lookback: {args.lookback}")
     if args.min_volume > 0:
         print(f"Minimum volume: {args.min_volume:,} shares/day")
+    if args.min_price is not None:
+        print(f"Minimum price: ${args.min_price:.2f}")
     if args.changed_only:
         print("Filtering for color changes only")
     if args.limit:
@@ -118,6 +128,7 @@ Examples:
         end=args.end,
         changed_only=args.changed_only,
         min_volume=args.min_volume,
+        min_price=args.min_price,
         limit=args.limit,
         debug=args.debug
     )
@@ -225,29 +236,38 @@ Examples:
             # Create chart
             fig, ax = plt.subplots(figsize=(14, 7))
             
+            # Convert datetime index to matplotlib dates
+            dates = mdates.date2num(ha_data.index.to_pydatetime())
+            
             for idx in range(len(ha_data)):
+                date = dates[idx]
                 row = ha_data.iloc[idx]
                 color = 'green' if row['HA_Close'] >= row['HA_Open'] else 'red'
                 
                 # Candle body
                 body_height = abs(row['HA_Close'] - row['HA_Open'])
                 body_bottom = min(row['HA_Open'], row['HA_Close'])
-                rect = Rectangle((idx, body_bottom), 0.8, body_height,
+                rect = Rectangle((date - 0.4, body_bottom), 0.8, body_height,
                                facecolor=color, edgecolor='black', linewidth=0.5)
                 ax.add_patch(rect)
                 
                 # Wicks
-                ax.plot([idx + 0.4, idx + 0.4], 
+                ax.plot([date, date], 
                        [row['HA_Low'], body_bottom], 
                        color='black', linewidth=0.5)
-                ax.plot([idx + 0.4, idx + 0.4], 
+                ax.plot([date, date], 
                        [body_bottom + body_height, row['HA_High']], 
                        color='black', linewidth=0.5)
             
-            ax.set_xlim(-1, len(ha_data))
+            # Format x-axis with dates
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+            ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+            plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha='right')
+            
+            ax.set_xlim(dates[0] - 1, dates[-1] + 1)
             ax.set_ylim(ha_data['HA_Low'].min() * 0.95, ha_data['HA_High'].max() * 1.05)
-            ax.set_xlabel('Days')
-            ax.set_ylabel('Price')
+            ax.set_xlabel('Date')
+            ax.set_ylabel('Price ($)')
             ax.set_title(f'{ticker} - Heiken Ashi ({args.period})')
             ax.grid(True, alpha=0.3)
             

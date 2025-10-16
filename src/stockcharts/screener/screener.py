@@ -129,7 +129,8 @@ def screen_nasdaq(
     start: Optional[str] = None,
     end: Optional[str] = None,
     debug: bool = False,
-    min_volume: Optional[float] = None
+    min_volume: Optional[float] = None,
+    min_price: Optional[float] = None
 ) -> List[ScreenResult]:
     """Screen NASDAQ stocks for Heiken Ashi candle colors.
     
@@ -157,6 +158,9 @@ def screen_nasdaq(
     min_volume : float | None
         Minimum average daily volume (in shares). Filters out low-volume stocks.
         Recommended: 500000 (500K) for swing trading, 1000000 (1M) for day trading.
+    min_price : float | None
+        Minimum stock price (in dollars). Filters out stocks below this price.
+        Useful for avoiding penny stocks (e.g., 5.0 or 10.0).
     end : str | None
         End date YYYY-MM-DD. Cannot be used with lookback.
     
@@ -188,7 +192,9 @@ def screen_nasdaq(
                 if not changed_only or result.color_changed:
                     # Apply volume filter if specified
                     if min_volume is None or result.avg_volume >= min_volume:
-                        results.append(result)
+                        # Apply price filter if specified
+                        if min_price is None or result.ha_close >= min_price:
+                            results.append(result)
         
         # Rate limiting
         if delay > 0 and i < len(tickers):
