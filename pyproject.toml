@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stockcharts"
-version = "0.1.1"
+version = "0.2.0"
 authors = [
   { name="Paul Boys", email="paul.d.boys@gmail.com" }
 ]
-description = "NASDAQ stock screener using Heiken Ashi candles for trend reversal detection with volume filtering"
+description = "NASDAQ stock screener using Heiken Ashi candles for trend reversal detection with volume and price filtering"
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
