@@ -202,7 +202,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 - [ ] Additional technical indicators (RSI, MACD, Bollinger Bands)
 - [ ] Multi-ticker comparison charts
 - [ ] Backtesting framework
-- [ ] Real-time streaming data support
+- [ ] Real-time data integration (requires API like Alpaca/Polygon - yfinance is EOD only)
 - [ ] Alert/notification system
 
 ## License
