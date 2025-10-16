@@ -1,6 +1,12 @@
 # StockCharts
 
-A Python library for screening NASDAQ stocks using Heiken Ashi candles to detect trend reversals with volume filtering.
+[![CI](https://github.com/paulboys/HeikinAshi/actions/workflows/ci.yml/badge.svg)](https://github.com/paulboys/HeikinAshi/actions/workflows/ci.yml)
+[![PyPI version](https://img.shields.io/pypi/v/stockcharts.svg)](https://pypi.org/project/stockcharts/)
+[![Python versions](https://img.shields.io/pypi/pyversions/stockcharts.svg)](https://pypi.org/project/stockcharts/)
+[![Downloads](https://static.pepy.tech/badge/stockcharts)](https://pepy.tech/project/stockcharts)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/paulboys/HeikinAshi/blob/main/LICENSE)
+
+A Python library for screening NASDAQ stocks using Heiken Ashi candles to detect trend reversals with volume and price filtering.
 
 ## Features
 
@@ -24,8 +30,8 @@ A Python library for screening NASDAQ stocks using Heiken Ashi candles to detect
 
 ## Installation
 
-### From PyPI (coming soon)
-```powershell
+### From PyPI
+```bash
 pip install stockcharts
 ```
 
