@@ -78,13 +78,17 @@ def detect_divergence(
             - 'bullish_details': str, description of bullish divergence
             - 'bearish_details': str, description of bearish divergence
             - 'last_signal': str, 'bullish', 'bearish', or 'none'
+            - 'bullish_indices': tuple (p1_idx, p2_idx, r1_idx, r2_idx) or None
+            - 'bearish_indices': tuple (p1_idx, p2_idx, r1_idx, r2_idx) or None
     """
     result = {
         'bullish': False,
         'bearish': False,
         'bullish_details': '',
         'bearish_details': '',
-        'last_signal': 'none'
+        'last_signal': 'none',
+        'bullish_indices': None,
+        'bearish_indices': None
     }
     
     if len(df) < lookback:
@@ -129,6 +133,7 @@ def detect_divergence(
                     f"{recent_df.loc[r2_idx, rsi_col]:.2f} (higher low)"
                 )
                 result['last_signal'] = 'bullish'
+                result['bullish_indices'] = (p1_idx, p2_idx, r1_idx, r2_idx)
     
     # Detect Bearish Divergence (price higher high, RSI lower high)
     if len(price_high_idx) >= 2 and len(rsi_high_idx) >= 2:
@@ -157,5 +162,6 @@ def detect_divergence(
                 )
                 if result['last_signal'] == 'none':
                     result['last_signal'] = 'bearish'
+                result['bearish_indices'] = (p1_idx, p2_idx, r1_idx, r2_idx)
     
     return result

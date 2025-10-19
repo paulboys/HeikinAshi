@@ -20,6 +20,8 @@ class RSIDivergenceResult:
     bullish_divergence: bool
     bearish_divergence: bool
     details: str
+    bullish_indices: Optional[tuple] = None  # (p1_idx, p2_idx, r1_idx, r2_idx)
+    bearish_indices: Optional[tuple] = None  # (p1_idx, p2_idx, r1_idx, r2_idx)
 
 
 def screen_rsi_divergence(
@@ -132,7 +134,9 @@ def screen_rsi_divergence(
                     divergence_type=' & '.join(div_type),
                     bullish_divergence=div_result['bullish'],
                     bearish_divergence=div_result['bearish'],
-                    details=' | '.join(details)
+                    details=' | '.join(details),
+                    bullish_indices=div_result['bullish_indices'],
+                    bearish_indices=div_result['bearish_indices']
                 ))
         
         except Exception as e:
@@ -149,6 +153,14 @@ def save_results_to_csv(results: List[RSIDivergenceResult], filename: str = 'rsi
         print("No results to save.")
         return
     
+    import json
+    
+    def serialize_indices(indices):
+        """Convert timestamp indices to ISO format strings for JSON serialization."""
+        if indices is None:
+            return None
+        return [idx.isoformat() for idx in indices]
+    
     df = pd.DataFrame([
         {
             'Ticker': r.ticker,
@@ -158,7 +170,9 @@ def save_results_to_csv(results: List[RSIDivergenceResult], filename: str = 'rsi
             'Divergence Type': r.divergence_type,
             'Bullish': r.bullish_divergence,
             'Bearish': r.bearish_divergence,
-            'Details': r.details
+            'Details': r.details,
+            'Bullish_Indices': json.dumps(serialize_indices(r.bullish_indices)) if r.bullish_indices else '',
+            'Bearish_Indices': json.dumps(serialize_indices(r.bearish_indices)) if r.bearish_indices else ''
         }
         for r in results
     ])

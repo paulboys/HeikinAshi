@@ -588,12 +588,42 @@ Examples:
     print(f"Interval: {args.interval}, Lookback: {args.lookback}, RSI Period: {args.rsi_period}")
     print()
     
+    import json
+    
     success_count = 0
     for i, ticker in enumerate(tickers, 1):
         print(f"[{i}/{len(tickers)}] Plotting {ticker}...", end=' ')
         
         try:
             data = fetch_ohlc(ticker, interval=args.interval, lookback=args.lookback)
+            
+            # Try to get precomputed divergence indices from CSV
+            precomputed = None
+            ticker_row = df[df[ticker_col] == ticker]
+            if not ticker_row.empty:
+                row = ticker_row.iloc[0]
+                precomputed = {}
+                
+                # Parse bullish indices if present
+                if 'Bullish_Indices' in row and row['Bullish_Indices']:
+                    try:
+                        indices_list = json.loads(row['Bullish_Indices'])
+                        if indices_list:
+                            precomputed['bullish_indices'] = tuple(pd.to_datetime(idx) for idx in indices_list)
+                    except:
+                        pass
+                
+                # Parse bearish indices if present
+                if 'Bearish_Indices' in row and row['Bearish_Indices']:
+                    try:
+                        indices_list = json.loads(row['Bearish_Indices'])
+                        if indices_list:
+                            precomputed['bearish_indices'] = tuple(pd.to_datetime(idx) for idx in indices_list)
+                    except:
+                        pass
+                
+                if not precomputed:
+                    precomputed = None
             
             # Create divergence chart
             fig = plot_price_rsi(
@@ -602,7 +632,8 @@ Examples:
                 rsi_period=args.rsi_period,
                 show_divergence=True,
                 divergence_window=args.swing_window,
-                divergence_lookback=args.divergence_lookback
+                divergence_lookback=args.divergence_lookback,
+                precomputed_divergence=precomputed
             )
             
             output_path = os.path.join(args.output_dir, f'{ticker}_{args.interval}.png')

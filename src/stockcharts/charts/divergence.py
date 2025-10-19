@@ -25,6 +25,7 @@ def plot_price_rsi(
     figsize: tuple[float, float] = (14, 10),
     overbought: float = 70.0,
     oversold: float = 30.0,
+    precomputed_divergence: dict = None,
 ) -> Figure:
     """
     Create a two-panel chart with candlestick price and RSI indicator.
@@ -39,6 +40,8 @@ def plot_price_rsi(
         figsize: Figure size (width, height) in inches
         overbought: RSI overbought level (default: 70)
         oversold: RSI oversold level (default: 30)
+        precomputed_divergence: Dict with 'bullish_indices' and/or 'bearish_indices' 
+                                from screener (overrides auto-detection)
     
     Returns:
         Matplotlib Figure object
@@ -47,9 +50,12 @@ def plot_price_rsi(
     df = df.copy()
     df['RSI'] = compute_rsi(df['Close'], period=rsi_period)
     
-    # Find divergence points if requested
+    # Use precomputed divergence if provided, otherwise auto-detect
     divergence_data = None
-    if show_divergence and len(df) >= divergence_lookback:
+    if precomputed_divergence:
+        # Convert precomputed indices to DataFrame format
+        divergence_data = _convert_precomputed_to_df(df, precomputed_divergence)
+    elif show_divergence and len(df) >= divergence_lookback:
         recent_df = df.tail(divergence_lookback)
         divergence_data = _find_divergence_points(
             recent_df, 
@@ -102,6 +108,53 @@ def plot_price_rsi(
     
     plt.tight_layout()
     return fig
+
+
+def _convert_precomputed_to_df(df: pd.DataFrame, precomputed: dict) -> pd.DataFrame:
+    """
+    Convert precomputed divergence indices to DataFrame format.
+    
+    Args:
+        df: Full OHLC DataFrame with RSI
+        precomputed: Dict with 'bullish_indices' and/or 'bearish_indices'
+                     Each is a tuple: (p1_idx, p2_idx, r1_idx, r2_idx)
+    
+    Returns:
+        DataFrame with divergence information or None
+    """
+    divergences = []
+    
+    # Handle bullish divergence
+    if precomputed.get('bullish_indices'):
+        p1_idx, p2_idx, r1_idx, r2_idx = precomputed['bullish_indices']
+        # Check if indices exist in current dataframe
+        if all(idx in df.index for idx in [p1_idx, p2_idx, r1_idx, r2_idx]):
+            divergences.append({
+                'divergence_type': 'bullish',
+                'swing_start_date': p1_idx,
+                'swing_end_date': p2_idx,
+                'price_start': df.loc[p1_idx, 'Close'],
+                'price_end': df.loc[p2_idx, 'Close'],
+                'rsi_start': df.loc[r1_idx, 'RSI'],
+                'rsi_end': df.loc[r2_idx, 'RSI']
+            })
+    
+    # Handle bearish divergence
+    if precomputed.get('bearish_indices'):
+        p1_idx, p2_idx, r1_idx, r2_idx = precomputed['bearish_indices']
+        # Check if indices exist in current dataframe
+        if all(idx in df.index for idx in [p1_idx, p2_idx, r1_idx, r2_idx]):
+            divergences.append({
+                'divergence_type': 'bearish',
+                'swing_start_date': p1_idx,
+                'swing_end_date': p2_idx,
+                'price_start': df.loc[p1_idx, 'Close'],
+                'price_end': df.loc[p2_idx, 'Close'],
+                'rsi_start': df.loc[r1_idx, 'RSI'],
+                'rsi_end': df.loc[r2_idx, 'RSI']
+            })
+    
+    return pd.DataFrame(divergences) if divergences else None
 
 
 def _find_divergence_points(df: pd.DataFrame, window: int) -> pd.DataFrame:
