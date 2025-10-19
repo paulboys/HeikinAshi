@@ -324,7 +324,21 @@ Examples:
     parser.add_argument(
         '--period',
         default='3mo',
-        help='Data lookback period: 1mo,3mo,6mo,1y,2y,5y,10y,ytd,max (default: 3mo)'
+        help='Historical breadth period (1mo,3mo,6mo,1y,2y,5y,10y,ytd,max). Ignored if --start and --end provided.'
+    )
+    parser.add_argument(
+        '--interval',
+        default='1d',
+        choices=['1d','1wk','1mo'],
+        help='Candle interval for aggregation (default: 1d)'
+    )
+    parser.add_argument(
+        '--start',
+        help='Explicit start date YYYY-MM-DD (requires --end to take effect)'
+    )
+    parser.add_argument(
+        '--end',
+        help='Explicit end date YYYY-MM-DD (requires --start to take effect)'
     )
     
     parser.add_argument(
@@ -372,7 +386,9 @@ Examples:
     
     print(f"Screening NASDAQ stocks for RSI divergences...")
     print(f"Divergence type: {args.type}")
-    print(f"Period: {args.period}, RSI period: {args.rsi_period}")
+    print(f"Period: {args.period}, Interval: {args.interval}, RSI period: {args.rsi_period}")
+    if args.start and args.end:
+        print(f"Date range override: {args.start} → {args.end}")
     if args.min_price is not None:
         print(f"Minimum price: ${args.min_price:.2f}")
     if args.max_price is not None:
@@ -382,12 +398,15 @@ Examples:
     results = screen_rsi_divergence(
         tickers=None,  # Use all NASDAQ
         period=args.period,
+        interval=args.interval,
         rsi_period=args.rsi_period,
         divergence_type=args.type,
         min_price=args.min_price,
         max_price=args.max_price,
         swing_window=args.swing_window,
-        lookback=args.lookback
+        lookback=args.lookback,
+        start=args.start,
+        end=args.end,
     )
     
     # Save results

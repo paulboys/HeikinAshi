@@ -1,18 +1,30 @@
 """Data fetching utilities using yfinance.
 
 Function:
-    fetch_ohlc(ticker, start=None, end=None, period="1d", lookback=None)
+    fetch_ohlc(
+        ticker,
+        interval="1d",
+        lookback: str | None = None,
+        start: str | None = None,
+        end: str | None = None,
+        auto_adjust: bool = False,
+    )
     
-Parameters:
-    - period: Aggregation period ('1d', '1wk', '1mo') - how data is grouped
-    - lookback: Time window ('3mo', '1y', etc.) - how far back to fetch
-    - start/end: Explicit date range (alternative to lookback)
-    
+Parameter semantics:
+    - interval: Aggregation interval for candles ('1d', '1wk', '1mo').
+    - lookback: Relative period for history breadth ('5d','1mo','3mo','6mo','1y','2y','5y','10y','ytd','max').
+    - start/end: Explicit date range (YYYY-MM-DD). If both provided they override lookback.
+      Passing values like '3mo' to start/end is invalid and will be ignored.
+
+We guard against accidentally sending a lookback string where a date is required by validating format.
+
 Returns a pandas DataFrame with columns: Open, High, Low, Close, Volume
 """
 from __future__ import annotations
 
 from typing import Optional
+import re
+from datetime import datetime
 import pandas as pd
 
 try:
@@ -21,50 +33,64 @@ except ImportError as e:  # pragma: no cover - guidance only
     raise ImportError("yfinance must be installed to use fetch_ohlc. Install with `pip install yfinance`." ) from e
 
 
-VALID_PERIODS = {"1d", "1wk", "1mo"}  # Aggregation periods: daily, weekly, monthly
+VALID_INTERVALS = {"1d", "1wk", "1mo"}  # Aggregation intervals: daily, weekly, monthly
+VALID_LOOKBACK = {"5d","1mo","3mo","6mo","1y","2y","5y","10y","ytd","max"}
+
+DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+def _is_date(s: Optional[str]) -> bool:
+    return bool(s and DATE_RE.match(s))
+
+def _normalize_date(s: Optional[str]) -> Optional[str]:
+    """Return date string if valid YYYY-MM-DD else None."""
+    if not _is_date(s):
+        return None
+    return s
 
 
 def fetch_ohlc(
-    ticker: str, 
-    start: Optional[str] = None, 
-    end: Optional[str] = None, 
-    period: str = "1d",
-    lookback: Optional[str] = None
+    ticker: str,
+    interval: str = "1d",
+    lookback: Optional[str] = None,
+    start: Optional[str] = None,
+    end: Optional[str] = None,
+    auto_adjust: bool = False,
 ) -> pd.DataFrame:
     """Fetch OHLC data for a single ticker.
 
-    Parameters
-    ----------
-    ticker : str
-        Symbol, e.g. 'AAPL'.
-    start : str | None
-        Start date YYYY-MM-DD. Optional. Cannot be used with lookback.
-    end : str | None
-        End date YYYY-MM-DD. Optional. Cannot be used with lookback.
-    period : str
-        Aggregation period (how data is grouped): '1d' (daily), '1wk' (weekly), '1mo' (monthly).
-        Default '1d'.
-    lookback : str | None
-        How far back to fetch data: '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max'.
-        Cannot be used with start/end. If not specified and no start/end given, defaults to '1y'.
-
-    Returns
-    -------
-    DataFrame with columns Open, High, Low, Close, Volume and DatetimeIndex.
+    Guard rails:
+        - If both start and end are valid dates they override lookback.
+        - If either start/end is invalid (e.g. '3mo'), it is ignored.
+        - If nothing specified, default lookback = '1y'.
     """
-    if period not in VALID_PERIODS:
-        raise ValueError(f"Unsupported period '{period}'. Allowed: {sorted(VALID_PERIODS)}")
+    if interval not in VALID_INTERVALS:
+        raise ValueError(f"Unsupported interval '{interval}'. Allowed: {sorted(VALID_INTERVALS)}")
 
-    # Validate parameter combinations
+    start = _normalize_date(start)
+    end = _normalize_date(end)
+
     if lookback and (start or end):
-        raise ValueError("Cannot specify both 'lookback' and 'start'/'end' parameters")
-    
-    # If neither lookback nor start/end specified, default to 1 year
+        # Explicit date range takes precedence; ignore lookback
+        lookback = None
+
     if not lookback and not start and not end:
         lookback = "1y"
 
-    # yfinance uses 'interval' for aggregation period and 'period' for lookback
-    df = yf.download(ticker, start=start, end=end, period=lookback, interval=period, progress=False, auto_adjust=False)
+    if lookback and lookback not in VALID_LOOKBACK:
+        raise ValueError(f"Unsupported lookback '{lookback}'. Allowed: {sorted(VALID_LOOKBACK)}")
+
+    download_kwargs = {
+        "interval": interval,
+        "progress": False,
+        "auto_adjust": auto_adjust,
+    }
+    if start and end:
+        download_kwargs["start"] = start
+        download_kwargs["end"] = end
+    else:
+        download_kwargs["period"] = lookback
+
+    df = yf.download(ticker, **download_kwargs)
     if df.empty:
         raise ValueError(f"No data returned for ticker '{ticker}'.")
 

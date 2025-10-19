@@ -24,20 +24,24 @@ class RSIDivergenceResult:
 
 def screen_rsi_divergence(
     tickers: Optional[List[str]] = None,
-    period: str = '3mo',
+    period: str = '3mo',  # Historical lookback e.g. '3mo', '6mo', '1y'
+    interval: str = '1d',  # Candle interval '1d','1wk','1mo'
     rsi_period: int = 14,
     divergence_type: str = 'all',  # 'bullish', 'bearish', or 'all'
     min_price: Optional[float] = None,
     max_price: Optional[float] = None,
     swing_window: int = 5,
-    lookback: int = 60
+    lookback: int = 60,
+    start: Optional[str] = None,
+    end: Optional[str] = None,
 ) -> List[RSIDivergenceResult]:
     """
     Screen stocks for RSI divergences.
     
     Args:
         tickers: List of ticker symbols (if None, uses all NASDAQ)
-        period: Data period ('1mo', '3mo', '6mo', '1y', etc.)
+    period: Historical period breadth for yfinance (e.g. '1mo', '3mo', '6mo', '1y') ignored if both start & end provided.
+    interval: Candle aggregation interval ('1d','1wk','1mo').
         rsi_period: RSI calculation period (default: 14)
         divergence_type: Type to screen for ('bullish', 'bearish', or 'all')
         min_price: Minimum stock price filter
@@ -66,8 +70,14 @@ def screen_rsi_divergence(
         print(f"[{i}/{total}] Screening {ticker}...", end='\r')
         
         try:
-            # Fetch OHLC data
-            df = fetch_ohlc(ticker, period)
+            # Fetch OHLC data using updated fetch_ohlc API
+            df = fetch_ohlc(
+                ticker,
+                interval=interval,
+                lookback=period if not (start and end) else None,
+                start=start,
+                end=end,
+            )
             
             if df is None or len(df) < rsi_period + swing_window:
                 continue
