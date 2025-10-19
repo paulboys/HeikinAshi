@@ -5,6 +5,7 @@ import argparse
 import sys
 from stockcharts.screener.screener import screen_nasdaq, ScreenResult
 from stockcharts.screener.nasdaq import get_nasdaq_tickers
+from stockcharts.screener.rsi_divergence import screen_rsi_divergence, save_results_to_csv
 from stockcharts.data.fetch import fetch_ohlc
 from stockcharts.charts.heiken_ashi import heiken_ashi
 import matplotlib.pyplot as plt
@@ -281,6 +282,136 @@ Examples:
             print(f"❌ Error: {e}")
     
     print(f"\nCompleted! Charts saved to {args.output_dir}")
+    return 0
+
+
+def main_rsi_divergence():
+    """
+    CLI entry point for RSI divergence screening.
+    """
+    parser = argparse.ArgumentParser(
+        description='Screen NASDAQ stocks for RSI/Price divergences',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Screen for all divergences
+  stockcharts-rsi-divergence
+
+  # Find only bullish divergences (potential buy signals)
+  stockcharts-rsi-divergence --type bullish
+
+  # Find bearish divergences (potential sell signals)
+  stockcharts-rsi-divergence --type bearish
+
+  # Filter by price range
+  stockcharts-rsi-divergence --min-price 10 --max-price 100
+
+  # Use custom RSI period
+  stockcharts-rsi-divergence --rsi-period 21
+
+  # Use longer lookback period (6 months)
+  stockcharts-rsi-divergence --period 6mo
+        """
+    )
+    
+    parser.add_argument(
+        '--type',
+        choices=['bullish', 'bearish', 'all'],
+        default='all',
+        help='Type of divergence to screen for (default: all)'
+    )
+    
+    parser.add_argument(
+        '--period',
+        default='3mo',
+        help='Data lookback period: 1mo,3mo,6mo,1y,2y,5y,10y,ytd,max (default: 3mo)'
+    )
+    
+    parser.add_argument(
+        '--rsi-period',
+        type=int,
+        default=14,
+        help='RSI calculation period (default: 14)'
+    )
+    
+    parser.add_argument(
+        '--min-price',
+        type=float,
+        default=None,
+        help='Minimum stock price in dollars (e.g., 5.0 or 10.0)'
+    )
+    
+    parser.add_argument(
+        '--max-price',
+        type=float,
+        default=None,
+        help='Maximum stock price in dollars (e.g., 100.0)'
+    )
+    
+    parser.add_argument(
+        '--swing-window',
+        type=int,
+        default=5,
+        help='Window for swing point detection (default: 5)'
+    )
+    
+    parser.add_argument(
+        '--lookback',
+        type=int,
+        default=60,
+        help='Number of bars to look back for divergence (default: 60)'
+    )
+    
+    parser.add_argument(
+        '--output',
+        default='results/rsi_divergence.csv',
+        help='Output CSV file path (default: results/rsi_divergence.csv)'
+    )
+    
+    args = parser.parse_args()
+    
+    print(f"Screening NASDAQ stocks for RSI divergences...")
+    print(f"Divergence type: {args.type}")
+    print(f"Period: {args.period}, RSI period: {args.rsi_period}")
+    if args.min_price is not None:
+        print(f"Minimum price: ${args.min_price:.2f}")
+    if args.max_price is not None:
+        print(f"Maximum price: ${args.max_price:.2f}")
+    print()
+    
+    results = screen_rsi_divergence(
+        tickers=None,  # Use all NASDAQ
+        period=args.period,
+        rsi_period=args.rsi_period,
+        divergence_type=args.type,
+        min_price=args.min_price,
+        max_price=args.max_price,
+        swing_window=args.swing_window,
+        lookback=args.lookback
+    )
+    
+    # Save results
+    if results:
+        import os
+        os.makedirs(os.path.dirname(args.output), exist_ok=True)
+        save_results_to_csv(results, args.output)
+        
+        # Print summary
+        print("\n" + "="*80)
+        print(f"Found {len(results)} stocks with divergences:")
+        print("="*80)
+        
+        for r in results[:10]:  # Show first 10
+            print(f"\n{r.ticker} ({r.company_name})")
+            print(f"  Price: ${r.close_price:.2f} | RSI: {r.rsi:.2f}")
+            print(f"  Type: {r.divergence_type.upper()}")
+            print(f"  {r.details}")
+        
+        if len(results) > 10:
+            print(f"\n... and {len(results) - 10} more (see {args.output})")
+    else:
+        print("\nNo divergences found.")
+    
     return 0
 
 

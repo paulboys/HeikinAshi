@@ -4,15 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stockcharts"
-version = "0.2.0"
+version = "0.3.0"
 authors = [
   { name="Paul Boys", email="paul.d.boys@gmail.com" }
 ]
-description = "NASDAQ stock screener using Heiken Ashi candles for trend reversal detection with volume and price filtering"
+description = "NASDAQ stock screener using Heiken Ashi candles and RSI divergence for trend reversal detection with volume and price filtering"
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
-keywords = ["stocks", "nasdaq", "heiken ashi", "screener", "trading", "finance", "technical-analysis", "swing-trading"]
+keywords = ["stocks", "nasdaq", "heiken ashi", "rsi", "divergence", "screener", "trading", "finance", "technical-analysis", "swing-trading"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Financial and Insurance Industry",
@@ -28,7 +28,8 @@ classifiers = [
 dependencies = [
   "yfinance>=0.2.38",
   "pandas>=2.0.0",
-  "matplotlib>=3.7.0"
+  "matplotlib>=3.7.0",
+  "numpy>=1.24.0"
 ]
 
 [project.urls]
@@ -39,6 +40,7 @@ Issues = "https://github.com/paulboys/HeikinAshi/issues"
 [project.scripts]
 stockcharts-screen = "stockcharts.cli:main_screen"
 stockcharts-plot = "stockcharts.cli:main_plot"
+stockcharts-rsi-divergence = "stockcharts.cli:main_rsi_divergence"
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0.0", "ruff>=0.1.0"]

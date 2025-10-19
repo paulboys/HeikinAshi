@@ -1,0 +1,157 @@
+"""RSI Divergence screener for NASDAQ stocks."""
+
+import pandas as pd
+from dataclasses import dataclass
+from typing import List, Optional
+from stockcharts.data.fetch import fetch_ohlc
+from stockcharts.screener.nasdaq import get_nasdaq_tickers
+from stockcharts.indicators.rsi import compute_rsi
+from stockcharts.indicators.divergence import detect_divergence
+
+
+@dataclass
+class RSIDivergenceResult:
+    """Result from RSI divergence screening."""
+    ticker: str
+    company_name: str
+    close_price: float
+    rsi: float
+    divergence_type: str  # 'bullish', 'bearish', or 'both'
+    bullish_divergence: bool
+    bearish_divergence: bool
+    details: str
+
+
+def screen_rsi_divergence(
+    tickers: Optional[List[str]] = None,
+    period: str = '3mo',
+    rsi_period: int = 14,
+    divergence_type: str = 'all',  # 'bullish', 'bearish', or 'all'
+    min_price: Optional[float] = None,
+    max_price: Optional[float] = None,
+    swing_window: int = 5,
+    lookback: int = 60
+) -> List[RSIDivergenceResult]:
+    """
+    Screen stocks for RSI divergences.
+    
+    Args:
+        tickers: List of ticker symbols (if None, uses all NASDAQ)
+        period: Data period ('1mo', '3mo', '6mo', '1y', etc.)
+        rsi_period: RSI calculation period (default: 14)
+        divergence_type: Type to screen for ('bullish', 'bearish', or 'all')
+        min_price: Minimum stock price filter
+        max_price: Maximum stock price filter
+        swing_window: Window for swing point detection (default: 5)
+        lookback: Bars to look back for divergence (default: 60)
+    
+    Returns:
+        List of RSIDivergenceResult objects
+    """
+    if tickers is None:
+        print("Fetching NASDAQ ticker list...")
+        tickers = get_nasdaq_tickers()
+        print(f"Found {len(tickers)} tickers to screen")
+    
+    results = []
+    total = len(tickers)
+    
+    for i, ticker_info in enumerate(tickers, 1):
+        if isinstance(ticker_info, tuple):
+            ticker, company_name = ticker_info
+        else:
+            ticker = ticker_info
+            company_name = ticker
+        
+        print(f"[{i}/{total}] Screening {ticker}...", end='\r')
+        
+        try:
+            # Fetch OHLC data
+            df = fetch_ohlc(ticker, period)
+            
+            if df is None or len(df) < rsi_period + swing_window:
+                continue
+            
+            # Get current price
+            close_price = df['Close'].iloc[-1]
+            
+            # Apply price filters
+            if min_price is not None and close_price < min_price:
+                continue
+            if max_price is not None and close_price > max_price:
+                continue
+            
+            # Calculate RSI
+            df['RSI'] = compute_rsi(df['Close'], period=rsi_period)
+            
+            if df['RSI'].isna().all():
+                continue
+            
+            current_rsi = df['RSI'].iloc[-1]
+            
+            # Detect divergences
+            div_result = detect_divergence(
+                df,
+                price_col='Close',
+                rsi_col='RSI',
+                window=swing_window,
+                lookback=lookback
+            )
+            
+            # Filter by divergence type
+            include = False
+            div_type = []
+            details = []
+            
+            if divergence_type in ['bullish', 'all'] and div_result['bullish']:
+                include = True
+                div_type.append('bullish')
+                details.append(f"BULLISH: {div_result['bullish_details']}")
+            
+            if divergence_type in ['bearish', 'all'] and div_result['bearish']:
+                include = True
+                div_type.append('bearish')
+                details.append(f"BEARISH: {div_result['bearish_details']}")
+            
+            if include:
+                results.append(RSIDivergenceResult(
+                    ticker=ticker,
+                    company_name=company_name,
+                    close_price=close_price,
+                    rsi=current_rsi,
+                    divergence_type=' & '.join(div_type),
+                    bullish_divergence=div_result['bullish'],
+                    bearish_divergence=div_result['bearish'],
+                    details=' | '.join(details)
+                ))
+        
+        except Exception as e:
+            # Silently skip errors for individual tickers
+            pass
+    
+    print(f"\nScreening complete. Found {len(results)} stocks with divergences.")
+    return results
+
+
+def save_results_to_csv(results: List[RSIDivergenceResult], filename: str = 'rsi_divergence_results.csv'):
+    """Save screening results to CSV file."""
+    if not results:
+        print("No results to save.")
+        return
+    
+    df = pd.DataFrame([
+        {
+            'Ticker': r.ticker,
+            'Company': r.company_name,
+            'Price': r.close_price,
+            'RSI': r.rsi,
+            'Divergence Type': r.divergence_type,
+            'Bullish': r.bullish_divergence,
+            'Bearish': r.bearish_divergence,
+            'Details': r.details
+        }
+        for r in results
+    ])
+    
+    df.to_csv(filename, index=False)
+    print(f"Results saved to {filename}")
