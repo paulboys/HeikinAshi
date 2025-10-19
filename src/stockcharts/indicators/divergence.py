@@ -4,6 +4,10 @@ import pandas as pd
 import numpy as np
 from typing import Tuple, Optional
 
+# Tolerance constants to avoid false divergences due to minor RSI fluctuations
+BEARISH_RSI_TOLERANCE = 0.5  # RSI must be at least 0.5 points lower for bearish divergence
+BULLISH_RSI_TOLERANCE = 0.5  # RSI must be at least 0.5 points higher for bullish divergence
+
 
 def find_swing_points(series: pd.Series, window: int = 5) -> Tuple[pd.Series, pd.Series]:
     """
@@ -122,7 +126,8 @@ def detect_divergence(
             r2_idx = min(rsi_lows_near_p2, key=lambda x: abs((x - p2_idx).days))
             
             price_ll = recent_df.loc[p2_idx, price_col] < recent_df.loc[p1_idx, price_col]
-            rsi_hl = recent_df.loc[r2_idx, rsi_col] > recent_df.loc[r1_idx, rsi_col]
+            # RSI must be at least BULLISH_RSI_TOLERANCE points higher to confirm divergence
+            rsi_hl = recent_df.loc[r2_idx, rsi_col] - BULLISH_RSI_TOLERANCE > recent_df.loc[r1_idx, rsi_col]
             
             if price_ll and rsi_hl:
                 result['bullish'] = True
@@ -150,7 +155,8 @@ def detect_divergence(
             r2_idx = min(rsi_highs_near_p2, key=lambda x: abs((x - p2_idx).days))
             
             price_hh = recent_df.loc[p2_idx, price_col] > recent_df.loc[p1_idx, price_col]
-            rsi_lh = recent_df.loc[r2_idx, rsi_col] < recent_df.loc[r1_idx, rsi_col]
+            # RSI must be at least BEARISH_RSI_TOLERANCE points lower to confirm divergence
+            rsi_lh = recent_df.loc[r2_idx, rsi_col] + BEARISH_RSI_TOLERANCE < recent_df.loc[r1_idx, rsi_col]
             
             if price_hh and rsi_lh:
                 result['bearish'] = True
