@@ -130,7 +130,8 @@ def screen_nasdaq(
     end: Optional[str] = None,
     debug: bool = False,
     min_volume: Optional[float] = None,
-    min_price: Optional[float] = None
+    min_price: Optional[float] = None,
+    ticker_filter: Optional[List[str]] = None
 ) -> List[ScreenResult]:
     """Screen NASDAQ stocks for Heiken Ashi candle colors.
     
@@ -163,18 +164,30 @@ def screen_nasdaq(
         Useful for avoiding penny stocks (e.g., 5.0 or 10.0).
     end : str | None
         End date YYYY-MM-DD. Cannot be used with lookback.
+    ticker_filter : List[str] | None
+        Optional list of ticker symbols to screen. If provided, only these tickers
+        will be screened instead of all NASDAQ stocks. Useful for filtering by
+        a pre-screened list (e.g., from RSI divergence results).
     
     Returns
     -------
     List[ScreenResult]
         List of results matching the color filter, sorted by ticker
     """
-    tickers = get_nasdaq_tickers(limit=limit)
+    # Use provided ticker filter or fetch all NASDAQ tickers
+    if ticker_filter is not None:
+        tickers = ticker_filter
+        if limit is not None:
+            tickers = tickers[:limit]
+    else:
+        tickers = get_nasdaq_tickers(limit=limit)
+    
     results = []
     
     change_msg = " that just changed color" if changed_only else ""
+    filter_msg = " (filtered list)" if ticker_filter is not None else ""
     if verbose:
-        print(f"Screening {len(tickers)} NASDAQ tickers for {color_filter} "
+        print(f"Screening {len(tickers)} tickers{filter_msg} for {color_filter} "
               f"Heiken Ashi candles{change_msg} ({period} period)...")
         print("-" * 70)
     

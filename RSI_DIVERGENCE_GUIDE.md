@@ -239,6 +239,31 @@ stockcharts-rsi-divergence --period 1mo --rsi-period 9 --lookback 20
 # 3. Trade with tight stops
 ```
 
+### High-Confidence Signal Workflow (RSI + Heiken Ashi)
+
+The most powerful setups occur when **both** RSI divergence and Heiken Ashi color change align:
+
+```bash
+# Step 1: Find bullish RSI divergences (potential reversal candidates)
+stockcharts-rsi-divergence --type bullish --min-price 10 --output results/bullish_div.csv
+
+# Step 2: Screen ONLY those tickers for fresh green Heiken Ashi candles
+stockcharts-screen --color green --changed-only --input-filter results/bullish_div.csv --output results/high_confidence.csv
+
+# Result: Stocks showing BOTH signals = highest probability reversal setups
+```
+
+**Why this works:**
+- RSI divergence identifies **potential** reversal (momentum weakening)
+- HA color flip confirms **actual** price reversal (trend change starting)
+- Together = early entry with confirmation
+
+**Alternative: Find currently green (not necessarily changed):**
+```bash
+# Useful if you want divergence stocks that are already in uptrend
+stockcharts-screen --color green --input-filter results/bullish_div.csv --output results/div_plus_green.csv
+```
+
 ## Technical Details
 
 ### RSI Calculation
@@ -304,13 +329,23 @@ The screener matches price swing points with RSI swing points within a time wind
 
 ### 5. Combining with Heiken Ashi
 ```bash
+# Method 1: Use input-filter for automatic intersection
+# 1. Find bullish divergences
+stockcharts-rsi-divergence --type bullish --min-price 10 --output bullish_div.csv
+
+# 2. Screen those stocks for green HA candles that just changed
+stockcharts-screen --color green --changed-only --input-filter bullish_div.csv --output combined_signals.csv
+
+# Result: Stocks with BOTH bullish RSI divergence AND fresh green HA candle (high-confidence setups)
+
+# Method 2: Manual comparison
 # 1. Find divergences
 stockcharts-rsi-divergence --type bullish --output bullish.csv
 
-# 2. Screen same stocks for Heiken Ashi reversals
-stockcharts-screen --color green --changed-only
+# 2. Screen all stocks for Heiken Ashi reversals
+stockcharts-screen --color green --changed-only --output green_ha.csv
 
-# 3. Look for stocks appearing in both lists
+# 3. Manually compare ticker lists in both CSV files
 ```
 
 ## Troubleshooting

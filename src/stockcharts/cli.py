@@ -36,6 +36,9 @@ Examples:
 
   # Custom date range
   stockcharts-screen --color green --start 2024-01-01 --end 2024-12-31
+
+  # Filter by pre-screened ticker list from RSI divergence
+  stockcharts-screen --color green --changed-only --input-filter bullish_div.csv
         """
     )
     
@@ -102,6 +105,12 @@ Examples:
     )
     
     parser.add_argument(
+        '--input-filter',
+        default=None,
+        help='CSV file with tickers to screen (must have "Ticker" column). Only screens these tickers instead of all NASDAQ.'
+    )
+    
+    parser.add_argument(
         '--debug',
         action='store_true',
         help='Show detailed error messages for each ticker'
@@ -109,7 +118,29 @@ Examples:
     
     args = parser.parse_args()
     
-    print(f"Screening NASDAQ stocks for {args.color} Heiken Ashi candles...")
+    # Load ticker filter if provided
+    ticker_filter = None
+    if args.input_filter:
+        import os
+        import pandas as pd
+        
+        if not os.path.exists(args.input_filter):
+            print(f"Error: Input filter file not found: {args.input_filter}")
+            return 1
+        
+        try:
+            filter_df = pd.read_csv(args.input_filter)
+            if 'Ticker' not in filter_df.columns:
+                print(f"Error: Input filter CSV must have a 'Ticker' column")
+                return 1
+            
+            ticker_filter = filter_df['Ticker'].tolist()
+            print(f"Loaded {len(ticker_filter)} tickers from {args.input_filter}")
+        except Exception as e:
+            print(f"Error loading input filter: {e}")
+            return 1
+    
+    print(f"Screening {'filtered list' if ticker_filter else 'NASDAQ stocks'} for {args.color} Heiken Ashi candles...")
     print(f"Period: {args.period}, Lookback: {args.lookback}")
     if args.min_volume > 0:
         print(f"Minimum volume: {args.min_volume:,} shares/day")
@@ -131,7 +162,8 @@ Examples:
         min_volume=args.min_volume,
         min_price=args.min_price,
         limit=args.limit,
-        debug=args.debug
+        debug=args.debug,
+        ticker_filter=ticker_filter
     )
     
     # Save results to CSV
