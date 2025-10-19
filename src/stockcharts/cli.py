@@ -249,7 +249,19 @@ Examples:
     os.makedirs(args.output_dir, exist_ok=True)
     
     df = pd.read_csv(args.input)
-    tickers = df['ticker'].tolist()
+    
+    # Handle both 'Ticker' and 'ticker' column names (case-insensitive)
+    ticker_col = None
+    if 'Ticker' in df.columns:
+        ticker_col = 'Ticker'
+    elif 'ticker' in df.columns:
+        ticker_col = 'ticker'
+    else:
+        print(f"Error: CSV must have a 'Ticker' or 'ticker' column")
+        print(f"Available columns: {', '.join(df.columns)}")
+        return 1
+    
+    tickers = df[ticker_col].tolist()
     
     print(f"Generating Heiken Ashi charts for {len(tickers)} stocks...")
     print(f"Output directory: {args.output_dir}")
@@ -259,7 +271,7 @@ Examples:
         print(f"[{i}/{len(tickers)}] Plotting {ticker}...", end=' ')
         
         try:
-            data = fetch_ohlc(ticker, period=args.period, lookback=args.lookback)
+            data = fetch_ohlc(ticker, interval=args.period, lookback=args.lookback)
             if data is None or data.empty:
                 print("❌ No data")
                 continue
