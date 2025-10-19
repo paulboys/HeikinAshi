@@ -32,6 +32,7 @@ def screen_rsi_divergence(
     divergence_type: str = 'all',  # 'bullish', 'bearish', or 'all'
     min_price: Optional[float] = None,
     max_price: Optional[float] = None,
+    min_volume: Optional[float] = None,
     swing_window: int = 5,
     lookback: int = 60,
     start: Optional[str] = None,
@@ -48,6 +49,7 @@ def screen_rsi_divergence(
         divergence_type: Type to screen for ('bullish', 'bearish', or 'all')
         min_price: Minimum stock price filter
         max_price: Maximum stock price filter
+        min_volume: Minimum average daily volume filter
         swing_window: Window for swing point detection (default: 5)
         lookback: Bars to look back for divergence (default: 60)
     
@@ -92,6 +94,13 @@ def screen_rsi_divergence(
                 continue
             if max_price is not None and close_price > max_price:
                 continue
+            
+            # Apply volume filter
+            if min_volume is not None:
+                if 'Volume' in df.columns:
+                    avg_volume = df['Volume'].mean()
+                    if avg_volume < min_volume:
+                        continue
             
             # Calculate RSI
             df['RSI'] = compute_rsi(df['Close'], period=rsi_period)

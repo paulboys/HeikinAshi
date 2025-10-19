@@ -350,6 +350,12 @@ Examples:
   # Filter by price range
   stockcharts-rsi-divergence --min-price 10 --max-price 100
 
+  # Filter by price and volume (swing trading)
+  stockcharts-rsi-divergence --min-price 10 --min-volume 500000
+
+  # Day trading setup with high volume
+  stockcharts-rsi-divergence --type bullish --min-volume 2000000
+
   # Use custom RSI period
   stockcharts-rsi-divergence --rsi-period 21
 
@@ -407,6 +413,13 @@ Examples:
     )
     
     parser.add_argument(
+        '--min-volume',
+        type=float,
+        default=None,
+        help='Minimum average daily volume (e.g., 500000 for 500K shares/day)'
+    )
+    
+    parser.add_argument(
         '--swing-window',
         type=int,
         default=5,
@@ -437,6 +450,8 @@ Examples:
         print(f"Minimum price: ${args.min_price:.2f}")
     if args.max_price is not None:
         print(f"Maximum price: ${args.max_price:.2f}")
+    if args.min_volume is not None:
+        print(f"Minimum volume: {args.min_volume:,.0f} shares/day")
     print()
     
     results = screen_rsi_divergence(
@@ -447,6 +462,7 @@ Examples:
         divergence_type=args.type,
         min_price=args.min_price,
         max_price=args.max_price,
+        min_volume=args.min_volume,
         swing_window=args.swing_window,
         lookback=args.lookback,
         start=args.start,
