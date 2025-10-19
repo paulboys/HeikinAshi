@@ -478,5 +478,146 @@ Examples:
     return 0
 
 
+def main_plot_divergence():
+    """
+    CLI entry point for plotting price/RSI divergence charts.
+    """
+    parser = argparse.ArgumentParser(
+        description='Generate Price/RSI divergence charts from screener results',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Plot divergences from default RSI screener output
+  stockcharts-plot-divergence
+
+  # Plot from specific CSV file
+  stockcharts-plot-divergence --input results/rsi_all.csv
+
+  # Save charts to specific directory
+  stockcharts-plot-divergence --output-dir divergence_charts/
+
+  # Use custom lookback period
+  stockcharts-plot-divergence --lookback 6mo --rsi-period 21
+        """
+    )
+    
+    parser.add_argument(
+        '--input',
+        default='results/rsi_divergence.csv',
+        help='Input CSV file from RSI divergence screener (default: results/rsi_divergence.csv)'
+    )
+    
+    parser.add_argument(
+        '--output-dir',
+        default='charts/divergence/',
+        help='Output directory for chart images (default: charts/divergence/)'
+    )
+    
+    parser.add_argument(
+        '--interval',
+        default='1d',
+        help='Data aggregation interval (default: 1d)'
+    )
+    
+    parser.add_argument(
+        '--lookback',
+        default='3mo',
+        help='Historical data lookback period (default: 3mo)'
+    )
+    
+    parser.add_argument(
+        '--rsi-period',
+        type=int,
+        default=14,
+        help='RSI calculation period (default: 14)'
+    )
+    
+    parser.add_argument(
+        '--swing-window',
+        type=int,
+        default=5,
+        help='Window for swing point detection (default: 5)'
+    )
+    
+    parser.add_argument(
+        '--divergence-lookback',
+        type=int,
+        default=60,
+        help='Number of bars to look back for divergence detection (default: 60)'
+    )
+    
+    parser.add_argument(
+        '--max-plots',
+        type=int,
+        default=None,
+        help='Maximum number of charts to generate (default: all)'
+    )
+    
+    args = parser.parse_args()
+    
+    import pandas as pd
+    import os
+    from stockcharts.charts.divergence import plot_price_rsi
+    
+    if not os.path.exists(args.input):
+        print(f"Error: Input file not found: {args.input}")
+        return 1
+    
+    os.makedirs(args.output_dir, exist_ok=True)
+    
+    df = pd.read_csv(args.input)
+    
+    # Handle both 'Ticker' and 'ticker' column names (case-insensitive)
+    ticker_col = None
+    if 'Ticker' in df.columns:
+        ticker_col = 'Ticker'
+    elif 'ticker' in df.columns:
+        ticker_col = 'ticker'
+    else:
+        print(f"Error: CSV must have a 'Ticker' or 'ticker' column")
+        print(f"Available columns: {', '.join(df.columns)}")
+        return 1
+    
+    tickers = df[ticker_col].unique().tolist()
+    
+    if args.max_plots:
+        tickers = tickers[:args.max_plots]
+    
+    print(f"Generating Price/RSI divergence charts for {len(tickers)} stocks...")
+    print(f"Output directory: {args.output_dir}")
+    print(f"Interval: {args.interval}, Lookback: {args.lookback}, RSI Period: {args.rsi_period}")
+    print()
+    
+    success_count = 0
+    for i, ticker in enumerate(tickers, 1):
+        print(f"[{i}/{len(tickers)}] Plotting {ticker}...", end=' ')
+        
+        try:
+            data = fetch_ohlc(ticker, interval=args.interval, lookback=args.lookback)
+            
+            # Create divergence chart
+            fig = plot_price_rsi(
+                data,
+                ticker=ticker,
+                rsi_period=args.rsi_period,
+                show_divergence=True,
+                divergence_window=args.swing_window,
+                divergence_lookback=args.divergence_lookback
+            )
+            
+            output_path = os.path.join(args.output_dir, f'{ticker}_{args.interval}.png')
+            fig.savefig(output_path, dpi=150, bbox_inches='tight')
+            plt.close(fig)
+            
+            print(f"✓ Saved to {output_path}")
+            success_count += 1
+            
+        except Exception as e:
+            print(f"❌ Error: {e}")
+    
+    print(f"\nCompleted! {success_count}/{len(tickers)} charts saved to {args.output_dir}")
+    return 0
+
+
 if __name__ == '__main__':
     sys.exit(main_screen())

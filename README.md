@@ -19,9 +19,11 @@ A Python library for screening NASDAQ stocks using Heiken Ashi candles and RSI d
 - **CSV Export**: Save screening results for further analysis
 
 ### 📊 Chart Generation
-- Generate Heiken Ashi candlestick charts from screening results
+- **Heiken Ashi Charts**: Generate candlestick charts from screening results
+- **Price/RSI Divergence Charts**: Visualize price action with RSI indicator and marked divergences
 - Support for multiple timeframes: 1m, 5m, 15m, 1h, 1d, 1wk, 1mo
 - High-quality PNG output for technical analysis
+- Automatic divergence detection and highlighting on charts
 
 ### 🎯 Trading Styles Supported
 - **Day Trading**: 1m-1h periods, high volume (2M+ shares/day)
@@ -51,12 +53,12 @@ pip install -e .
 
 ## Quick Start
 
-After installation, you'll have three command-line tools available:
+After installation, you'll have four command-line tools available:
 
 ### 1. `stockcharts-screen` - Heiken Ashi Color Screening
-### 1. `stockcharts-screen` - Heiken Ashi Color Screening
-### 2. `stockcharts-plot` - Chart Generation
+### 2. `stockcharts-plot` - Heiken Ashi Chart Generation
 ### 3. `stockcharts-rsi-divergence` - RSI Divergence Screening
+### 4. `stockcharts-plot-divergence` - Price/RSI Divergence Charts
 
 ## Usage
 
@@ -111,6 +113,23 @@ stockcharts-rsi-divergence --type bearish --min-price 10 --max-price 100
 stockcharts-rsi-divergence --rsi-period 21 --period 6mo
 ```
 
+### 4. Generate Divergence Charts
+
+**Plot divergences from screener results:**
+```powershell
+stockcharts-plot-divergence
+```
+
+**Custom analysis with longer lookback:**
+```powershell
+stockcharts-plot-divergence --input results/rsi_all.csv --lookback 6mo --output-dir charts/analysis/
+```
+
+**Limit number of charts and customize RSI:**
+```powershell
+stockcharts-plot-divergence --max-plots 20 --rsi-period 21
+```
+
 ### Command-Line Options
 
 #### `stockcharts-screen` (Heiken Ashi Screening)
@@ -139,6 +158,16 @@ stockcharts-rsi-divergence --rsi-period 21 --period 6mo
 - `--swing-window`: Window for swing point detection (default: 5)
 - `--lookback`: Bars to analyze for divergence (default: 60)
 - `--output`: CSV output path (default: results/rsi_divergence.csv)
+
+#### `stockcharts-plot-divergence` (Divergence Chart Generation)
+- `--input`: Input CSV file from RSI divergence screener
+- `--output-dir`: Directory for chart images (default: charts/divergence/)
+- `--interval`: Data aggregation interval: `1d`, `1wk`, `1mo` (default: 1d)
+- `--lookback`: Historical data window (default: 3mo)
+- `--rsi-period`: RSI calculation period (default: 14)
+- `--swing-window`: Window for swing point detection (default: 5)
+- `--divergence-lookback`: Bars to look back for divergence (default: 60)
+- `--max-plots`: Maximum number of charts to generate (default: all)
 
 See [QUICK_REFERENCE.md](QUICK_REFERENCE.md) for parameter details.
 

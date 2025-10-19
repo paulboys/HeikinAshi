@@ -41,6 +41,7 @@ Issues = "https://github.com/paulboys/HeikinAshi/issues"
 stockcharts-screen = "stockcharts.cli:main_screen"
 stockcharts-plot = "stockcharts.cli:main_plot"
 stockcharts-rsi-divergence = "stockcharts.cli:main_rsi_divergence"
+stockcharts-plot-divergence = "stockcharts.cli:main_plot_divergence"
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0.0", "ruff>=0.1.0"]

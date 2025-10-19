@@ -76,7 +76,7 @@ def screen_ticker(
     """
     try:
         # Fetch recent data
-        df = fetch_ohlc(ticker, period=period, lookback=lookback, start=start, end=end)
+        df = fetch_ohlc(ticker, interval=period, lookback=lookback, start=start, end=end)
         
         if df.empty or len(df) < 2:
             return None
