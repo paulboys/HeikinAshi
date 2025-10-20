@@ -7,6 +7,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and 
 - (placeholder) Add MACD divergence support
 - (placeholder) Average volume filter (20-day)
 
+## [0.4.1] - 2025-10-20
+### Changed
+- Version bump to test automated PyPI publish workflow trigger.
+- Verified packaging integrity after tolerance and documentation consolidation changes.
+
+### CI/CD
+- Tag-based publish workflow executed with PyPI token secret.
+
+### Notes
+- No functional code changes beyond version increment; this is a release process validation.
+
 ## [0.4.0] - 2025-10-19
 ### Added
 - Consolidated documentation into `docs/` directory (overview, screener, divergence, parameters, volume, trading styles, quick reference, roadmap, legacy mapping, deprecation notice).
@@ -35,5 +46,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and 
 - Initial RSI divergence screener and chart plotting.
 - Heiken Ashi NASDAQ screener.
 
-[Unreleased]: https://github.com/paulboys/HeikinAshi/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/paulboys/HeikinAshi/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/paulboys/HeikinAshi/releases/tag/v0.4.1
 [0.4.0]: https://github.com/paulboys/HeikinAshi/releases/tag/v0.4.0
