@@ -138,6 +138,8 @@ Comprehensive, consolidated documentation lives in the `docs/` directory:
 
 All documentation is consolidated under `docs/`. Legacy root markdown files have been removed.
 
+See also: [CHANGELOG.md](CHANGELOG.md) for release history.
+
 ## Hosted Documentation
 
 An interactive, searchable documentation site is published via MkDocs + GitHub Pages.
