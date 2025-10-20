@@ -136,7 +136,7 @@ Comprehensive, consolidated documentation lives in the `docs/` directory:
 | Roadmap & Next Steps | `docs/roadmap.md` |
 | Legacy Mapping | `docs/legacy.md` |
 
-Older individual markdown files remain for now and will be deprecated after migration.
+All documentation is consolidated under `docs/`. Legacy root markdown files have been removed.
 
 **Custom analysis with longer lookback:**
 ```powershell
