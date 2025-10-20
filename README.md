@@ -138,6 +138,38 @@ Comprehensive, consolidated documentation lives in the `docs/` directory:
 
 All documentation is consolidated under `docs/`. Legacy root markdown files have been removed.
 
+## Hosted Documentation
+
+An interactive, searchable documentation site is published via MkDocs + GitHub Pages.
+
+### Local Preview
+```powershell
+pip install -r requirements-docs.txt
+mkdocs serve
+# Visit http://127.0.0.1:8000
+```
+
+### Manual Build
+```powershell
+mkdocs build --strict
+# Output generated in ./site/
+```
+
+### Deployment (CI Automated)
+Docs are automatically built and deployed when you push changes to `docs/`, `mkdocs.yml`, or `requirements-docs.txt` on `main`.
+
+Workflow file: `.github/workflows/docs.yml` using `peaceiris/actions-gh-pages`.
+
+To trigger manually:
+```powershell
+gh workflow run Deploy Documentation
+```
+
+### Site URL
+https://paulboys.github.io/HeikinAshi/
+
+If the page is not yet enabled, activate GitHub Pages in repository settings pointing to the `gh-pages` branch.
+
 **Custom analysis with longer lookback:**
 ```powershell
 stockcharts-plot-divergence --input results/rsi_all.csv --lookback 6mo --output-dir charts/analysis/

@@ -1,0 +1,59 @@
+site_name: StockCharts
+site_description: NASDAQ Heiken Ashi & RSI Divergence Screening Toolkit
+site_url: https://paulboys.github.io/HeikinAshi/
+repo_name: paulboys/HeikinAshi
+repo_url: https://github.com/paulboys/HeikinAshi
+edit_uri: edit/main/docs/
+
+nav:
+  - Home: index.md
+  - Overview: overview.md
+  - Quick Reference: quick_reference.md
+  - Screeners:
+      - Heiken Ashi Screener: screener.md
+      - RSI Divergence Screener: rsi_divergence.md
+  - Parameters: parameters.md
+  - Volume Filtering: volume.md
+  - Trading Styles: trading_styles.md
+  - Roadmap: roadmap.md
+  - Legacy Mapping: legacy.md
+  - Deprecation Notice: DEPRECATION_NOTICE.md
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.tabs
+    - navigation.instant
+    - content.code.copy
+    - search.highlight
+    - search.suggest
+  palette:
+    - scheme: slate
+      primary: indigo
+      accent: cyan
+    - scheme: default
+      primary: indigo
+      accent: cyan
+
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - codehilite
+  - footnotes
+  - tables
+  - attr_list
+  - md_in_html
+
+plugins:
+  - search
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/paulboys/HeikinAshi
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/stockcharts/
+
+copyright: "© 2025 StockCharts"
