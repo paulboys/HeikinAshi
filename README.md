@@ -341,6 +341,12 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
+## Disclaimer
+
+This project is provided for educational and informational purposes only and does not constitute financial, investment, trading, legal, tax, or other professional advice. Outputs (including screens, indicators, charts, divergences) may contain errors, omissions, delays, or false signals. Trading and investing involve risk of loss, including principal. Past performance or detected patterns do not guarantee future results. Validate all insights independently before acting.
+
+By using this software you accept full responsibility for any decisions and agree to indemnify the author against claims arising from its use. For personalized advice consult a licensed financial professional. See `DISCLAIMER.md` for full details.
+
 ## Acknowledgments
 
 - **yfinance**: Yahoo Finance data API
