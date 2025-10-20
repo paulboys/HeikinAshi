@@ -18,6 +18,7 @@ nav:
   - Roadmap: roadmap.md
   - Legacy Mapping: legacy.md
   - Deprecation Notice: DEPRECATION_NOTICE.md
+  - Disclaimer: disclaimer.md
 
 theme:
   name: material

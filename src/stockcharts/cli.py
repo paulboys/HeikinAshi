@@ -2,6 +2,7 @@
 Command-line interface for stockcharts screener.
 """
 import argparse
+import os
 import sys
 from stockcharts.screener.screener import screen_nasdaq, ScreenResult
 from stockcharts.screener.nasdaq import get_nasdaq_tickers
@@ -11,6 +12,15 @@ from stockcharts.charts.heiken_ashi import heiken_ashi
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib.patches import Rectangle
+
+
+def _print_disclaimer_once(args):
+    """Print a one-line disclaimer unless suppressed."""
+    if getattr(args, "no_disclaimer", False):
+        return
+    if os.environ.get("STOCKCHARTS_NO_DISCLAIMER") == "1":
+        return
+    print("[Disclaimer] Educational tool; not financial advice. See DISCLAIMER.md or docs/disclaimer.md. Use --no-disclaimer to hide.")
 
 
 def main_screen():
@@ -116,7 +126,24 @@ Examples:
         help='Show detailed error messages for each ticker'
     )
     
+    parser.add_argument(
+        '--no-disclaimer',
+        action='store_true',
+        help='Suppress one-line non-advice disclaimer banner'
+    )
+    parser.add_argument(
+        '--version',
+        action='store_true',
+        help='Print package version and exit'
+    )
     args = parser.parse_args()
+
+    if args.version:
+        from stockcharts import __version__
+        print(f"stockcharts {__version__}")
+        return 0
+
+    _print_disclaimer_once(args)
     
     # Load ticker filter if provided
     ticker_filter = None
@@ -237,7 +264,24 @@ Examples:
         help='Historical data lookback (default: 3mo)'
     )
     
+    parser.add_argument(
+        '--no-disclaimer',
+        action='store_true',
+        help='Suppress one-line non-advice disclaimer banner'
+    )
+    parser.add_argument(
+        '--version',
+        action='store_true',
+        help='Print package version and exit'
+    )
     args = parser.parse_args()
+
+    if args.version:
+        from stockcharts import __version__
+        print(f"stockcharts {__version__}")
+        return 0
+
+    _print_disclaimer_once(args)
     
     import pandas as pd
     import os
@@ -439,7 +483,24 @@ Examples:
         help='Output CSV file path (default: results/rsi_divergence.csv)'
     )
     
+    parser.add_argument(
+        '--no-disclaimer',
+        action='store_true',
+        help='Suppress one-line non-advice disclaimer banner'
+    )
+    parser.add_argument(
+        '--version',
+        action='store_true',
+        help='Print package version and exit'
+    )
     args = parser.parse_args()
+
+    if args.version:
+        from stockcharts import __version__
+        print(f"stockcharts {__version__}")
+        return 0
+
+    _print_disclaimer_once(args)
     
     print(f"Screening NASDAQ stocks for RSI divergences...")
     print(f"Divergence type: {args.type}")
@@ -569,7 +630,24 @@ Examples:
         help='Maximum number of charts to generate (default: all)'
     )
     
+    parser.add_argument(
+        '--no-disclaimer',
+        action='store_true',
+        help='Suppress one-line non-advice disclaimer banner'
+    )
+    parser.add_argument(
+        '--version',
+        action='store_true',
+        help='Print package version and exit'
+    )
     args = parser.parse_args()
+
+    if args.version:
+        from stockcharts import __version__
+        print(f"stockcharts {__version__}")
+        return 0
+
+    _print_disclaimer_once(args)
     
     import pandas as pd
     import os
