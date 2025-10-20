@@ -120,6 +120,24 @@ stockcharts-rsi-divergence --rsi-period 21 --period 6mo
 stockcharts-plot-divergence
 ```
 
+## Documentation
+
+Comprehensive, consolidated documentation lives in the `docs/` directory:
+
+| Topic | File |
+|-------|------|
+| Project Overview & Architecture | `docs/overview.md` |
+| Heiken Ashi Screener Guide | `docs/screener.md` |
+| RSI Divergence Screener | `docs/rsi_divergence.md` |
+| Parameters & Configuration | `docs/parameters.md` |
+| Volume Filtering | `docs/volume.md` |
+| Trading Style Guidance | `docs/trading_styles.md` |
+| Quick Reference Commands | `docs/quick_reference.md` |
+| Roadmap & Next Steps | `docs/roadmap.md` |
+| Legacy Mapping | `docs/legacy.md` |
+
+Older individual markdown files remain for now and will be deprecated after migration.
+
 **Custom analysis with longer lookback:**
 ```powershell
 stockcharts-plot-divergence --input results/rsi_all.csv --lookback 6mo --output-dir charts/analysis/
