@@ -171,3 +171,110 @@ def detect_divergence(
                 result['bearish_indices'] = (p1_idx, p2_idx, r1_idx, r2_idx)
     
     return result
+
+
+def check_breakout_occurred(
+    df: pd.DataFrame,
+    divergence_idx: pd.Timestamp,
+    divergence_type: str,
+    threshold: float = 0.05,
+    price_col: str = 'Close'
+) -> bool:
+    """
+    Check if a breakout has already occurred after divergence detection.
+    
+    For bullish divergence: Price moved up significantly from divergence point.
+    For bearish divergence: Price moved down significantly from divergence point.
+    
+    Args:
+        df: DataFrame with price data
+        divergence_idx: Index of the divergence point (second swing low/high)
+        divergence_type: 'bullish' or 'bearish'
+        threshold: Percentage move required to consider it a breakout (default: 0.05 = 5%)
+        price_col: Name of price column (default: 'Close')
+    
+    Returns:
+        True if breakout already occurred (signal is stale), False if still valid
+    """
+    if divergence_idx not in df.index:
+        return False
+    
+    divergence_price = df.loc[divergence_idx, price_col]
+    current_price = df[price_col].iloc[-1]
+    
+    if divergence_type == 'bullish':
+        # Bullish divergence: check if price already rallied past threshold
+        breakout_price = divergence_price * (1 + threshold)
+        return current_price >= breakout_price
+    
+    elif divergence_type == 'bearish':
+        # Bearish divergence: check if price already dropped past threshold
+        breakout_price = divergence_price * (1 - threshold)
+        return current_price <= breakout_price
+    
+    return False
+
+
+def check_failed_breakout(
+    df: pd.DataFrame,
+    divergence_idx: pd.Timestamp,
+    divergence_type: str,
+    lookback_window: int = 10,
+    attempt_threshold: float = 0.03,
+    reversal_threshold: float = 0.01,
+    price_col: str = 'Close'
+) -> bool:
+    """
+    Check if divergence led to a failed breakout attempt.
+    
+    A failed breakout means price tried to move in the divergence direction
+    but reversed and closed back near/below the divergence level.
+    
+    Args:
+        df: DataFrame with price data
+        divergence_idx: Index of the divergence point
+        divergence_type: 'bullish' or 'bearish'
+        lookback_window: Number of recent bars to check (default: 10)
+        attempt_threshold: % move required to consider an "attempt" (default: 0.03 = 3%)
+        reversal_threshold: % from divergence price to consider "failed" (default: 0.01 = 1%)
+        price_col: Name of price column (default: 'Close')
+    
+    Returns:
+        True if failed breakout detected (signal is weak), False otherwise
+    """
+    if divergence_idx not in df.index:
+        return False
+    
+    # Get data after divergence point
+    div_loc = df.index.get_loc(divergence_idx)
+    if div_loc >= len(df) - 1:
+        return False  # No data after divergence
+    
+    recent_data = df.iloc[div_loc:div_loc + lookback_window + 1]
+    if len(recent_data) < 2:
+        return False
+    
+    divergence_price = df.loc[divergence_idx, price_col]
+    current_close = df[price_col].iloc[-1]
+    
+    if divergence_type == 'bullish':
+        # Check for failed bullish attempt
+        attempted_high = recent_data['High'].max()
+        attempt_target = divergence_price * (1 + attempt_threshold)
+        failed_level = divergence_price * (1 + reversal_threshold)
+        
+        # Price tried to rally (reached attempt threshold) but closed back low
+        if attempted_high >= attempt_target and current_close < failed_level:
+            return True
+    
+    elif divergence_type == 'bearish':
+        # Check for failed bearish attempt
+        attempted_low = recent_data['Low'].min()
+        attempt_target = divergence_price * (1 - attempt_threshold)
+        failed_level = divergence_price * (1 - reversal_threshold)
+        
+        # Price tried to drop (reached attempt threshold) but closed back high
+        if attempted_low <= attempt_target and current_close > failed_level:
+            return True
+    
+    return False

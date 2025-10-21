@@ -6,7 +6,11 @@ from typing import List, Optional
 from stockcharts.data.fetch import fetch_ohlc
 from stockcharts.screener.nasdaq import get_nasdaq_tickers
 from stockcharts.indicators.rsi import compute_rsi
-from stockcharts.indicators.divergence import detect_divergence
+from stockcharts.indicators.divergence import (
+    detect_divergence,
+    check_breakout_occurred,
+    check_failed_breakout
+)
 
 
 @dataclass
@@ -37,14 +41,20 @@ def screen_rsi_divergence(
     lookback: int = 60,
     start: Optional[str] = None,
     end: Optional[str] = None,
+    exclude_breakouts: bool = False,
+    breakout_threshold: float = 0.05,
+    exclude_failed_breakouts: bool = False,
+    failed_lookback_window: int = 10,
+    failed_attempt_threshold: float = 0.03,
+    failed_reversal_threshold: float = 0.01,
 ) -> List[RSIDivergenceResult]:
     """
     Screen stocks for RSI divergences.
     
     Args:
         tickers: List of ticker symbols (if None, uses all NASDAQ)
-    period: Historical period breadth for yfinance (e.g. '1mo', '3mo', '6mo', '1y') ignored if both start & end provided.
-    interval: Candle aggregation interval ('1d','1wk','1mo').
+        period: Historical period breadth for yfinance (e.g. '1mo', '3mo', '6mo', '1y') ignored if both start & end provided.
+        interval: Candle aggregation interval ('1d','1wk','1mo').
         rsi_period: RSI calculation period (default: 14)
         divergence_type: Type to screen for ('bullish', 'bearish', or 'all')
         min_price: Minimum stock price filter
@@ -52,6 +62,12 @@ def screen_rsi_divergence(
         min_volume: Minimum average daily volume filter
         swing_window: Window for swing point detection (default: 5)
         lookback: Bars to look back for divergence (default: 60)
+        exclude_breakouts: If True, filter out divergences where breakout already occurred
+        breakout_threshold: % move required to consider breakout complete (default: 0.05 = 5%)
+        exclude_failed_breakouts: If True, filter out divergences with failed breakout attempts
+        failed_lookback_window: Bars to check for failed breakout (default: 10)
+        failed_attempt_threshold: % move to consider breakout "attempted" (default: 0.03 = 3%)
+        failed_reversal_threshold: % from divergence to consider "failed" (default: 0.01 = 1%)
     
     Returns:
         List of RSIDivergenceResult objects
@@ -125,14 +141,52 @@ def screen_rsi_divergence(
             details = []
             
             if divergence_type in ['bullish', 'all'] and div_result['bullish']:
-                include = True
-                div_type.append('bullish')
-                details.append(f"BULLISH: {div_result['bullish_details']}")
+                # Check breakout filters for bullish divergence
+                skip_bullish = False
+                
+                if exclude_breakouts and div_result['bullish_indices']:
+                    _, p2_idx, _, _ = div_result['bullish_indices']
+                    if check_breakout_occurred(df, p2_idx, 'bullish', breakout_threshold):
+                        skip_bullish = True
+                
+                if not skip_bullish and exclude_failed_breakouts and div_result['bullish_indices']:
+                    _, p2_idx, _, _ = div_result['bullish_indices']
+                    if check_failed_breakout(
+                        df, p2_idx, 'bullish',
+                        failed_lookback_window,
+                        failed_attempt_threshold,
+                        failed_reversal_threshold
+                    ):
+                        skip_bullish = True
+                
+                if not skip_bullish:
+                    include = True
+                    div_type.append('bullish')
+                    details.append(f"BULLISH: {div_result['bullish_details']}")
             
             if divergence_type in ['bearish', 'all'] and div_result['bearish']:
-                include = True
-                div_type.append('bearish')
-                details.append(f"BEARISH: {div_result['bearish_details']}")
+                # Check breakout filters for bearish divergence
+                skip_bearish = False
+                
+                if exclude_breakouts and div_result['bearish_indices']:
+                    _, p2_idx, _, _ = div_result['bearish_indices']
+                    if check_breakout_occurred(df, p2_idx, 'bearish', breakout_threshold):
+                        skip_bearish = True
+                
+                if not skip_bearish and exclude_failed_breakouts and div_result['bearish_indices']:
+                    _, p2_idx, _, _ = div_result['bearish_indices']
+                    if check_failed_breakout(
+                        df, p2_idx, 'bearish',
+                        failed_lookback_window,
+                        failed_attempt_threshold,
+                        failed_reversal_threshold
+                    ):
+                        skip_bearish = True
+                
+                if not skip_bearish:
+                    include = True
+                    div_type.append('bearish')
+                    details.append(f"BEARISH: {div_result['bearish_details']}")
             
             if include:
                 results.append(RSIDivergenceResult(

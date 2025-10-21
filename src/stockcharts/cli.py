@@ -484,6 +484,46 @@ Examples:
     )
     
     parser.add_argument(
+        '--exclude-breakouts',
+        action='store_true',
+        help='Exclude divergences where breakout already occurred (price moved past threshold)'
+    )
+    
+    parser.add_argument(
+        '--breakout-threshold',
+        type=float,
+        default=0.05,
+        help='Percentage move to consider breakout complete (default: 0.05 = 5%%)'
+    )
+    
+    parser.add_argument(
+        '--exclude-failed-breakouts',
+        action='store_true',
+        help='Exclude divergences with failed breakout attempts (price reversed after trying)'
+    )
+    
+    parser.add_argument(
+        '--failed-lookback',
+        type=int,
+        default=10,
+        help='Bars to check for failed breakout (default: 10)'
+    )
+    
+    parser.add_argument(
+        '--failed-attempt-threshold',
+        type=float,
+        default=0.03,
+        help='Percentage move to consider breakout "attempted" (default: 0.03 = 3%%)'
+    )
+    
+    parser.add_argument(
+        '--failed-reversal-threshold',
+        type=float,
+        default=0.01,
+        help='Percentage from divergence to consider breakout "failed" (default: 0.01 = 1%%)'
+    )
+    
+    parser.add_argument(
         '--no-disclaimer',
         action='store_true',
         help='Suppress one-line non-advice disclaimer banner'
@@ -513,6 +553,10 @@ Examples:
         print(f"Maximum price: ${args.max_price:.2f}")
     if args.min_volume is not None:
         print(f"Minimum volume: {args.min_volume:,.0f} shares/day")
+    if args.exclude_breakouts:
+        print(f"Excluding completed breakouts (threshold: {args.breakout_threshold*100:.1f}%)")
+    if args.exclude_failed_breakouts:
+        print(f"Excluding failed breakouts (attempt: {args.failed_attempt_threshold*100:.1f}%, reversal: {args.failed_reversal_threshold*100:.1f}%)")
     print()
     
     results = screen_rsi_divergence(
@@ -528,6 +572,12 @@ Examples:
         lookback=args.lookback,
         start=args.start,
         end=args.end,
+        exclude_breakouts=args.exclude_breakouts,
+        breakout_threshold=args.breakout_threshold,
+        exclude_failed_breakouts=args.exclude_failed_breakouts,
+        failed_lookback_window=args.failed_lookback,
+        failed_attempt_threshold=args.failed_attempt_threshold,
+        failed_reversal_threshold=args.failed_reversal_threshold,
     )
     
     # Save results
