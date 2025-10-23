@@ -53,19 +53,23 @@ def detect_divergence(
     price_col: str = 'Close',
     rsi_col: str = 'RSI',
     window: int = 5,
-    lookback: int = 60
+    lookback: int = 60,
+    min_swing_points: int = 2,
+    index_proximity_factor: int = 2,
+    sequence_tolerance_pct: float = 0.002,
+    rsi_sequence_tolerance: float = 0.0
 ) -> dict:
     """
     Detect bullish and bearish divergences between price and RSI.
     
     Bullish Divergence (potential reversal up):
-    - Price makes lower low
-    - RSI makes higher low
+    - Price makes lower lows (2 or 3 points)
+    - RSI makes higher lows (2 or 3 points)
     - Indicates weakening downtrend
     
     Bearish Divergence (potential reversal down):
-    - Price makes higher high
-    - RSI makes lower high
+    - Price makes higher highs (2 or 3 points)
+    - RSI makes lower highs (2 or 3 points)
     - Indicates weakening uptrend
     
     Args:
@@ -74,6 +78,10 @@ def detect_divergence(
         rsi_col: Name of RSI column (default: 'RSI')
         window: Window for swing point detection (default: 5)
         lookback: Number of bars to look back for divergence (default: 60)
+        min_swing_points: Minimum swing points required (2 or 3, default: 2)
+        index_proximity_factor: Multiplier for window to allow bar index gap tolerance (default: 2)
+        sequence_tolerance_pct: Relative tolerance for 3-point price sequences (default: 0.002 = 0.2%)
+        rsi_sequence_tolerance: Extra RSI tolerance in points for 3-point sequences (default: 0.0)
     
     Returns:
         Dict with:
@@ -82,8 +90,8 @@ def detect_divergence(
             - 'bullish_details': str, description of bullish divergence
             - 'bearish_details': str, description of bearish divergence
             - 'last_signal': str, 'bullish', 'bearish', or 'none'
-            - 'bullish_indices': tuple (p1_idx, p2_idx, r1_idx, r2_idx) or None
-            - 'bearish_indices': tuple (p1_idx, p2_idx, r1_idx, r2_idx) or None
+            - 'bullish_indices': tuple of price/RSI indices or None
+            - 'bearish_indices': tuple of price/RSI indices or None
     """
     result = {
         'bullish': False,
@@ -111,64 +119,157 @@ def detect_divergence(
     rsi_high_idx = rsi_highs.dropna().index
     rsi_low_idx = rsi_lows.dropna().index
     
-    # Detect Bullish Divergence (price lower low, RSI higher low)
-    if len(price_low_idx) >= 2 and len(rsi_low_idx) >= 2:
-        # Get last two price lows
-        last_two_price_lows = price_low_idx[-2:]
-        p1_idx, p2_idx = last_two_price_lows[0], last_two_price_lows[1]
-        
-        # Find corresponding RSI lows (within reasonable time window)
-        rsi_lows_near_p1 = [idx for idx in rsi_low_idx if abs((idx - p1_idx).days) <= window * 2]
-        rsi_lows_near_p2 = [idx for idx in rsi_low_idx if abs((idx - p2_idx).days) <= window * 2]
-        
-        if rsi_lows_near_p1 and rsi_lows_near_p2:
-            r1_idx = min(rsi_lows_near_p1, key=lambda x: abs((x - p1_idx).days))
-            r2_idx = min(rsi_lows_near_p2, key=lambda x: abs((x - p2_idx).days))
-            
-            price_ll = recent_df.loc[p2_idx, price_col] < recent_df.loc[p1_idx, price_col]
-            # RSI must be at least BULLISH_RSI_TOLERANCE points higher to confirm divergence
-            rsi_hl = recent_df.loc[r2_idx, rsi_col] - BULLISH_RSI_TOLERANCE > recent_df.loc[r1_idx, rsi_col]
-            
-            if price_ll and rsi_hl:
-                result['bullish'] = True
-                result['bullish_details'] = (
-                    f"Price: {recent_df.loc[p1_idx, price_col]:.2f} → "
-                    f"{recent_df.loc[p2_idx, price_col]:.2f} (lower low) | "
-                    f"RSI: {recent_df.loc[r1_idx, rsi_col]:.2f} → "
-                    f"{recent_df.loc[r2_idx, rsi_col]:.2f} (higher low)"
-                )
-                result['last_signal'] = 'bullish'
-                result['bullish_indices'] = (p1_idx, p2_idx, r1_idx, r2_idx)
+    # Precompute positional indices for bar-distance based alignment (handles weekends/holidays)
+    pos_map = {idx: i for i, idx in enumerate(recent_df.index)}
+    max_bar_gap = window * index_proximity_factor
     
-    # Detect Bearish Divergence (price higher high, RSI lower high)
-    if len(price_high_idx) >= 2 and len(rsi_high_idx) >= 2:
-        # Get last two price highs
-        last_two_price_highs = price_high_idx[-2:]
-        p1_idx, p2_idx = last_two_price_highs[0], last_two_price_highs[1]
-        
-        # Find corresponding RSI highs (within reasonable time window)
-        rsi_highs_near_p1 = [idx for idx in rsi_high_idx if abs((idx - p1_idx).days) <= window * 2]
-        rsi_highs_near_p2 = [idx for idx in rsi_high_idx if abs((idx - p2_idx).days) <= window * 2]
-        
-        if rsi_highs_near_p1 and rsi_highs_near_p2:
-            r1_idx = min(rsi_highs_near_p1, key=lambda x: abs((x - p1_idx).days))
-            r2_idx = min(rsi_highs_near_p2, key=lambda x: abs((x - p2_idx).days))
+    def nearest_by_bar(target_idx, candidates):
+        """Return candidate with smallest absolute bar index distance within max_bar_gap."""
+        if target_idx not in pos_map:
+            return None
+        tpos = pos_map[target_idx]
+        viable = [(abs(pos_map[c] - tpos), c) for c in candidates if c in pos_map and abs(pos_map[c] - tpos) <= max_bar_gap]
+        if not viable:
+            return None
+        return min(viable)[1]
+    
+    # Detect Bullish Divergence (price lower lows, RSI higher lows)
+    if len(price_low_idx) >= min_swing_points and len(rsi_low_idx) >= min_swing_points:
+        # Try 3-point divergence first if requested
+        if min_swing_points == 3 and len(price_low_idx) >= 3 and len(rsi_low_idx) >= 3:
+            p1_idx, p2_idx, p3_idx = price_low_idx[-3], price_low_idx[-2], price_low_idx[-1]
             
-            price_hh = recent_df.loc[p2_idx, price_col] > recent_df.loc[p1_idx, price_col]
-            # RSI must be at least BEARISH_RSI_TOLERANCE points lower to confirm divergence
-            rsi_lh = recent_df.loc[r2_idx, rsi_col] + BEARISH_RSI_TOLERANCE < recent_df.loc[r1_idx, rsi_col]
+            # Find corresponding RSI lows using bar distance instead of calendar days
+            r1_idx = nearest_by_bar(p1_idx, rsi_low_idx)
+            r2_idx = nearest_by_bar(p2_idx, rsi_low_idx)
+            r3_idx = nearest_by_bar(p3_idx, rsi_low_idx)
             
-            if price_hh and rsi_lh:
-                result['bearish'] = True
-                result['bearish_details'] = (
-                    f"Price: {recent_df.loc[p1_idx, price_col]:.2f} → "
-                    f"{recent_df.loc[p2_idx, price_col]:.2f} (higher high) | "
-                    f"RSI: {recent_df.loc[r1_idx, rsi_col]:.2f} → "
-                    f"{recent_df.loc[r2_idx, rsi_col]:.2f} (lower high)"
+            if r1_idx and r2_idx and r3_idx:
+                p1 = recent_df.loc[p1_idx, price_col]
+                p2 = recent_df.loc[p2_idx, price_col]
+                p3 = recent_df.loc[p3_idx, price_col]
+                
+                # Allow slight tolerance: each next low should be materially lower
+                # p2 <= p1 * (1 - tolerance) and p3 <= p2 * (1 - tolerance)
+                price_desc = (
+                    (p2 <= p1 * (1 - sequence_tolerance_pct)) and
+                    (p3 <= p2 * (1 - sequence_tolerance_pct))
                 )
-                if result['last_signal'] == 'none':
-                    result['last_signal'] = 'bearish'
-                result['bearish_indices'] = (p1_idx, p2_idx, r1_idx, r2_idx)
+                
+                r1 = recent_df.loc[r1_idx, rsi_col]
+                r2 = recent_df.loc[r2_idx, rsi_col]
+                r3 = recent_df.loc[r3_idx, rsi_col]
+                
+                # RSI should be ascending with tolerance
+                rsi_asc = (
+                    (r2 - r1 >= max(BULLISH_RSI_TOLERANCE, rsi_sequence_tolerance)) and
+                    (r3 - r2 >= max(BULLISH_RSI_TOLERANCE, rsi_sequence_tolerance))
+                )
+                
+                if price_desc and rsi_asc:
+                    result['bullish'] = True
+                    result['bullish_details'] = (
+                        f"3-Point: Price {p1:.2f}→{p2:.2f}→{p3:.2f} (descending) | "
+                        f"RSI {r1:.2f}→{r2:.2f}→{r3:.2f} (ascending)"
+                    )
+                    result['last_signal'] = 'bullish'
+                    result['bullish_indices'] = (p1_idx, p2_idx, p3_idx, r1_idx, r2_idx, r3_idx)
+        
+        # Fall back to 2-point if 3-point not found or min_swing_points==2
+        if not result['bullish'] and len(price_low_idx) >= 2 and len(rsi_low_idx) >= 2:
+            p1_idx, p2_idx = price_low_idx[-2], price_low_idx[-1]
+            
+            # Find corresponding RSI lows using bar distance
+            r1_idx = nearest_by_bar(p1_idx, rsi_low_idx)
+            r2_idx = nearest_by_bar(p2_idx, rsi_low_idx)
+            
+            if r1_idx and r2_idx:
+                p1 = recent_df.loc[p1_idx, price_col]
+                p2 = recent_df.loc[p2_idx, price_col]
+                r1 = recent_df.loc[r1_idx, rsi_col]
+                r2 = recent_df.loc[r2_idx, rsi_col]
+                
+                price_ll = p2 < p1
+                # RSI must be at least BULLISH_RSI_TOLERANCE points higher to confirm divergence
+                rsi_hl = r2 - r1 >= BULLISH_RSI_TOLERANCE
+                
+                if price_ll and rsi_hl:
+                    result['bullish'] = True
+                    result['bullish_details'] = (
+                        f"Price {p1:.2f}→{p2:.2f} (LL) | RSI {r1:.2f}→{r2:.2f} (HL)"
+                    )
+                    result['last_signal'] = 'bullish'
+                    result['bullish_indices'] = (p1_idx, p2_idx, r1_idx, r2_idx)
+    
+    # Detect Bearish Divergence (price higher highs, RSI lower highs)
+    if len(price_high_idx) >= min_swing_points and len(rsi_high_idx) >= min_swing_points:
+        # Try 3-point divergence first if requested
+        if min_swing_points == 3 and len(price_high_idx) >= 3 and len(rsi_high_idx) >= 3:
+            p1_idx, p2_idx, p3_idx = price_high_idx[-3], price_high_idx[-2], price_high_idx[-1]
+            
+            # Find corresponding RSI highs using bar distance
+            r1_idx = nearest_by_bar(p1_idx, rsi_high_idx)
+            r2_idx = nearest_by_bar(p2_idx, rsi_high_idx)
+            r3_idx = nearest_by_bar(p3_idx, rsi_high_idx)
+            
+            if r1_idx and r2_idx and r3_idx:
+                p1 = recent_df.loc[p1_idx, price_col]
+                p2 = recent_df.loc[p2_idx, price_col]
+                p3 = recent_df.loc[p3_idx, price_col]
+                
+                # Allow slight tolerance: each next high should be materially higher
+                # p2 >= p1 * (1 + tolerance) and p3 >= p2 * (1 + tolerance)
+                price_asc = (
+                    (p2 >= p1 * (1 + sequence_tolerance_pct)) and
+                    (p3 >= p2 * (1 + sequence_tolerance_pct))
+                )
+                
+                r1 = recent_df.loc[r1_idx, rsi_col]
+                r2 = recent_df.loc[r2_idx, rsi_col]
+                r3 = recent_df.loc[r3_idx, rsi_col]
+                
+                # RSI should be descending with tolerance
+                rsi_desc = (
+                    (r1 - r2 >= max(BEARISH_RSI_TOLERANCE, rsi_sequence_tolerance)) and
+                    (r2 - r3 >= max(BEARISH_RSI_TOLERANCE, rsi_sequence_tolerance))
+                )
+                
+                if price_asc and rsi_desc:
+                    result['bearish'] = True
+                    result['bearish_details'] = (
+                        f"3-Point: Price {p1:.2f}→{p2:.2f}→{p3:.2f} (ascending) | "
+                        f"RSI {r1:.2f}→{r2:.2f}→{r3:.2f} (descending)"
+                    )
+                    if result['last_signal'] == 'none':
+                        result['last_signal'] = 'bearish'
+                    result['bearish_indices'] = (p1_idx, p2_idx, p3_idx, r1_idx, r2_idx, r3_idx)
+        
+        # Fall back to 2-point if 3-point not found or min_swing_points==2
+        if not result['bearish'] and len(price_high_idx) >= 2 and len(rsi_high_idx) >= 2:
+            p1_idx, p2_idx = price_high_idx[-2], price_high_idx[-1]
+            
+            # Find corresponding RSI highs using bar distance
+            r1_idx = nearest_by_bar(p1_idx, rsi_high_idx)
+            r2_idx = nearest_by_bar(p2_idx, rsi_high_idx)
+            
+            if r1_idx and r2_idx:
+                p1 = recent_df.loc[p1_idx, price_col]
+                p2 = recent_df.loc[p2_idx, price_col]
+                r1 = recent_df.loc[r1_idx, rsi_col]
+                r2 = recent_df.loc[r2_idx, rsi_col]
+                
+                price_hh = p2 > p1
+                # RSI must be at least BEARISH_RSI_TOLERANCE points lower to confirm divergence
+                rsi_lh = r1 - r2 >= BEARISH_RSI_TOLERANCE
+                
+                if price_hh and rsi_lh:
+                    result['bearish'] = True
+                    result['bearish_details'] = (
+                        f"Price {p1:.2f}→{p2:.2f} (HH) | RSI {r1:.2f}→{r2:.2f} (LH)"
+                    )
+                    if result['last_signal'] == 'none':
+                        result['last_signal'] = 'bearish'
+                    result['bearish_indices'] = (p1_idx, p2_idx, r1_idx, r2_idx)
     
     return result
 

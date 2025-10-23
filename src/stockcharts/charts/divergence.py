@@ -117,7 +117,8 @@ def _convert_precomputed_to_df(df: pd.DataFrame, precomputed: dict) -> pd.DataFr
     Args:
         df: Full OHLC DataFrame with RSI
         precomputed: Dict with 'bullish_indices' and/or 'bearish_indices'
-                     Each is a tuple: (p1_idx, p2_idx, r1_idx, r2_idx)
+                     Each is a tuple: (p1_idx, p2_idx, r1_idx, r2_idx) for 2-point
+                                   or (p1_idx, p2_idx, p3_idx, r1_idx, r2_idx, r3_idx) for 3-point
     
     Returns:
         DataFrame with divergence information or None
@@ -126,33 +127,61 @@ def _convert_precomputed_to_df(df: pd.DataFrame, precomputed: dict) -> pd.DataFr
     
     # Handle bullish divergence
     if precomputed.get('bullish_indices'):
-        p1_idx, p2_idx, r1_idx, r2_idx = precomputed['bullish_indices']
-        # Check if indices exist in current dataframe
-        if all(idx in df.index for idx in [p1_idx, p2_idx, r1_idx, r2_idx]):
-            divergences.append({
-                'divergence_type': 'bullish',
-                'swing_start_date': p1_idx,
-                'swing_end_date': p2_idx,
-                'price_start': df.loc[p1_idx, 'Close'],
-                'price_end': df.loc[p2_idx, 'Close'],
-                'rsi_start': df.loc[r1_idx, 'RSI'],
-                'rsi_end': df.loc[r2_idx, 'RSI']
-            })
+        indices = precomputed['bullish_indices']
+        
+        # 3-point divergence
+        if len(indices) == 6:
+            p1_idx, p2_idx, p3_idx, r1_idx, r2_idx, r3_idx = indices
+            if all(idx in df.index for idx in indices):
+                divergences.append({
+                    'divergence_type': 'bullish',
+                    'num_points': 3,
+                    'swing_dates': [p1_idx, p2_idx, p3_idx],
+                    'prices': [df.loc[p1_idx, 'Close'], df.loc[p2_idx, 'Close'], df.loc[p3_idx, 'Close']],
+                    'rsi_dates': [r1_idx, r2_idx, r3_idx],
+                    'rsi_values': [df.loc[r1_idx, 'RSI'], df.loc[r2_idx, 'RSI'], df.loc[r3_idx, 'RSI']]
+                })
+        # 2-point divergence
+        elif len(indices) == 4:
+            p1_idx, p2_idx, r1_idx, r2_idx = indices
+            if all(idx in df.index for idx in indices):
+                divergences.append({
+                    'divergence_type': 'bullish',
+                    'num_points': 2,
+                    'swing_dates': [p1_idx, p2_idx],
+                    'prices': [df.loc[p1_idx, 'Close'], df.loc[p2_idx, 'Close']],
+                    'rsi_dates': [r1_idx, r2_idx],
+                    'rsi_values': [df.loc[r1_idx, 'RSI'], df.loc[r2_idx, 'RSI']]
+                })
     
     # Handle bearish divergence
     if precomputed.get('bearish_indices'):
-        p1_idx, p2_idx, r1_idx, r2_idx = precomputed['bearish_indices']
-        # Check if indices exist in current dataframe
-        if all(idx in df.index for idx in [p1_idx, p2_idx, r1_idx, r2_idx]):
-            divergences.append({
-                'divergence_type': 'bearish',
-                'swing_start_date': p1_idx,
-                'swing_end_date': p2_idx,
-                'price_start': df.loc[p1_idx, 'Close'],
-                'price_end': df.loc[p2_idx, 'Close'],
-                'rsi_start': df.loc[r1_idx, 'RSI'],
-                'rsi_end': df.loc[r2_idx, 'RSI']
-            })
+        indices = precomputed['bearish_indices']
+        
+        # 3-point divergence
+        if len(indices) == 6:
+            p1_idx, p2_idx, p3_idx, r1_idx, r2_idx, r3_idx = indices
+            if all(idx in df.index for idx in indices):
+                divergences.append({
+                    'divergence_type': 'bearish',
+                    'num_points': 3,
+                    'swing_dates': [p1_idx, p2_idx, p3_idx],
+                    'prices': [df.loc[p1_idx, 'Close'], df.loc[p2_idx, 'Close'], df.loc[p3_idx, 'Close']],
+                    'rsi_dates': [r1_idx, r2_idx, r3_idx],
+                    'rsi_values': [df.loc[r1_idx, 'RSI'], df.loc[r2_idx, 'RSI'], df.loc[r3_idx, 'RSI']]
+                })
+        # 2-point divergence
+        elif len(indices) == 4:
+            p1_idx, p2_idx, r1_idx, r2_idx = indices
+            if all(idx in df.index for idx in indices):
+                divergences.append({
+                    'divergence_type': 'bearish',
+                    'num_points': 2,
+                    'swing_dates': [p1_idx, p2_idx],
+                    'prices': [df.loc[p1_idx, 'Close'], df.loc[p2_idx, 'Close']],
+                    'rsi_dates': [r1_idx, r2_idx],
+                    'rsi_values': [df.loc[r1_idx, 'RSI'], df.loc[r2_idx, 'RSI']]
+                })
     
     return pd.DataFrame(divergences) if divergences else None
 
@@ -288,7 +317,7 @@ def _plot_rsi(ax: Axes, df: pd.DataFrame, overbought: float, oversold: float) ->
 
 
 def _plot_price_divergences(ax: Axes, df: pd.DataFrame, divergences: pd.DataFrame) -> None:
-    """Mark divergence points on price chart."""
+    """Mark divergence points on price chart (supports 2-point and 3-point)."""
     x = np.arange(len(df))
     
     # Create a mapping of dates to x positions
@@ -300,43 +329,49 @@ def _plot_price_divergences(ax: Axes, df: pd.DataFrame, divergences: pd.DataFram
     
     for _, div in divergences.iterrows():
         div_type = div['divergence_type']
-        start_date = div['swing_start_date']
-        end_date = div['swing_end_date']
         
-        # Skip if dates not in dataframe
-        if start_date not in date_to_x or end_date not in date_to_x:
+        # Handle both old format (swing_start_date/swing_end_date) and new format (swing_dates list)
+        if 'swing_dates' in div:
+            swing_dates = div['swing_dates']
+            prices = div['prices']
+        else:
+            # Old 2-point format
+            swing_dates = [div['swing_start_date'], div['swing_end_date']]
+            prices = [div['price_start'], div['price_end']]
+        
+        # Skip if any dates not in dataframe
+        if not all(date in date_to_x for date in swing_dates):
             continue
-            
-        start_x = date_to_x[start_date]
-        end_x = date_to_x[end_date]
-        start_price = df.loc[start_date, 'Close']
-        end_price = df.loc[end_date, 'Close']
+        
+        x_coords = [date_to_x[date] for date in swing_dates]
         
         # Color and style based on divergence type
         if div_type == 'bullish':
             color = 'green'
             marker = '^'
-            label = 'Bullish Divergence' if not bullish_labeled else None
+            num_points = len(swing_dates)
+            label = f'Bullish Divergence ({num_points}-point)' if not bullish_labeled else None
             bullish_labeled = True
         else:  # bearish
             color = 'red'
             marker = 'v'
-            label = 'Bearish Divergence' if not bearish_labeled else None
+            num_points = len(swing_dates)
+            label = f'Bearish Divergence ({num_points}-point)' if not bearish_labeled else None
             bearish_labeled = True
         
-        # Plot divergence line
-        ax.plot([start_x, end_x], [start_price, end_price], 
+        # Plot divergence line connecting all points
+        ax.plot(x_coords, prices, 
                 color=color, linewidth=2, linestyle='--', alpha=0.7, zorder=4,
                 label=label)
         
-        # Plot markers at swing points
-        ax.scatter([start_x, end_x], [start_price, end_price], 
+        # Plot markers at all swing points
+        ax.scatter(x_coords, prices, 
                   color=color, marker=marker, s=100, zorder=5, 
                   edgecolors='black', linewidths=1.5)
 
 
 def _plot_rsi_divergences(ax: Axes, df: pd.DataFrame, divergences: pd.DataFrame) -> None:
-    """Mark divergence points on RSI chart."""
+    """Mark divergence points on RSI chart (supports 2-point and 3-point)."""
     x = np.arange(len(df))
     
     # Create a mapping of dates to x positions
@@ -344,28 +379,32 @@ def _plot_rsi_divergences(ax: Axes, df: pd.DataFrame, divergences: pd.DataFrame)
     
     for _, div in divergences.iterrows():
         div_type = div['divergence_type']
-        start_date = div['swing_start_date']
-        end_date = div['swing_end_date']
         
-        # Skip if dates not in dataframe
-        if start_date not in date_to_x or end_date not in date_to_x:
+        # Handle both old format (swing_start_date/swing_end_date) and new format (rsi_dates list)
+        if 'rsi_dates' in div:
+            rsi_dates = div['rsi_dates']
+            rsi_values = div['rsi_values']
+        else:
+            # Old 2-point format
+            rsi_dates = [div['swing_start_date'], div['swing_end_date']]
+            rsi_values = [div['rsi_start'], div['rsi_end']]
+        
+        # Skip if any dates not in dataframe
+        if not all(date in date_to_x for date in rsi_dates):
             continue
-            
-        start_x = date_to_x[start_date]
-        end_x = date_to_x[end_date]
-        start_rsi = df.loc[start_date, 'RSI']
-        end_rsi = df.loc[end_date, 'RSI']
+        
+        x_coords = [date_to_x[date] for date in rsi_dates]
         
         # Color based on divergence type
         color = 'green' if div_type == 'bullish' else 'red'
         marker = '^' if div_type == 'bullish' else 'v'
         
-        # Plot divergence line
-        ax.plot([start_x, end_x], [start_rsi, end_rsi], 
+        # Plot divergence line connecting all points
+        ax.plot(x_coords, rsi_values, 
                 color=color, linewidth=2, linestyle='--', alpha=0.7, zorder=4)
         
-        # Plot markers at swing points
-        ax.scatter([start_x, end_x], [start_rsi, end_rsi], 
+        # Plot markers at all swing points
+        ax.scatter(x_coords, rsi_values, 
                   color=color, marker=marker, s=100, zorder=5,
                   edgecolors='black', linewidths=1.5)
 

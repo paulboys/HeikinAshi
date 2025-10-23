@@ -47,6 +47,10 @@ def screen_rsi_divergence(
     failed_lookback_window: int = 10,
     failed_attempt_threshold: float = 0.03,
     failed_reversal_threshold: float = 0.01,
+    min_swing_points: int = 2,
+    index_proximity_factor: int = 2,
+    sequence_tolerance_pct: float = 0.002,
+    rsi_sequence_tolerance: float = 0.0,
 ) -> List[RSIDivergenceResult]:
     """
     Screen stocks for RSI divergences.
@@ -68,6 +72,10 @@ def screen_rsi_divergence(
         failed_lookback_window: Bars to check for failed breakout (default: 10)
         failed_attempt_threshold: % move to consider breakout "attempted" (default: 0.03 = 3%)
         failed_reversal_threshold: % from divergence to consider "failed" (default: 0.01 = 1%)
+        min_swing_points: Minimum swing points required (2 or 3, default: 2)
+        index_proximity_factor: Multiplier for swing_window to allow bar index gap (default: 2)
+        sequence_tolerance_pct: Relative tolerance for 3-point price sequences (default: 0.002 = 0.2%)
+        rsi_sequence_tolerance: Extra RSI tolerance in points for 3-point sequences (default: 0.0)
     
     Returns:
         List of RSIDivergenceResult objects
@@ -132,7 +140,11 @@ def screen_rsi_divergence(
                 price_col='Close',
                 rsi_col='RSI',
                 window=swing_window,
-                lookback=lookback
+                lookback=lookback,
+                min_swing_points=min_swing_points,
+                index_proximity_factor=index_proximity_factor,
+                sequence_tolerance_pct=sequence_tolerance_pct,
+                rsi_sequence_tolerance=rsi_sequence_tolerance
             )
             
             # Filter by divergence type
@@ -145,14 +157,17 @@ def screen_rsi_divergence(
                 skip_bullish = False
                 
                 if exclude_breakouts and div_result['bullish_indices']:
-                    _, p2_idx, _, _ = div_result['bullish_indices']
-                    if check_breakout_occurred(df, p2_idx, 'bullish', breakout_threshold):
+                    # Get last price index (2-point: idx 1, 3-point: idx 2)
+                    indices = div_result['bullish_indices']
+                    last_price_idx = indices[2] if len(indices) == 6 else indices[1]
+                    if check_breakout_occurred(df, last_price_idx, 'bullish', breakout_threshold):
                         skip_bullish = True
                 
                 if not skip_bullish and exclude_failed_breakouts and div_result['bullish_indices']:
-                    _, p2_idx, _, _ = div_result['bullish_indices']
+                    indices = div_result['bullish_indices']
+                    last_price_idx = indices[2] if len(indices) == 6 else indices[1]
                     if check_failed_breakout(
-                        df, p2_idx, 'bullish',
+                        df, last_price_idx, 'bullish',
                         failed_lookback_window,
                         failed_attempt_threshold,
                         failed_reversal_threshold
@@ -169,14 +184,17 @@ def screen_rsi_divergence(
                 skip_bearish = False
                 
                 if exclude_breakouts and div_result['bearish_indices']:
-                    _, p2_idx, _, _ = div_result['bearish_indices']
-                    if check_breakout_occurred(df, p2_idx, 'bearish', breakout_threshold):
+                    # Get last price index (2-point: idx 1, 3-point: idx 2)
+                    indices = div_result['bearish_indices']
+                    last_price_idx = indices[2] if len(indices) == 6 else indices[1]
+                    if check_breakout_occurred(df, last_price_idx, 'bearish', breakout_threshold):
                         skip_bearish = True
                 
                 if not skip_bearish and exclude_failed_breakouts and div_result['bearish_indices']:
-                    _, p2_idx, _, _ = div_result['bearish_indices']
+                    indices = div_result['bearish_indices']
+                    last_price_idx = indices[2] if len(indices) == 6 else indices[1]
                     if check_failed_breakout(
-                        df, p2_idx, 'bearish',
+                        df, last_price_idx, 'bearish',
                         failed_lookback_window,
                         failed_attempt_threshold,
                         failed_reversal_threshold

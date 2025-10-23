@@ -478,6 +478,14 @@ Examples:
     )
     
     parser.add_argument(
+        '--min-swing-points',
+        type=int,
+        choices=[2, 3],
+        default=2,
+        help='Minimum swing points required for divergence (2 or 3, default: 2). Use 3 for stronger confirmation.'
+    )
+    
+    parser.add_argument(
         '--output',
         default='results/rsi_divergence.csv',
         help='Output CSV file path (default: results/rsi_divergence.csv)'
@@ -545,6 +553,7 @@ Examples:
     print(f"Screening NASDAQ stocks for RSI divergences...")
     print(f"Divergence type: {args.type}")
     print(f"Period: {args.period}, Interval: {args.interval}, RSI period: {args.rsi_period}")
+    print(f"Min swing points: {args.min_swing_points} ({'3-point divergence required' if args.min_swing_points == 3 else '2-point divergence (standard)'})")
     if args.start and args.end:
         print(f"Date range override: {args.start} → {args.end}")
     if args.min_price is not None:
@@ -578,6 +587,7 @@ Examples:
         failed_lookback_window=args.failed_lookback,
         failed_attempt_threshold=args.failed_attempt_threshold,
         failed_reversal_threshold=args.failed_reversal_threshold,
+        min_swing_points=args.min_swing_points,
     )
     
     # Save results
@@ -671,6 +681,14 @@ Examples:
         type=int,
         default=60,
         help='Number of bars to look back for divergence detection (default: 60)'
+    )
+    
+    parser.add_argument(
+        '--min-swing-points',
+        type=int,
+        choices=[2, 3],
+        default=2,
+        help='Minimum number of swing points required for divergence (2 or 3, default: 2)'
     )
     
     parser.add_argument(
