@@ -532,6 +532,27 @@ Examples:
     )
     
     parser.add_argument(
+        '--index-proximity-factor',
+        type=int,
+        default=2,
+        help='Multiplier for swing window to allow bar index gap tolerance (default: 2)'
+    )
+    
+    parser.add_argument(
+        '--sequence-tolerance-pct',
+        type=float,
+        default=0.002,
+        help='Relative tolerance for 3-point price sequences (default: 0.002 = 0.2%%)'
+    )
+    
+    parser.add_argument(
+        '--rsi-sequence-tolerance',
+        type=float,
+        default=0.0,
+        help='Extra RSI tolerance in points for 3-point sequences (default: 0.0)'
+    )
+    
+    parser.add_argument(
         '--no-disclaimer',
         action='store_true',
         help='Suppress one-line non-advice disclaimer banner'
@@ -588,6 +609,9 @@ Examples:
         failed_attempt_threshold=args.failed_attempt_threshold,
         failed_reversal_threshold=args.failed_reversal_threshold,
         min_swing_points=args.min_swing_points,
+        index_proximity_factor=args.index_proximity_factor,
+        sequence_tolerance_pct=args.sequence_tolerance_pct,
+        rsi_sequence_tolerance=args.rsi_sequence_tolerance,
     )
     
     # Save results
