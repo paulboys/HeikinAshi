@@ -574,6 +574,40 @@ Examples:
     )
     
     parser.add_argument(
+        '--use-sequence-scoring',
+        action='store_true',
+        help='Enable ATR-normalized 3-point sequence scoring for better quality filtering'
+    )
+    
+    parser.add_argument(
+        '--min-sequence-score',
+        type=float,
+        default=1.0,
+        help='Minimum score to accept a 3-point sequence when --use-sequence-scoring enabled (default: 1.0)'
+    )
+    
+    parser.add_argument(
+        '--max-bar-gap',
+        type=int,
+        default=10,
+        help='Max bar distance between price and RSI pivots for sequence scoring (default: 10)'
+    )
+    
+    parser.add_argument(
+        '--min-magnitude-atr-mult',
+        type=float,
+        default=0.5,
+        help='Min price move as ATR multiple for sequence scoring (default: 0.5)'
+    )
+    
+    parser.add_argument(
+        '--atr-period',
+        type=int,
+        default=14,
+        help='ATR period for magnitude filtering in sequence scoring (default: 14)'
+    )
+    
+    parser.add_argument(
         '--no-disclaimer',
         action='store_true',
         help='Suppress one-line non-advice disclaimer banner'
@@ -601,6 +635,8 @@ Examples:
     else:
         print(f" (window: {args.swing_window})")
     print(f"Min swing points: {args.min_swing_points} ({'3-point divergence required' if args.min_swing_points == 3 else '2-point divergence (standard)'})")
+    if args.use_sequence_scoring:
+        print(f"Sequence scoring: ENABLED (min score: {args.min_sequence_score:.2f}, ATR mult: {args.min_magnitude_atr_mult:.2f}, max bar gap: {args.max_bar_gap})")
     if args.start and args.end:
         print(f"Date range override: {args.start} → {args.end}")
     if args.min_price is not None:
@@ -644,6 +680,11 @@ Examples:
         zigzag_atr_period=14,  # deprecated but kept for backward compat
         ema_price_span=args.ema_price_span,
         ema_rsi_span=args.ema_rsi_span,
+        use_sequence_scoring=args.use_sequence_scoring,
+        min_sequence_score=args.min_sequence_score,
+        max_bar_gap=args.max_bar_gap,
+        min_magnitude_atr_mult=args.min_magnitude_atr_mult,
+        atr_period=args.atr_period,
     )
     
     # Save results

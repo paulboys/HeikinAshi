@@ -57,6 +57,11 @@ def screen_rsi_divergence(
     zigzag_atr_period: int = 14,
     ema_price_span: int = 5,
     ema_rsi_span: int = 5,
+    use_sequence_scoring: bool = False,
+    min_sequence_score: float = 1.0,
+    max_bar_gap: int = 10,
+    min_magnitude_atr_mult: float = 0.5,
+    atr_period: int = 14,
 ) -> List[RSIDivergenceResult]:
     """
     Screen stocks for RSI divergences.
@@ -88,6 +93,11 @@ def screen_rsi_divergence(
         zigzag_atr_period: ATR period for zigzag-atr method (default: 14) [DEPRECATED]
         ema_price_span: EMA smoothing span for price when using ema-deriv (default: 5)
         ema_rsi_span: EMA smoothing span for RSI when using ema-deriv (default: 5)
+        use_sequence_scoring: Enable ATR-normalized 3-point scoring (default: False)
+        min_sequence_score: Minimum score to accept a 3-point sequence (default: 1.0)
+        max_bar_gap: Max bar distance between price and RSI pivots for scoring (default: 10)
+        min_magnitude_atr_mult: Min price move as ATR multiple for scoring (default: 0.5)
+        atr_period: ATR period for magnitude filtering (default: 14)
     
     Returns:
         List of RSIDivergenceResult objects
@@ -162,7 +172,12 @@ def screen_rsi_divergence(
                 zigzag_atr_mult=zigzag_atr_mult,
                 zigzag_atr_period=zigzag_atr_period,
                 ema_price_span=ema_price_span,
-                ema_rsi_span=ema_rsi_span
+                ema_rsi_span=ema_rsi_span,
+                use_sequence_scoring=use_sequence_scoring,
+                min_sequence_score=min_sequence_score,
+                max_bar_gap=max_bar_gap,
+                min_magnitude_atr_mult=min_magnitude_atr_mult,
+                atr_period=atr_period
             )
             
             # Filter by divergence type
