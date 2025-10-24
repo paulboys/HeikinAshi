@@ -7,6 +7,52 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and 
 - (placeholder) Add MACD divergence support
 - (placeholder) Average volume filter (20-day)
 
+## [0.5.0] - 2025-10-24
+### Added
+- **EMA-Derivative Pivot Detection**: New pivot method using EMA smoothing and slope sign changes
+  - More robust than window-based swing detection for noisy data
+  - Simpler: 2 parameters (price_span, rsi_span) vs 6+ for ZigZag
+  - `--pivot-method ema-deriv` with `--ema-price-span` and `--ema-rsi-span` flags
+- **3-Point Divergence Detection**: Enhanced confirmation with 3 consecutive swing points
+  - `--min-swing-points {2,3}` parameter (default: 2)
+  - Bar-index based alignment (handles weekends/holidays correctly)
+  - Sequence tolerance parameters for flexible pattern matching
+- **Advanced Tolerance Parameters**:
+  - `--index-proximity-factor`: Bar gap tolerance multiplier (default: 2)
+  - `--sequence-tolerance-pct`: Price sequence tolerance for 3-point (default: 0.002 = 0.2%)
+  - `--rsi-sequence-tolerance`: Extra RSI tolerance for 3-point patterns (default: 0.0)
+- **Breakout Filtering**: Filter out stale or failed divergence signals
+  - `--exclude-breakouts`: Remove divergences where price already moved past threshold
+  - `--exclude-failed-breakouts`: Remove divergences with attempted but reversed breakouts
+  - Configurable thresholds for both filters
+- **Documentation**:
+  - `THREE_POINT_DIVERGENCE_IMPROVEMENTS.md`: Technical details on 3-point improvements
+  - `EMA_DERIVATIVE_PIVOT_GUIDE.md`: Complete guide to EMA-derivative method
+  - Parameter tuning guides for different trading styles
+
+### Changed
+- **Pivot Detection Architecture**: Refactored to support pluggable pivot methods
+  - Created `src/stockcharts/indicators/pivots.py` module
+  - Updated `detect_divergence()` to accept multiple pivot methods
+- **Alignment Logic**: Switched from calendar days to bar-index distance
+  - More reliable across market holidays and weekends
+  - Configurable proximity factor for flexibility
+
+### Removed
+- **ZigZag Module**: Removed `src/stockcharts/indicators/zigzag.py`
+  - Overly complex with poor results
+  - Replaced by simpler, more effective EMA-derivative method
+  - Reduced codebase by ~200 lines
+
+### Fixed
+- Weekend/holiday alignment issues in swing point pairing
+- Over-strict monotonic requirements for 3-point patterns
+- Missing 3-point divergences due to tight tolerance
+
+### Performance
+- EMA-derivative method: O(n) complexity, faster than nested window loops
+- Bar-index mapping: O(n) preprocessing, O(1) lookup
+
 ## [0.4.1] - 2025-10-20
 ### Changed
 - Version bump to test automated PyPI publish workflow trigger.
