@@ -553,6 +553,27 @@ Examples:
     )
     
     parser.add_argument(
+        '--pivot-method',
+        choices=['swing', 'ema-deriv'],
+        default='swing',
+        help='Pivot detection method: swing (window-based), ema-deriv (EMA derivative smoothing) (default: swing)'
+    )
+    
+    parser.add_argument(
+        '--ema-price-span',
+        type=int,
+        default=5,
+        help='EMA smoothing span for price when using ema-deriv (default: 5)'
+    )
+    
+    parser.add_argument(
+        '--ema-rsi-span',
+        type=int,
+        default=5,
+        help='EMA smoothing span for RSI when using ema-deriv (default: 5)'
+    )
+    
+    parser.add_argument(
         '--no-disclaimer',
         action='store_true',
         help='Suppress one-line non-advice disclaimer banner'
@@ -574,6 +595,11 @@ Examples:
     print(f"Screening NASDAQ stocks for RSI divergences...")
     print(f"Divergence type: {args.type}")
     print(f"Period: {args.period}, Interval: {args.interval}, RSI period: {args.rsi_period}")
+    print(f"Pivot method: {args.pivot_method}", end='')
+    if args.pivot_method == 'ema-deriv':
+        print(f" (price span: {args.ema_price_span}, RSI span: {args.ema_rsi_span})")
+    else:
+        print(f" (window: {args.swing_window})")
     print(f"Min swing points: {args.min_swing_points} ({'3-point divergence required' if args.min_swing_points == 3 else '2-point divergence (standard)'})")
     if args.start and args.end:
         print(f"Date range override: {args.start} → {args.end}")
@@ -612,6 +638,12 @@ Examples:
         index_proximity_factor=args.index_proximity_factor,
         sequence_tolerance_pct=args.sequence_tolerance_pct,
         rsi_sequence_tolerance=args.rsi_sequence_tolerance,
+        pivot_method=args.pivot_method,
+        zigzag_pct=0.03,  # deprecated but kept for backward compat
+        zigzag_atr_mult=2.0,  # deprecated but kept for backward compat
+        zigzag_atr_period=14,  # deprecated but kept for backward compat
+        ema_price_span=args.ema_price_span,
+        ema_rsi_span=args.ema_rsi_span,
     )
     
     # Save results

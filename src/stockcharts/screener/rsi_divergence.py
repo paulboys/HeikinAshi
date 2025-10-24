@@ -51,6 +51,12 @@ def screen_rsi_divergence(
     index_proximity_factor: int = 2,
     sequence_tolerance_pct: float = 0.002,
     rsi_sequence_tolerance: float = 0.0,
+    pivot_method: str = 'swing',
+    zigzag_pct: float = 0.03,
+    zigzag_atr_mult: float = 2.0,
+    zigzag_atr_period: int = 14,
+    ema_price_span: int = 5,
+    ema_rsi_span: int = 5,
 ) -> List[RSIDivergenceResult]:
     """
     Screen stocks for RSI divergences.
@@ -76,6 +82,12 @@ def screen_rsi_divergence(
         index_proximity_factor: Multiplier for swing_window to allow bar index gap (default: 2)
         sequence_tolerance_pct: Relative tolerance for 3-point price sequences (default: 0.002 = 0.2%)
         rsi_sequence_tolerance: Extra RSI tolerance in points for 3-point sequences (default: 0.0)
+        pivot_method: Pivot detection method - 'swing' or 'ema-deriv' (default: 'swing')
+        zigzag_pct: Percentage threshold for zigzag-pct method (default: 0.03 = 3%) [DEPRECATED]
+        zigzag_atr_mult: ATR multiplier for zigzag-atr method (default: 2.0) [DEPRECATED]
+        zigzag_atr_period: ATR period for zigzag-atr method (default: 14) [DEPRECATED]
+        ema_price_span: EMA smoothing span for price when using ema-deriv (default: 5)
+        ema_rsi_span: EMA smoothing span for RSI when using ema-deriv (default: 5)
     
     Returns:
         List of RSIDivergenceResult objects
@@ -144,7 +156,13 @@ def screen_rsi_divergence(
                 min_swing_points=min_swing_points,
                 index_proximity_factor=index_proximity_factor,
                 sequence_tolerance_pct=sequence_tolerance_pct,
-                rsi_sequence_tolerance=rsi_sequence_tolerance
+                rsi_sequence_tolerance=rsi_sequence_tolerance,
+                pivot_method=pivot_method,
+                zigzag_pct=zigzag_pct,
+                zigzag_atr_mult=zigzag_atr_mult,
+                zigzag_atr_period=zigzag_atr_period,
+                ema_price_span=ema_price_span,
+                ema_rsi_span=ema_rsi_span
             )
             
             # Filter by divergence type

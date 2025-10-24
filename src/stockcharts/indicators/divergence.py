@@ -2,7 +2,8 @@
 
 import pandas as pd
 import numpy as np
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
+from stockcharts.indicators.pivots import ema_derivative_pivots
 
 # Tolerance constants to avoid false divergences due to minor RSI fluctuations
 BEARISH_RSI_TOLERANCE = 0.5  # RSI must be at least 0.5 points lower for bearish divergence
@@ -57,7 +58,13 @@ def detect_divergence(
     min_swing_points: int = 2,
     index_proximity_factor: int = 2,
     sequence_tolerance_pct: float = 0.002,
-    rsi_sequence_tolerance: float = 0.0
+    rsi_sequence_tolerance: float = 0.0,
+    pivot_method: str = 'swing',
+    zigzag_pct: float = 0.03,
+    zigzag_atr_mult: float = 2.0,
+    zigzag_atr_period: int = 14,
+    ema_price_span: int = 5,
+    ema_rsi_span: int = 5
 ) -> dict:
     """
     Detect bullish and bearish divergences between price and RSI.
@@ -82,6 +89,12 @@ def detect_divergence(
         index_proximity_factor: Multiplier for window to allow bar index gap tolerance (default: 2)
         sequence_tolerance_pct: Relative tolerance for 3-point price sequences (default: 0.002 = 0.2%)
         rsi_sequence_tolerance: Extra RSI tolerance in points for 3-point sequences (default: 0.0)
+        pivot_method: Method for detecting pivots - 'swing' or 'ema-deriv' (default: 'swing')
+        zigzag_pct: [DEPRECATED] Not used
+        zigzag_atr_mult: [DEPRECATED] Not used
+        zigzag_atr_period: [DEPRECATED] Not used
+        ema_price_span: EMA smoothing span for price when using ema-deriv (default: 5)
+        ema_rsi_span: EMA smoothing span for RSI when using ema-deriv (default: 5)
     
     Returns:
         Dict with:
@@ -109,15 +122,30 @@ def detect_divergence(
     # Use only recent data
     recent_df = df.tail(lookback).copy()
     
-    # Find swing points in price and RSI
-    price_highs, price_lows = find_swing_points(recent_df[price_col], window)
-    rsi_highs, rsi_lows = find_swing_points(recent_df[rsi_col], window)
-    
-    # Get indices where swing points exist
-    price_high_idx = price_highs.dropna().index
-    price_low_idx = price_lows.dropna().index
-    rsi_high_idx = rsi_highs.dropna().index
-    rsi_low_idx = rsi_lows.dropna().index
+    # Find swing points in price and RSI using selected method
+    if pivot_method == 'ema-deriv':
+        # Use EMA-derivative pivot detection
+        pivots_dict = ema_derivative_pivots(
+            recent_df,
+            price_col=price_col,
+            rsi_col=rsi_col,
+            price_span=ema_price_span,
+            rsi_span=ema_rsi_span
+        )
+        price_high_idx = pivots_dict['price_highs']
+        price_low_idx = pivots_dict['price_lows']
+        rsi_high_idx = pivots_dict['rsi_highs']
+        rsi_low_idx = pivots_dict['rsi_lows']
+    else:
+        # Traditional window-based swing point detection
+        price_highs, price_lows = find_swing_points(recent_df[price_col], window)
+        rsi_highs, rsi_lows = find_swing_points(recent_df[rsi_col], window)
+        
+        # Get indices where swing points exist
+        price_high_idx = price_highs.dropna().index
+        price_low_idx = price_lows.dropna().index
+        rsi_high_idx = rsi_highs.dropna().index
+        rsi_low_idx = rsi_lows.dropna().index
     
     # Precompute positional indices for bar-distance based alignment (handles weekends/holidays)
     pos_map = {idx: i for i, idx in enumerate(recent_df.index)}
