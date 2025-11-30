@@ -24,6 +24,7 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-docs.txt ]; then pip install -r requirements-docs.txt; fi
           pip install pytest pytest-cov mkdocs mkdocs-material mkdocstrings[python]
+          pip install -e .
 
       - name: Run tests with coverage
         run: |
