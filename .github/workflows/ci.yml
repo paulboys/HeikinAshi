@@ -28,7 +28,8 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          pytest -q --maxfail=1 --disable-warnings --cov=src --cov-report=term-missing || true
+          pytest --cov=src --cov-report=term-missing --cov-report=xml
+        continue-on-error: false
 
       - name: Build docs (strict)
         run: |
@@ -39,5 +40,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: ./.coverage*
+          path: |
+            .coverage
+            coverage.xml
+          if-no-files-found: warn
         
