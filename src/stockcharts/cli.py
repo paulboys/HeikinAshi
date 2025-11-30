@@ -29,9 +29,14 @@ def _print_disclaimer_once(args):
     )
 
 
-def main_screen():
-    """
-    CLI entry point for NASDAQ screening.
+def main_screen() -> int:
+    """Screen NASDAQ tickers for Heiken Ashi reversals.
+
+    Side Effects:
+        Prints progress/status lines; writes CSV to ``--output`` if results found.
+
+    Returns:
+        int: 0 success, non-zero on input/IO errors.
     """
     parser = argparse.ArgumentParser(
         description="Screen NASDAQ stocks for Heiken Ashi color changes",
@@ -232,9 +237,11 @@ Examples:
     return 0
 
 
-def main_plot():
-    """
-    CLI entry point for plotting Heiken Ashi charts from CSV results.
+def main_plot() -> int:
+    """Generate Heiken Ashi charts from screener CSV output.
+
+    Expects an input CSV containing a ``Ticker`` or ``ticker`` column.
+    Produces PNG files under ``--output-dir``.
     """
     parser = argparse.ArgumentParser(
         description="Generate Heiken Ashi charts from screener results",
@@ -393,9 +400,11 @@ Examples:
     return 0
 
 
-def main_rsi_divergence():
-    """
-    CLI entry point for RSI divergence screening.
+def main_rsi_divergence() -> int:
+    """Screen NASDAQ tickers for price/RSI divergences.
+
+    Supports price/volume filters, pivot method selection, and optional
+    3-point sequence scoring with ATR normalization.
     """
     parser = argparse.ArgumentParser(
         description="Screen NASDAQ stocks for RSI/Price divergences",
@@ -740,9 +749,11 @@ Examples:
     return 0
 
 
-def main_plot_divergence():
-    """
-    CLI entry point for plotting price/RSI divergence charts.
+def main_plot_divergence() -> int:
+    """Plot price + RSI divergence charts from screener results CSV.
+
+    Uses precomputed divergence indices if present in CSV columns.
+    Saves PNG charts under ``--output-dir``.
     """
     parser = argparse.ArgumentParser(
         description="Generate Price/RSI divergence charts from screener results",

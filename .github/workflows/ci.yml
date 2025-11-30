@@ -26,6 +26,22 @@ jobs:
           pip install pytest pytest-cov mkdocs mkdocs-material mkdocstrings[python]
           pip install -e .
 
+      - name: Install dev tooling (mypy, ruff, pydocstyle)
+        run: |
+          pip install mypy ruff pydocstyle
+
+      - name: Static analysis (ruff)
+        run: |
+          ruff check src
+
+      - name: Type checking (mypy)
+        run: |
+          mypy src/stockcharts
+
+      - name: Docstring style (pydocstyle)
+        run: |
+          pydocstyle src/stockcharts
+
       - name: Run tests with coverage
         run: |
           pytest --cov=src --cov-report=term-missing --cov-report=xml --cov-report=html

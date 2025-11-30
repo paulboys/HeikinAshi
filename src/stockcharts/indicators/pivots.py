@@ -1,12 +1,26 @@
-"""Alternative pivot extraction methods for divergence detection."""
+"""Pivot extraction utilities (EMA-derivative based).
 
-from typing import Dict
+Public API:
+    ema_derivative_pivots(df: pd.DataFrame, ...) -> dict
+Returns pivot indices for price & RSI along with metadata.
+"""
+
+from __future__ import annotations
+
+from typing import Any, Dict
 
 import pandas as pd
 
+__all__ = ["ema_derivative_pivots"]
+
 
 def _ema(series: pd.Series, span: int) -> pd.Series:
-    """Calculate exponential moving average."""
+    """Return exponential moving average for ``series`` using span.
+
+    Args:
+        series: Input numeric series.
+        span: EMA span (period) for smoothing.
+    """
     return series.ewm(span=span, adjust=False).mean()
 
 
@@ -16,32 +30,26 @@ def ema_derivative_pivots(
     rsi_col: str = "RSI",
     price_span: int = 5,
     rsi_span: int = 5,
-) -> Dict:
-    """
-    Detect pivot highs/lows using sign changes in first derivative of EMA-smoothed series.
+) -> Dict[str, Any]:
+    """Detect pivot highs/lows via sign changes in first derivative of EMA-smoothed series.
 
-    This method smooths the price and RSI with EMA, then detects where the slope (derivative)
-    changes sign. More robust than window-based methods for noisy data.
-
-    Pivot Detection Logic:
-    - Pivot Low: derivative transitions from negative to positive (valley)
-    - Pivot High: derivative transitions from positive to negative (peak)
+    Method:
+        1. Smooth price & RSI with EMA.
+        2. Compute first difference (derivative).
+        3. Identify sign-change points as pivots:
+            - Pivot Low: derivative < 0 then > 0.
+            - Pivot High: derivative > 0 then < 0.
 
     Args:
-        df: DataFrame with price and RSI data
-        price_col: Column name for price (default: 'Close')
-        rsi_col: Column name for RSI (default: 'RSI')
-        price_span: EMA smoothing span for price (default: 5)
-        rsi_span: EMA smoothing span for RSI (default: 5)
+        df: DataFrame containing at least ``price_col`` and ``rsi_col``.
+        price_col: Price column name (default "Close").
+        rsi_col: RSI column name (default "RSI").
+        price_span: EMA span for price smoothing.
+        rsi_span: EMA span for RSI smoothing.
 
     Returns:
-        Dict with keys: 'price_highs', 'price_lows', 'rsi_highs', 'rsi_lows', 'meta'
-        Each contains a list/Index of timestamps where pivots occur.
-
-    Example:
-        # Use 7-period EMA for smoother pivots
-        pivots = ema_derivative_pivots(df, price_span=7, rsi_span=7)
-        print(f"Found {len(pivots['price_lows'])} price lows")
+        Dict with keys: ``price_highs``, ``price_lows``, ``rsi_highs``, ``rsi_lows``, ``meta``.
+        ``meta`` includes method name and counts.
     """
     if price_col not in df.columns or rsi_col not in df.columns:
         return {
@@ -52,26 +60,18 @@ def ema_derivative_pivots(
             "meta": {"method": "ema-deriv", "error": "Missing required columns"},
         }
 
-    # Smooth the series with EMA
     price_smoothed = _ema(df[price_col], price_span)
     rsi_smoothed = _ema(df[rsi_col], rsi_span)
 
-    # Calculate first derivative (rate of change)
     price_derivative = price_smoothed.diff()
     rsi_derivative = rsi_smoothed.diff()
 
-    # Detect sign changes in derivative
-    # Pivot low: derivative goes from negative to positive
     price_lows = price_smoothed[
         (price_derivative.shift(1) < 0) & (price_derivative > 0)
     ].index
-
-    # Pivot high: derivative goes from positive to negative
     price_highs = price_smoothed[
         (price_derivative.shift(1) > 0) & (price_derivative < 0)
     ].index
-
-    # Same logic for RSI
     rsi_lows = rsi_smoothed[(rsi_derivative.shift(1) < 0) & (rsi_derivative > 0)].index
     rsi_highs = rsi_smoothed[(rsi_derivative.shift(1) > 0) & (rsi_derivative < 0)].index
 

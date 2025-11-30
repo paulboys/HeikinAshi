@@ -1,4 +1,11 @@
-"""Divergence detection module for price vs RSI analysis."""
+"""Price vs RSI divergence detection utilities.
+
+Public API (selected):
+    detect_divergence(df, ...) -> Dict[str, Any]
+    find_three_point_sequences(df, price_idx, rsi_idx, kind='low', ...) -> List[Dict[str, Any]]
+
+All helper functions use explicit typing; tolerances tuned to reduce noise.
+"""
 
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
@@ -17,15 +24,14 @@ BULLISH_RSI_TOLERANCE = (
 
 
 def _compute_atr(df: pd.DataFrame, period: int = 14) -> pd.Series:
-    """
-    Compute Average True Range for volatility normalization.
+    """Return Average True Range series (simple rolling mean of True Range).
 
     Args:
-        df: DataFrame with High, Low, Close columns
-        period: ATR period (default: 14)
+        df: DataFrame with ``High``, ``Low``, ``Close`` columns.
+        period: ATR period window length.
 
     Returns:
-        Series of ATR values
+        ATR series aligned to ``df`` index.
     """
     high, low, close = df["High"], df["Low"], df["Close"]
     tr = pd.concat(
@@ -69,14 +75,8 @@ def find_three_point_sequences(
         require_strict_order: If True, enforce strict < or > (default: False allows tolerance)
 
     Returns:
-        List of dicts with keys:
-            - kind: 'low' or 'high'
-            - price_idx: tuple of 3 price pivot timestamps
-            - rsi_idx: tuple of 3 RSI pivot timestamps
-            - price_vals: tuple of 3 price values
-            - rsi_vals: tuple of 3 RSI values
-            - score: conviction score (higher = better)
-            - meta: dict with span12, span23, atr values
+        List[Dict[str, Any]] sorted by descending ``score``. Each dict contains:
+            kind, price_idx, rsi_idx, price_vals, rsi_vals, score, meta.
     """
     # Build position map for bar-distance calculations
     pos = {idx: i for i, idx in enumerate(df.index)}
@@ -211,9 +211,7 @@ def find_three_point_sequences(
     return candidates
 
 
-def find_swing_points(
-    series: pd.Series, window: int = 5
-) -> Tuple[pd.Series, pd.Series]:
+def find_swing_points(series: pd.Series, window: int = 5) -> Tuple[pd.Series, pd.Series]:
     """
     Find swing highs and lows in a price or indicator series.
 
@@ -273,7 +271,7 @@ def detect_divergence(
     max_bar_gap: int = 10,
     min_magnitude_atr_mult: float = 0.5,
     atr_period: int = 14,
-) -> dict:
+) -> Dict[str, Any]:
     """
     Detect bullish and bearish divergences between price and RSI.
 
@@ -310,16 +308,8 @@ def detect_divergence(
         atr_period: ATR period for magnitude filtering (default: 14)
 
     Returns:
-        Dict with:
-            - 'bullish': bool, True if bullish divergence detected
-            - 'bearish': bool, True if bearish divergence detected
-            - 'bullish_details': str, description of bullish divergence
-            - 'bearish_details': str, description of bearish divergence
-            - 'last_signal': str, 'bullish', 'bearish', or 'none'
-            - 'bullish_indices': tuple of price/RSI indices or None
-            - 'bearish_indices': tuple of price/RSI indices or None
-            - 'bullish_score': float, conviction score (if use_sequence_scoring=True)
-            - 'bearish_score': float, conviction score (if use_sequence_scoring=True)
+        Dict[str, Any] with keys: bullish, bearish, bullish_details, bearish_details,
+        last_signal, bullish_indices, bearish_indices, bullish_score, bearish_score.
     """
     result = {
         "bullish": False,

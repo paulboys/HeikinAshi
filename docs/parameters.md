@@ -49,3 +49,30 @@
 - Momentum exhaustion: `--type bearish --min-price 50 --min-volume 2_000_000`
 - Reversal scan: `--type bullish --swing-window 7 --rsi-period 21`
 - Liquidity focus: `--min-volume 5_000_000 --min-price 10`
+
+---
+
+## Extended Terminology Guide (Merged)
+
+### Aggregation Period (`--period`)
+Defines candle size: `1d`, `1wk`, `1mo`.
+
+### Time Window (`--lookback`)
+Historical span fetched: `5d`, `1mo`, `3mo`, `6mo`, `1y`, `2y`, `5y`.
+
+### Explicit Date Range (`--start` / `--end`)
+Overrides lookback when both provided; format YYYY-MM-DD.
+
+### Example Commands
+```
+stockcharts-screen --color green --period 1d --lookback 3mo --output green_reversals.csv
+stockcharts-screen --color green --period 1wk --lookback 1y --output weekly_reversals.csv
+stockcharts-screen --color green --period 1d --start 2024-01-01 --end 2024-12-31
+```
+
+### Common Mistakes
+- Mixing lookback with start/end.
+- Using too short lookback to detect color change.
+
+### Multi-Timeframe Workflow
+Weekly context → Daily execution → Optional charting.

@@ -73,3 +73,44 @@ Overlays price + RSI + detected divergence markers (using precomputed indices if
 
 ## Future Improvements
 See `docs/roadmap.md`.
+
+---
+
+## Extended Guide (Merged)
+
+The legacy comprehensive guide has been merged here for single-source documentation. It includes detailed trading workflows, expanded CLI examples, Python API usage, interpretation guidelines, strategy integrations (Heiken Ashi + RSI), and troubleshooting. For full historical content refer to repository history; redundant sections have been consolidated to avoid duplication.
+
+### Detailed Concepts
+
+Bullish divergence: Price forms lower low while RSI forms higher low (momentum improvement). Bearish divergence: Price forms higher high while RSI forms lower high (momentum deterioration).
+
+### Expanded CLI Examples
+```
+stockcharts-rsi-divergence --type bullish --min-price 10 --period 6mo --output results/swing_trades.csv
+stockcharts-rsi-divergence --period 1mo --rsi-period 9
+stockcharts-rsi-divergence --type bearish --min-price 100 --period 1y
+stockcharts-rsi-divergence --rsi-period 21 --lookback 90 --period 1y
+```
+
+### Python Usage Pattern
+```python
+from stockcharts.screener.rsi_divergence import screen_rsi_divergence, save_results_to_csv
+results = screen_rsi_divergence(divergence_type='bullish', min_price=10.0, period='6mo')
+for r in results:
+    print(r.ticker, r.close_price, r.rsi, r.divergence_type, r.details)
+save_results_to_csv(results, 'bullish_divergences.csv')
+```
+
+### CSV Output Columns
+Ticker, Company, Price, RSI, Divergence Type, Bullish, Bearish, Details.
+
+### Strategy Intersection (RSI + Heiken Ashi)
+Use divergence screener first, then feed tickers to HA color change screener via `--input-filter` for higher confidence setups.
+
+### Troubleshooting Tips
+- No results: increase `--lookback`, decrease `--swing-window`.
+- Too many results: raise `--min-volume`, tighten price filters.
+- Slow performance: restrict universe with price/volume filters or custom ticker list.
+
+### Best Practices
+Confirm divergence with price action (reversal candle patterns), volume expansion, and multi-timeframe alignment. Apply disciplined risk management (stops below swing lows for bullish, above swing highs for bearish).

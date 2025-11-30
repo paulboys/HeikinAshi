@@ -34,3 +34,41 @@ Edit `BEARISH_RSI_TOLERANCE` / `BULLISH_RSI_TOLERANCE` in `divergence.py`.
 | Too many signals | Raise `--min-volume` or increase tolerance |
 | Rate limit errors | Increase `--delay` |
 | Missing charts markers | Ensure precomputed indices available |
+
+---
+
+## Extended Daily Workflow (Merged)
+
+### Environment Setup
+```
+conda create -n stockcharts python=3.12 -y
+conda activate stockcharts
+pip install -r requirements.txt
+pip install -e .
+```
+
+### Morning Scan
+```
+stockcharts-screen --color all --output results/morning_scan.csv
+```
+
+### Weekly Bullish/Bearish Sets
+```
+stockcharts-screen --color green --interval 1wk --output results/weekly_bullish.csv
+stockcharts-screen --color red --interval 1wk --output results/weekly_bearish.csv
+```
+
+### Batch Chart Generation (PowerShell)
+```
+$tickers = @('AAPL','MSFT','GOOGL','NVDA')
+foreach ($t in $tickers) { python scripts\plot_heiken_ashi.py --ticker $t --output "charts\$t.png" }
+```
+
+### Programmatic Example
+```python
+from stockcharts.data.fetch import fetch_ohlc
+from stockcharts.charts.heiken_ashi import heiken_ashi
+df = fetch_ohlc('AAPL', interval='1d')
+ha = heiken_ashi(df)
+print(ha.tail())
+```

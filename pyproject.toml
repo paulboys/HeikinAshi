@@ -44,11 +44,33 @@ stockcharts-rsi-divergence = "stockcharts.cli:main_rsi_divergence"
 stockcharts-plot-divergence = "stockcharts.cli:main_plot_divergence"
 
 [project.optional-dependencies]
-dev = ["pytest>=7.0.0", "ruff>=0.1.0"]
+dev = [
+  "pytest>=7.0.0",
+  "pytest-cov>=4.1.0",
+  "ruff>=0.1.0",
+  "mypy>=1.10.0",
+  "pydocstyle>=6.3.0"
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.ruff]
 line-length = 100
-select = ["E","F","I"]
+select = ["E","F","I","D","ANN","B","UP"]
+ignore = ["D203","D212","D107"]
+docstring-convention = "google"
+
+[tool.mypy]
+python_version = "3.11"
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unreachable = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+show_error_codes = true
+exclude = ["tests/"]
+
+[tool.pydocstyle]
+convention = "google"
+add-ignore = "D107"
