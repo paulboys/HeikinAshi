@@ -1,14 +1,16 @@
 """RSI Divergence screener for NASDAQ stocks."""
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Optional
 
 import pandas as pd
 
 from stockcharts.data.fetch import fetch_ohlc
-from stockcharts.indicators.divergence import (check_breakout_occurred,
-                                               check_failed_breakout,
-                                               detect_divergence)
+from stockcharts.indicators.divergence import (
+    check_breakout_occurred,
+    check_failed_breakout,
+    detect_divergence,
+)
 from stockcharts.indicators.rsi import compute_rsi
 from stockcharts.screener.nasdaq import get_nasdaq_tickers
 
@@ -30,7 +32,7 @@ class RSIDivergenceResult:
 
 
 def screen_rsi_divergence(
-    tickers: Optional[List[str]] = None,
+    tickers: list[str] | None = None,
     period: str = "3mo",  # Historical lookback e.g. '3mo', '6mo', '1y'
     interval: str = "1d",  # Candle interval '1d','1wk','1mo'
     rsi_period: int = 14,
@@ -63,7 +65,7 @@ def screen_rsi_divergence(
     max_bar_gap: int = 10,
     min_magnitude_atr_mult: float = 0.5,
     atr_period: int = 14,
-) -> List[RSIDivergenceResult]:
+) -> list[RSIDivergenceResult]:
     """
     Screen stocks for RSI divergences.
 
@@ -71,6 +73,8 @@ def screen_rsi_divergence(
         tickers: List of ticker symbols (if None, uses all NASDAQ)
         period: Historical period breadth for yfinance (e.g. '1mo', '3mo', '6mo', '1y') ignored if both start & end provided.
         interval: Candle aggregation interval ('1d','1wk','1mo').
+        start: Start date for historical data (YYYY-MM-DD format).
+        end: End date for historical data (YYYY-MM-DD format).
         rsi_period: RSI calculation period (default: 14)
         divergence_type: Type to screen for ('bullish', 'bearish', or 'all')
         min_price: Minimum stock price filter
@@ -272,7 +276,7 @@ def screen_rsi_divergence(
                     )
                 )
 
-        except Exception as e:
+        except Exception:
             # Silently skip errors for individual tickers
             pass
 
@@ -281,8 +285,8 @@ def screen_rsi_divergence(
 
 
 def save_results_to_csv(
-    results: List[RSIDivergenceResult], filename: str = "rsi_divergence_results.csv"
-):
+    results: list[RSIDivergenceResult], filename: str = "rsi_divergence_results.csv"
+) -> None:
     """Save screening results to CSV file."""
     if not results:
         print("No results to save.")
@@ -290,7 +294,7 @@ def save_results_to_csv(
 
     import json
 
-    def serialize_indices(indices):
+    def serialize_indices(indices: list | tuple | None) -> list[str] | None:
         """Convert timestamp indices to ISO format strings for JSON serialization."""
         if indices is None:
             return None

@@ -347,7 +347,7 @@ def _plot_rsi(ax: Axes, df: pd.DataFrame, overbought: float, oversold: float) ->
     x = np.arange(len(df))
 
     # Plot RSI line
-    ax.plot(x, df["RSI"], color="blue", linewidth=2, label=f"RSI", zorder=3)
+    ax.plot(x, df["RSI"], color="blue", linewidth=2, label="RSI", zorder=3)
 
     # Plot overbought/oversold lines
     ax.axhline(
@@ -378,7 +378,7 @@ def _plot_price_divergences(
     ax: Axes, df: pd.DataFrame, divergences: pd.DataFrame
 ) -> None:
     """Mark divergence points on price chart (supports 2-point and 3-point)."""
-    x = np.arange(len(df))
+    np.arange(len(df))
 
     # Create a mapping of dates to x positions
     date_to_x = {date: i for i, date in enumerate(df.index)}
@@ -456,7 +456,7 @@ def _plot_rsi_divergences(
     ax: Axes, df: pd.DataFrame, divergences: pd.DataFrame
 ) -> None:
     """Mark divergence points on RSI chart (supports 2-point and 3-point)."""
-    x = np.arange(len(df))
+    np.arange(len(df))
 
     # Create a mapping of dates to x positions
     date_to_x = {date: i for i, date in enumerate(df.index)}

@@ -24,8 +24,6 @@ Returns a pandas DataFrame with columns: Open, High, Low, Close, Volume
 from __future__ import annotations
 
 import re
-from datetime import datetime
-from typing import Optional
 
 import pandas as pd
 
@@ -43,11 +41,11 @@ VALID_LOOKBACK = {"5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "ma
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
-def _is_date(s: Optional[str]) -> bool:
+def _is_date(s: str | None) -> bool:
     return bool(s and DATE_RE.match(s))
 
 
-def _normalize_date(s: Optional[str]) -> Optional[str]:
+def _normalize_date(s: str | None) -> str | None:
     """Return date string if valid YYYY-MM-DD else None."""
     if not _is_date(s):
         return None
@@ -57,9 +55,9 @@ def _normalize_date(s: Optional[str]) -> Optional[str]:
 def fetch_ohlc(
     ticker: str,
     interval: str = "1d",
-    lookback: Optional[str] = None,
-    start: Optional[str] = None,
-    end: Optional[str] = None,
+    lookback: str | None = None,
+    start: str | None = None,
+    end: str | None = None,
     auto_adjust: bool = False,
 ) -> pd.DataFrame:
     """Fetch OHLC data for a single ticker.

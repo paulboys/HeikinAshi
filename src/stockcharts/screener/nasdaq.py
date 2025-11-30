@@ -7,12 +7,11 @@ from __future__ import annotations
 
 import io
 import urllib.request
-from typing import List
 
 import pandas as pd
 
 
-def get_nasdaq_tickers(limit: int | None = None) -> List[str]:
+def get_nasdaq_tickers(limit: int | None = None) -> list[str]:
     """Fetch list of NASDAQ ticker symbols.
 
     Parameters
@@ -21,12 +20,12 @@ def get_nasdaq_tickers(limit: int | None = None) -> List[str]:
         Maximum number of tickers to return. None returns all available.
         Useful for testing with smaller subsets.
 
-    Returns
+    Returns:
     -------
     List[str]
         List of ticker symbols (e.g., ['AAPL', 'MSFT', 'GOOGL', ...])
 
-    Notes
+    Notes:
     -----
     This function fetches data from NASDAQ's official FTP server.
     Falls back to a static list if the download fails.

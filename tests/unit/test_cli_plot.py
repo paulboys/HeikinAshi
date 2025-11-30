@@ -100,8 +100,19 @@ def test_main_plot_successful_with_uppercase_ticker(
     """Test successful plotting with uppercase Ticker column."""
     output_dir = tmp_path / "charts"
 
-    with patch("sys.argv", ["stockcharts-plot", "--input", str(sample_input_csv), "--output-dir", str(output_dir)]):
-        with patch("stockcharts.cli.fetch_ohlc", return_value=mock_ohlc_data) as mock_fetch:
+    with patch(
+        "sys.argv",
+        [
+            "stockcharts-plot",
+            "--input",
+            str(sample_input_csv),
+            "--output-dir",
+            str(output_dir),
+        ],
+    ):
+        with patch(
+            "stockcharts.cli.fetch_ohlc", return_value=mock_ohlc_data
+        ) as mock_fetch:
             with patch("stockcharts.cli.heiken_ashi", return_value=mock_ha_data):
                 with patch("matplotlib.pyplot.savefig") as mock_savefig:
                     with patch("matplotlib.pyplot.close"):
@@ -131,7 +142,13 @@ def test_main_plot_successful_with_lowercase_ticker(
 
     with patch(
         "sys.argv",
-        ["stockcharts-plot", "--input", str(sample_input_csv_lowercase), "--output-dir", str(output_dir)],
+        [
+            "stockcharts-plot",
+            "--input",
+            str(sample_input_csv_lowercase),
+            "--output-dir",
+            str(output_dir),
+        ],
     ):
         with patch("stockcharts.cli.fetch_ohlc", return_value=mock_ohlc_data):
             with patch("stockcharts.cli.heiken_ashi", return_value=mock_ha_data):
@@ -147,7 +164,16 @@ def test_main_plot_empty_data_skipped(sample_input_csv, tmp_path):
     """Test that tickers with no data are skipped gracefully."""
     output_dir = tmp_path / "charts"
 
-    with patch("sys.argv", ["stockcharts-plot", "--input", str(sample_input_csv), "--output-dir", str(output_dir)]):
+    with patch(
+        "sys.argv",
+        [
+            "stockcharts-plot",
+            "--input",
+            str(sample_input_csv),
+            "--output-dir",
+            str(output_dir),
+        ],
+    ):
         with patch("stockcharts.cli.fetch_ohlc", return_value=None):  # Simulate no data
             with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                 result = main_plot()
@@ -161,8 +187,19 @@ def test_main_plot_fetch_exception_handled(sample_input_csv, tmp_path):
     """Test that fetch exceptions are caught and displayed."""
     output_dir = tmp_path / "charts"
 
-    with patch("sys.argv", ["stockcharts-plot", "--input", str(sample_input_csv), "--output-dir", str(output_dir)]):
-        with patch("stockcharts.cli.fetch_ohlc", side_effect=Exception("Network error")):
+    with patch(
+        "sys.argv",
+        [
+            "stockcharts-plot",
+            "--input",
+            str(sample_input_csv),
+            "--output-dir",
+            str(output_dir),
+        ],
+    ):
+        with patch(
+            "stockcharts.cli.fetch_ohlc", side_effect=Exception("Network error")
+        ):
             with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                 result = main_plot()
 
@@ -171,7 +208,9 @@ def test_main_plot_fetch_exception_handled(sample_input_csv, tmp_path):
     assert "❌ Error" in output_text
 
 
-def test_main_plot_custom_period_and_lookback(sample_input_csv, mock_ohlc_data, mock_ha_data, tmp_path):
+def test_main_plot_custom_period_and_lookback(
+    sample_input_csv, mock_ohlc_data, mock_ha_data, tmp_path
+):
     """Test plotting with custom period and lookback."""
     output_dir = tmp_path / "charts"
 
@@ -189,7 +228,9 @@ def test_main_plot_custom_period_and_lookback(sample_input_csv, mock_ohlc_data, 
             "5d",
         ],
     ):
-        with patch("stockcharts.cli.fetch_ohlc", return_value=mock_ohlc_data) as mock_fetch:
+        with patch(
+            "stockcharts.cli.fetch_ohlc", return_value=mock_ohlc_data
+        ) as mock_fetch:
             with patch("stockcharts.cli.heiken_ashi", return_value=mock_ha_data):
                 with patch("matplotlib.pyplot.savefig"):
                     with patch("matplotlib.pyplot.close"):
@@ -203,13 +244,22 @@ def test_main_plot_custom_period_and_lookback(sample_input_csv, mock_ohlc_data, 
     assert call_kwargs["lookback"] == "5d"
 
 
-def test_main_plot_no_disclaimer_flag(sample_input_csv, mock_ohlc_data, mock_ha_data, tmp_path):
+def test_main_plot_no_disclaimer_flag(
+    sample_input_csv, mock_ohlc_data, mock_ha_data, tmp_path
+):
     """Test --no-disclaimer flag suppresses disclaimer."""
     output_dir = tmp_path / "charts"
 
     with patch(
         "sys.argv",
-        ["stockcharts-plot", "--input", str(sample_input_csv), "--output-dir", str(output_dir), "--no-disclaimer"],
+        [
+            "stockcharts-plot",
+            "--input",
+            str(sample_input_csv),
+            "--output-dir",
+            str(output_dir),
+            "--no-disclaimer",
+        ],
     ):
         with patch("stockcharts.cli.fetch_ohlc", return_value=mock_ohlc_data):
             with patch("stockcharts.cli.heiken_ashi", return_value=mock_ha_data):
@@ -222,12 +272,23 @@ def test_main_plot_no_disclaimer_flag(sample_input_csv, mock_ohlc_data, mock_ha_
     assert "[Disclaimer]" not in output_text
 
 
-def test_main_plot_creates_output_directory(sample_input_csv, mock_ohlc_data, mock_ha_data, tmp_path):
+def test_main_plot_creates_output_directory(
+    sample_input_csv, mock_ohlc_data, mock_ha_data, tmp_path
+):
     """Test that output directory is created if it doesn't exist."""
     output_dir = tmp_path / "new_charts_dir"
     assert not output_dir.exists()
 
-    with patch("sys.argv", ["stockcharts-plot", "--input", str(sample_input_csv), "--output-dir", str(output_dir)]):
+    with patch(
+        "sys.argv",
+        [
+            "stockcharts-plot",
+            "--input",
+            str(sample_input_csv),
+            "--output-dir",
+            str(output_dir),
+        ],
+    ):
         with patch("stockcharts.cli.fetch_ohlc", return_value=mock_ohlc_data):
             with patch("stockcharts.cli.heiken_ashi", return_value=mock_ha_data):
                 with patch("matplotlib.pyplot.savefig"):

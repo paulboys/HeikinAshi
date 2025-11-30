@@ -7,7 +7,8 @@ Public API (selected):
 All helper functions use explicit typing; tolerances tuned to reduce noise.
 """
 
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from collections.abc import Iterable
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -53,7 +54,7 @@ def find_three_point_sequences(
     min_magnitude_atr_mult: float = 0.5,
     atr_period: int = 14,
     require_strict_order: bool = False,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Find and score 3-point divergence sequences from pivot indices.
 
@@ -87,7 +88,7 @@ def find_three_point_sequences(
         return []
 
     # Helper: find nearest RSI pivot by bar distance within max_bar_gap
-    def nearest_rsi(target_idx):
+    def nearest_rsi(target_idx: int) -> int | None:
         tpos = pos[target_idx]
         best = None
         best_gap = max_bar_gap + 1
@@ -211,7 +212,9 @@ def find_three_point_sequences(
     return candidates
 
 
-def find_swing_points(series: pd.Series, window: int = 5) -> Tuple[pd.Series, pd.Series]:
+def find_swing_points(
+    series: pd.Series, window: int = 5
+) -> tuple[pd.Series, pd.Series]:
     """
     Find swing highs and lows in a price or indicator series.
 
@@ -271,7 +274,7 @@ def detect_divergence(
     max_bar_gap: int = 10,
     min_magnitude_atr_mult: float = 0.5,
     atr_period: int = 14,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Detect bullish and bearish divergences between price and RSI.
 
@@ -358,7 +361,7 @@ def detect_divergence(
     pos_map = {idx: i for i, idx in enumerate(recent_df.index)}
     max_bar_gap_fallback = window * index_proximity_factor
 
-    def nearest_by_bar(target_idx, candidates):
+    def nearest_by_bar(target_idx: int, candidates: list[int]) -> int | None:
         """Return candidate with smallest absolute bar index distance within max_bar_gap."""
         if target_idx not in pos_map:
             return None

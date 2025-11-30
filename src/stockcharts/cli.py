@@ -1,6 +1,4 @@
-"""
-Command-line interface for stockcharts screener.
-"""
+"""Command-line interface for stockcharts screener."""
 
 import argparse
 import os
@@ -12,13 +10,11 @@ from matplotlib.patches import Rectangle
 
 from stockcharts.charts.heiken_ashi import heiken_ashi
 from stockcharts.data.fetch import fetch_ohlc
-from stockcharts.screener.nasdaq import get_nasdaq_tickers
-from stockcharts.screener.rsi_divergence import (save_results_to_csv,
-                                                 screen_rsi_divergence)
-from stockcharts.screener.screener import ScreenResult, screen_nasdaq
+from stockcharts.screener.rsi_divergence import save_results_to_csv, screen_rsi_divergence
+from stockcharts.screener.screener import screen_nasdaq
 
 
-def _print_disclaimer_once(args):
+def _print_disclaimer_once(args: argparse.Namespace) -> None:
     """Print a one-line disclaimer unless suppressed."""
     if getattr(args, "no_disclaimer", False):
         return
@@ -167,7 +163,7 @@ Examples:
         try:
             filter_df = pd.read_csv(args.input_filter)
             if "Ticker" not in filter_df.columns:
-                print(f"Error: Input filter CSV must have a 'Ticker' column")
+                print("Error: Input filter CSV must have a 'Ticker' column")
                 return 1
 
             ticker_filter = filter_df["Ticker"].tolist()
@@ -232,7 +228,7 @@ Examples:
         print(f"\nFound {len(results)} stocks matching criteria")
         print(f"Results saved to: {args.output}")
     else:
-        print(f"\nNo stocks found matching criteria")
+        print("\nNo stocks found matching criteria")
 
     return 0
 
@@ -316,7 +312,7 @@ Examples:
     elif "ticker" in df.columns:
         ticker_col = "ticker"
     else:
-        print(f"Error: CSV must have a 'Ticker' or 'ticker' column")
+        print("Error: CSV must have a 'Ticker' or 'ticker' column")
         print(f"Available columns: {', '.join(df.columns)}")
         return 1
 
@@ -652,7 +648,7 @@ Examples:
 
     _print_disclaimer_once(args)
 
-    print(f"Screening NASDAQ stocks for RSI divergences...")
+    print("Screening NASDAQ stocks for RSI divergences...")
     print(f"Divergence type: {args.type}")
     print(
         f"Period: {args.period}, Interval: {args.interval}, RSI period: {args.rsi_period}"
@@ -871,7 +867,7 @@ Examples:
     elif "ticker" in df.columns:
         ticker_col = "ticker"
     else:
-        print(f"Error: CSV must have a 'Ticker' or 'ticker' column")
+        print("Error: CSV must have a 'Ticker' or 'ticker' column")
         print(f"Available columns: {', '.join(df.columns)}")
         return 1
 
@@ -911,7 +907,7 @@ Examples:
                             precomputed["bullish_indices"] = tuple(
                                 pd.to_datetime(idx) for idx in indices_list
                             )
-                    except:
+                    except Exception:
                         pass
 
                 # Parse bearish indices if present
@@ -922,7 +918,7 @@ Examples:
                             precomputed["bearish_indices"] = tuple(
                                 pd.to_datetime(idx) for idx in indices_list
                             )
-                    except:
+                    except Exception:
                         pass
 
                 if not precomputed:

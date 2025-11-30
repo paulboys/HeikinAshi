@@ -15,7 +15,7 @@ def sample_rsi_csv(tmp_path):
     """Create sample RSI divergence CSV."""
     csv_path = tmp_path / "rsi_results.csv"
     csv_path.write_text(
-        'Ticker,Company,Divergence Type,Bullish_Indices,Bearish_Indices\n'
+        "Ticker,Company,Divergence Type,Bullish_Indices,Bearish_Indices\n"
         'AAPL,Apple Inc.,bullish,"[\\"2024-01-10\\",\\"2024-01-20\\",\\"2024-01-11\\",\\"2024-01-21\\"]",\n'
         'MSFT,Microsoft Corp.,bearish,,"[\\"2024-01-15\\",\\"2024-01-25\\",\\"2024-01-16\\",\\"2024-01-26\\"]"\n'
     )
@@ -26,7 +26,9 @@ def sample_rsi_csv(tmp_path):
 def sample_rsi_csv_lowercase(tmp_path):
     """Create sample RSI CSV with lowercase ticker column."""
     csv_path = tmp_path / "rsi_results_lower.csv"
-    csv_path.write_text('ticker,company,divergence_type\nAAPL,Apple,bullish\nMSFT,Microsoft,bearish\n')
+    csv_path.write_text(
+        "ticker,company,divergence_type\nAAPL,Apple,bullish\nMSFT,Microsoft,bearish\n"
+    )
     return csv_path
 
 
@@ -58,7 +60,9 @@ def test_main_plot_divergence_version_flag():
 
 def test_main_plot_divergence_missing_input_file():
     """Test error handling when input CSV doesn't exist."""
-    with patch("sys.argv", ["stockcharts-plot-divergence", "--input", "nonexistent.csv"]):
+    with patch(
+        "sys.argv", ["stockcharts-plot-divergence", "--input", "nonexistent.csv"]
+    ):
         with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
             result = main_plot_divergence()
 
@@ -81,11 +85,22 @@ def test_main_plot_divergence_missing_ticker_column(tmp_path):
     assert "must have a 'Ticker' or 'ticker' column" in output_text
 
 
-def test_main_plot_divergence_successful_with_uppercase_ticker(sample_rsi_csv, mock_ohlc_data, tmp_path):
+def test_main_plot_divergence_successful_with_uppercase_ticker(
+    sample_rsi_csv, mock_ohlc_data, tmp_path
+):
     """Test successful plotting with uppercase Ticker column."""
     output_dir = tmp_path / "div_charts"
 
-    with patch("sys.argv", ["stockcharts-plot-divergence", "--input", str(sample_rsi_csv), "--output-dir", str(output_dir)]):
+    with patch(
+        "sys.argv",
+        [
+            "stockcharts-plot-divergence",
+            "--input",
+            str(sample_rsi_csv),
+            "--output-dir",
+            str(output_dir),
+        ],
+    ):
         with patch("stockcharts.cli.fetch_ohlc", return_value=mock_ohlc_data):
             with patch("stockcharts.charts.divergence.plot_price_rsi") as mock_plot:
                 mock_fig = MagicMock()
@@ -116,7 +131,13 @@ def test_main_plot_divergence_successful_with_lowercase_ticker(
 
     with patch(
         "sys.argv",
-        ["stockcharts-plot-divergence", "--input", str(sample_rsi_csv_lowercase), "--output-dir", str(output_dir)],
+        [
+            "stockcharts-plot-divergence",
+            "--input",
+            str(sample_rsi_csv_lowercase),
+            "--output-dir",
+            str(output_dir),
+        ],
     ):
         with patch("stockcharts.cli.fetch_ohlc", return_value=mock_ohlc_data):
             with patch("stockcharts.charts.divergence.plot_price_rsi") as mock_plot:
@@ -130,11 +151,22 @@ def test_main_plot_divergence_successful_with_lowercase_ticker(
     assert mock_plot.call_count == 2
 
 
-def test_main_plot_divergence_with_precomputed_indices(sample_rsi_csv, mock_ohlc_data, tmp_path):
+def test_main_plot_divergence_with_precomputed_indices(
+    sample_rsi_csv, mock_ohlc_data, tmp_path
+):
     """Test that precomputed divergence indices are parsed and passed."""
     output_dir = tmp_path / "div_charts"
 
-    with patch("sys.argv", ["stockcharts-plot-divergence", "--input", str(sample_rsi_csv), "--output-dir", str(output_dir)]):
+    with patch(
+        "sys.argv",
+        [
+            "stockcharts-plot-divergence",
+            "--input",
+            str(sample_rsi_csv),
+            "--output-dir",
+            str(output_dir),
+        ],
+    ):
         with patch("stockcharts.cli.fetch_ohlc", return_value=mock_ohlc_data):
             with patch("stockcharts.charts.divergence.plot_price_rsi") as mock_plot:
                 mock_fig = MagicMock()
@@ -150,7 +182,9 @@ def test_main_plot_divergence_with_precomputed_indices(sample_rsi_csv, mock_ohlc
     assert "precomputed_divergence" in first_call_kwargs
 
 
-def test_main_plot_divergence_custom_parameters(sample_rsi_csv, mock_ohlc_data, tmp_path):
+def test_main_plot_divergence_custom_parameters(
+    sample_rsi_csv, mock_ohlc_data, tmp_path
+):
     """Test plotting with custom RSI period, interval, and lookback."""
     output_dir = tmp_path / "custom_charts"
 
@@ -172,7 +206,9 @@ def test_main_plot_divergence_custom_parameters(sample_rsi_csv, mock_ohlc_data, 
             "7",
         ],
     ):
-        with patch("stockcharts.cli.fetch_ohlc", return_value=mock_ohlc_data) as mock_fetch:
+        with patch(
+            "stockcharts.cli.fetch_ohlc", return_value=mock_ohlc_data
+        ) as mock_fetch:
             with patch("stockcharts.charts.divergence.plot_price_rsi") as mock_plot:
                 mock_fig = MagicMock()
                 mock_plot.return_value = mock_fig
@@ -231,8 +267,19 @@ def test_main_plot_divergence_handles_exceptions(sample_rsi_csv, tmp_path):
     """Test that plotting exceptions are caught and reported per ticker."""
     output_dir = tmp_path / "error_charts"
 
-    with patch("sys.argv", ["stockcharts-plot-divergence", "--input", str(sample_rsi_csv), "--output-dir", str(output_dir)]):
-        with patch("stockcharts.cli.fetch_ohlc", side_effect=Exception("Network error")):
+    with patch(
+        "sys.argv",
+        [
+            "stockcharts-plot-divergence",
+            "--input",
+            str(sample_rsi_csv),
+            "--output-dir",
+            str(output_dir),
+        ],
+    ):
+        with patch(
+            "stockcharts.cli.fetch_ohlc", side_effect=Exception("Network error")
+        ):
             with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                 result = main_plot_divergence()
 
@@ -242,12 +289,23 @@ def test_main_plot_divergence_handles_exceptions(sample_rsi_csv, tmp_path):
     assert "❌ Error" in output_text
 
 
-def test_main_plot_divergence_creates_output_directory(sample_rsi_csv, mock_ohlc_data, tmp_path):
+def test_main_plot_divergence_creates_output_directory(
+    sample_rsi_csv, mock_ohlc_data, tmp_path
+):
     """Test that output directory is created if it doesn't exist."""
     output_dir = tmp_path / "new_divergence_dir"
     assert not output_dir.exists()
 
-    with patch("sys.argv", ["stockcharts-plot-divergence", "--input", str(sample_rsi_csv), "--output-dir", str(output_dir)]):
+    with patch(
+        "sys.argv",
+        [
+            "stockcharts-plot-divergence",
+            "--input",
+            str(sample_rsi_csv),
+            "--output-dir",
+            str(output_dir),
+        ],
+    ):
         with patch("stockcharts.cli.fetch_ohlc", return_value=mock_ohlc_data):
             with patch("stockcharts.charts.divergence.plot_price_rsi") as mock_plot:
                 mock_fig = MagicMock()

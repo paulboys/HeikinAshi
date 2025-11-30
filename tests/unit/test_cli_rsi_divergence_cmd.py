@@ -50,8 +50,19 @@ def test_main_rsi_divergence_successful_run(mock_rsi_results, tmp_path):
     """Test successful screening with results saved."""
     output_file = tmp_path / "rsi_output.csv"
 
-    with patch("sys.argv", ["stockcharts-rsi-divergence", "--type", "bullish", "--output", str(output_file)]):
-        with patch("stockcharts.cli.screen_rsi_divergence", return_value=mock_rsi_results):
+    with patch(
+        "sys.argv",
+        [
+            "stockcharts-rsi-divergence",
+            "--type",
+            "bullish",
+            "--output",
+            str(output_file),
+        ],
+    ):
+        with patch(
+            "stockcharts.cli.screen_rsi_divergence", return_value=mock_rsi_results
+        ):
             with patch("stockcharts.cli.save_results_to_csv") as mock_save:
                 with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                     result = main_rsi_divergence()
@@ -68,7 +79,9 @@ def test_main_rsi_divergence_no_results(tmp_path):
     """Test screening with no divergences found."""
     output_file = tmp_path / "empty_rsi.csv"
 
-    with patch("sys.argv", ["stockcharts-rsi-divergence", "--output", str(output_file)]):
+    with patch(
+        "sys.argv", ["stockcharts-rsi-divergence", "--output", str(output_file)]
+    ):
         with patch("stockcharts.cli.screen_rsi_divergence", return_value=[]):
             with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                 result = main_rsi_divergence()
@@ -97,7 +110,9 @@ def test_main_rsi_divergence_custom_parameters(mock_rsi_results, tmp_path):
             str(output_file),
         ],
     ):
-        with patch("stockcharts.cli.screen_rsi_divergence", return_value=mock_rsi_results) as mock_screen:
+        with patch(
+            "stockcharts.cli.screen_rsi_divergence", return_value=mock_rsi_results
+        ) as mock_screen:
             with patch("stockcharts.cli.save_results_to_csv"):
                 result = main_rsi_divergence()
 
@@ -128,7 +143,9 @@ def test_main_rsi_divergence_with_filters(mock_rsi_results, tmp_path):
             str(output_file),
         ],
     ):
-        with patch("stockcharts.cli.screen_rsi_divergence", return_value=mock_rsi_results) as mock_screen:
+        with patch(
+            "stockcharts.cli.screen_rsi_divergence", return_value=mock_rsi_results
+        ) as mock_screen:
             with patch("stockcharts.cli.save_results_to_csv"):
                 result = main_rsi_divergence()
 
@@ -158,7 +175,9 @@ def test_main_rsi_divergence_3point_with_scoring(mock_rsi_results, tmp_path):
             str(output_file),
         ],
     ):
-        with patch("stockcharts.cli.screen_rsi_divergence", return_value=mock_rsi_results) as mock_screen:
+        with patch(
+            "stockcharts.cli.screen_rsi_divergence", return_value=mock_rsi_results
+        ) as mock_screen:
             with patch("stockcharts.cli.save_results_to_csv"):
                 with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                     result = main_rsi_divergence()
@@ -194,7 +213,9 @@ def test_main_rsi_divergence_ema_deriv_pivot_method(mock_rsi_results, tmp_path):
             str(output_file),
         ],
     ):
-        with patch("stockcharts.cli.screen_rsi_divergence", return_value=mock_rsi_results) as mock_screen:
+        with patch(
+            "stockcharts.cli.screen_rsi_divergence", return_value=mock_rsi_results
+        ) as mock_screen:
             with patch("stockcharts.cli.save_results_to_csv"):
                 with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                     result = main_rsi_divergence()
@@ -229,7 +250,9 @@ def test_main_rsi_divergence_exclude_breakouts(mock_rsi_results, tmp_path):
             str(output_file),
         ],
     ):
-        with patch("stockcharts.cli.screen_rsi_divergence", return_value=mock_rsi_results) as mock_screen:
+        with patch(
+            "stockcharts.cli.screen_rsi_divergence", return_value=mock_rsi_results
+        ) as mock_screen:
             with patch("stockcharts.cli.save_results_to_csv"):
                 with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                     result = main_rsi_divergence()
@@ -264,7 +287,9 @@ def test_main_rsi_divergence_custom_date_range(mock_rsi_results, tmp_path):
             str(output_file),
         ],
     ):
-        with patch("stockcharts.cli.screen_rsi_divergence", return_value=mock_rsi_results) as mock_screen:
+        with patch(
+            "stockcharts.cli.screen_rsi_divergence", return_value=mock_rsi_results
+        ) as mock_screen:
             with patch("stockcharts.cli.save_results_to_csv"):
                 with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                     result = main_rsi_divergence()

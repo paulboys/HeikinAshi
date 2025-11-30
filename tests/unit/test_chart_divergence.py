@@ -4,11 +4,9 @@ import pandas as pd
 import pytest
 from matplotlib.figure import Figure
 
-from stockcharts.charts.divergence import (
-    _convert_precomputed_to_df,
-    _find_divergence_points,
-    plot_price_rsi,
-)
+from stockcharts.charts.divergence import (_convert_precomputed_to_df,
+                                           _find_divergence_points,
+                                           plot_price_rsi)
 
 
 @pytest.fixture
@@ -92,9 +90,7 @@ def test_plot_price_rsi_with_precomputed_3point_bearish(sample_ohlc_data):
     r2_idx = sample_ohlc_data.index[31]
     r3_idx = sample_ohlc_data.index[51]
 
-    precomputed = {
-        "bearish_indices": (p1_idx, p2_idx, p3_idx, r1_idx, r2_idx, r3_idx)
-    }
+    precomputed = {"bearish_indices": (p1_idx, p2_idx, p3_idx, r1_idx, r2_idx, r3_idx)}
 
     fig = plot_price_rsi(
         sample_ohlc_data,
@@ -194,9 +190,7 @@ def test_convert_precomputed_to_df_3point_bearish(sample_ohlc_data):
     r2_idx = sample_ohlc_data.index[31]
     r3_idx = sample_ohlc_data.index[51]
 
-    precomputed = {
-        "bearish_indices": (p1_idx, p2_idx, p3_idx, r1_idx, r2_idx, r3_idx)
-    }
+    precomputed = {"bearish_indices": (p1_idx, p2_idx, p3_idx, r1_idx, r2_idx, r3_idx)}
 
     result = _convert_precomputed_to_df(sample_ohlc_data, precomputed)
 

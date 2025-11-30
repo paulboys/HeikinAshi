@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from typing import List, Literal, Optional
+from typing import Literal
 
 import pandas as pd
 
@@ -41,7 +41,7 @@ def get_candle_color(ha_df: pd.DataFrame, index: int = -1) -> Literal["green", "
     index : int
         Index of the candle to check (-1 for most recent, -2 for previous, etc.)
 
-    Returns
+    Returns:
     -------
     "green" if HA_Close >= HA_Open (bullish), "red" otherwise (bearish)
     """
@@ -52,11 +52,11 @@ def get_candle_color(ha_df: pd.DataFrame, index: int = -1) -> Literal["green", "
 def screen_ticker(
     ticker: str,
     period: str = "1d",
-    lookback: Optional[str] = None,
-    start: Optional[str] = None,
-    end: Optional[str] = None,
+    lookback: str | None = None,
+    start: str | None = None,
+    end: str | None = None,
     debug: bool = False,
-) -> Optional[ScreenResult]:
+) -> ScreenResult | None:
     """Screen a single ticker for its latest Heiken Ashi candle color.
 
     Parameters
@@ -72,7 +72,7 @@ def screen_ticker(
     end : str | None
         End date YYYY-MM-DD
 
-    Returns
+    Returns:
     -------
     ScreenResult or None if data unavailable or error occurs
     """
@@ -125,18 +125,18 @@ def screen_ticker(
 def screen_nasdaq(
     color_filter: Literal["green", "red", "all"] = "all",
     period: str = "1d",
-    limit: Optional[int] = None,
+    limit: int | None = None,
     delay: float = 0.5,
     verbose: bool = True,
     changed_only: bool = False,
-    lookback: Optional[str] = None,
-    start: Optional[str] = None,
-    end: Optional[str] = None,
+    lookback: str | None = None,
+    start: str | None = None,
+    end: str | None = None,
     debug: bool = False,
-    min_volume: Optional[float] = None,
-    min_price: Optional[float] = None,
-    ticker_filter: Optional[List[str]] = None,
-) -> List[ScreenResult]:
+    min_volume: float | None = None,
+    min_price: float | None = None,
+    ticker_filter: list[str] | None = None,
+) -> list[ScreenResult]:
     """Screen NASDAQ stocks for Heiken Ashi candle colors.
 
     Parameters
@@ -173,7 +173,7 @@ def screen_nasdaq(
         will be screened instead of all NASDAQ stocks. Useful for filtering by
         a pre-screened list (e.g., from RSI divergence results).
 
-    Returns
+    Returns:
     -------
     List[ScreenResult]
         List of results matching the color filter, sorted by ticker

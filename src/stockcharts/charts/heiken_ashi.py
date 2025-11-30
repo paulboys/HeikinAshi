@@ -29,10 +29,10 @@ def heiken_ashi(df: pd.DataFrame) -> pd.DataFrame:
     # Flatten to 1D arrays (handles both single and multi-level column indexes)
     o = df["Open"].values.flatten()
     h = df["High"].values.flatten()
-    l = df["Low"].values.flatten()
+    low = df["Low"].values.flatten()
     c = df["Close"].values.flatten()
 
-    ha_close = (o + h + l + c) / 4.0
+    ha_close = (o + h + low + c) / 4.0
     ha_open = ha_close.copy()
     # Seed first value
     ha_open[0] = (o[0] + c[0]) / 2.0
@@ -54,7 +54,7 @@ def heiken_ashi(df: pd.DataFrame) -> pd.DataFrame:
     ha_low = (
         pd.concat(
             [
-                pd.Series(l),
+                pd.Series(low),
                 pd.Series(ha_open),
                 pd.Series(ha_close),
             ],

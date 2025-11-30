@@ -5,11 +5,9 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from stockcharts.screener.rsi_divergence import (
-    RSIDivergenceResult,
-    save_results_to_csv,
-    screen_rsi_divergence,
-)
+from stockcharts.screener.rsi_divergence import (RSIDivergenceResult,
+                                                 save_results_to_csv,
+                                                 screen_rsi_divergence)
 
 
 @pytest.fixture
@@ -83,8 +81,14 @@ def test_screen_rsi_divergence_bullish_filter_includes_bullish(
     mock_ohlc_with_rsi, mock_bullish_divergence_result
 ):
     """Test divergence_type='bullish' includes bullish divergences."""
-    with patch("stockcharts.screener.rsi_divergence.fetch_ohlc", return_value=mock_ohlc_with_rsi):
-        with patch("stockcharts.screener.rsi_divergence.compute_rsi", return_value=mock_ohlc_with_rsi["RSI"]):
+    with patch(
+        "stockcharts.screener.rsi_divergence.fetch_ohlc",
+        return_value=mock_ohlc_with_rsi,
+    ):
+        with patch(
+            "stockcharts.screener.rsi_divergence.compute_rsi",
+            return_value=mock_ohlc_with_rsi["RSI"],
+        ):
             with patch(
                 "stockcharts.screener.rsi_divergence.detect_divergence",
                 return_value=mock_bullish_divergence_result,
@@ -102,8 +106,14 @@ def test_screen_rsi_divergence_bearish_filter_includes_bearish(
     mock_ohlc_with_rsi, mock_bearish_divergence_result
 ):
     """Test divergence_type='bearish' includes bearish divergences."""
-    with patch("stockcharts.screener.rsi_divergence.fetch_ohlc", return_value=mock_ohlc_with_rsi):
-        with patch("stockcharts.screener.rsi_divergence.compute_rsi", return_value=mock_ohlc_with_rsi["RSI"]):
+    with patch(
+        "stockcharts.screener.rsi_divergence.fetch_ohlc",
+        return_value=mock_ohlc_with_rsi,
+    ):
+        with patch(
+            "stockcharts.screener.rsi_divergence.compute_rsi",
+            return_value=mock_ohlc_with_rsi["RSI"],
+        ):
             with patch(
                 "stockcharts.screener.rsi_divergence.detect_divergence",
                 return_value=mock_bearish_divergence_result,
@@ -138,25 +148,45 @@ def test_screen_rsi_divergence_all_filter_includes_both(mock_ohlc_with_rsi):
         ),
     }
 
-    with patch("stockcharts.screener.rsi_divergence.fetch_ohlc", return_value=mock_ohlc_with_rsi):
-        with patch("stockcharts.screener.rsi_divergence.compute_rsi", return_value=mock_ohlc_with_rsi["RSI"]):
-            with patch("stockcharts.screener.rsi_divergence.detect_divergence", return_value=both_result):
-                results = screen_rsi_divergence(tickers=["TEST"], divergence_type="all", lookback=60)
+    with patch(
+        "stockcharts.screener.rsi_divergence.fetch_ohlc",
+        return_value=mock_ohlc_with_rsi,
+    ):
+        with patch(
+            "stockcharts.screener.rsi_divergence.compute_rsi",
+            return_value=mock_ohlc_with_rsi["RSI"],
+        ):
+            with patch(
+                "stockcharts.screener.rsi_divergence.detect_divergence",
+                return_value=both_result,
+            ):
+                results = screen_rsi_divergence(
+                    tickers=["TEST"], divergence_type="all", lookback=60
+                )
 
     assert len(results) == 1
     assert "bullish & bearish" in results[0].divergence_type.lower()
 
 
-def test_screen_rsi_divergence_exclude_breakouts_filters_bullish(mock_ohlc_with_rsi, mock_bullish_divergence_result):
+def test_screen_rsi_divergence_exclude_breakouts_filters_bullish(
+    mock_ohlc_with_rsi, mock_bullish_divergence_result
+):
     """Test exclude_breakouts=True filters out completed breakouts."""
-    with patch("stockcharts.screener.rsi_divergence.fetch_ohlc", return_value=mock_ohlc_with_rsi):
-        with patch("stockcharts.screener.rsi_divergence.compute_rsi", return_value=mock_ohlc_with_rsi["RSI"]):
+    with patch(
+        "stockcharts.screener.rsi_divergence.fetch_ohlc",
+        return_value=mock_ohlc_with_rsi,
+    ):
+        with patch(
+            "stockcharts.screener.rsi_divergence.compute_rsi",
+            return_value=mock_ohlc_with_rsi["RSI"],
+        ):
             with patch(
                 "stockcharts.screener.rsi_divergence.detect_divergence",
                 return_value=mock_bullish_divergence_result,
             ):
                 with patch(
-                    "stockcharts.screener.rsi_divergence.check_breakout_occurred", return_value=True
+                    "stockcharts.screener.rsi_divergence.check_breakout_occurred",
+                    return_value=True,
                 ):  # Breakout happened
                     results = screen_rsi_divergence(
                         tickers=["TEST"],
@@ -173,14 +203,21 @@ def test_screen_rsi_divergence_exclude_breakouts_includes_non_breakout(
     mock_ohlc_with_rsi, mock_bullish_divergence_result
 ):
     """Test exclude_breakouts=True includes divergences without breakout."""
-    with patch("stockcharts.screener.rsi_divergence.fetch_ohlc", return_value=mock_ohlc_with_rsi):
-        with patch("stockcharts.screener.rsi_divergence.compute_rsi", return_value=mock_ohlc_with_rsi["RSI"]):
+    with patch(
+        "stockcharts.screener.rsi_divergence.fetch_ohlc",
+        return_value=mock_ohlc_with_rsi,
+    ):
+        with patch(
+            "stockcharts.screener.rsi_divergence.compute_rsi",
+            return_value=mock_ohlc_with_rsi["RSI"],
+        ):
             with patch(
                 "stockcharts.screener.rsi_divergence.detect_divergence",
                 return_value=mock_bullish_divergence_result,
             ):
                 with patch(
-                    "stockcharts.screener.rsi_divergence.check_breakout_occurred", return_value=False
+                    "stockcharts.screener.rsi_divergence.check_breakout_occurred",
+                    return_value=False,
                 ):  # No breakout
                     results = screen_rsi_divergence(
                         tickers=["TEST"],
@@ -197,14 +234,21 @@ def test_screen_rsi_divergence_exclude_failed_breakouts_filters_bearish(
     mock_ohlc_with_rsi, mock_bearish_divergence_result
 ):
     """Test exclude_failed_breakouts=True filters out failed attempts."""
-    with patch("stockcharts.screener.rsi_divergence.fetch_ohlc", return_value=mock_ohlc_with_rsi):
-        with patch("stockcharts.screener.rsi_divergence.compute_rsi", return_value=mock_ohlc_with_rsi["RSI"]):
+    with patch(
+        "stockcharts.screener.rsi_divergence.fetch_ohlc",
+        return_value=mock_ohlc_with_rsi,
+    ):
+        with patch(
+            "stockcharts.screener.rsi_divergence.compute_rsi",
+            return_value=mock_ohlc_with_rsi["RSI"],
+        ):
             with patch(
                 "stockcharts.screener.rsi_divergence.detect_divergence",
                 return_value=mock_bearish_divergence_result,
             ):
                 with patch(
-                    "stockcharts.screener.rsi_divergence.check_failed_breakout", return_value=True
+                    "stockcharts.screener.rsi_divergence.check_failed_breakout",
+                    return_value=True,
                 ):  # Failed attempt
                     results = screen_rsi_divergence(
                         tickers=["TEST"],
@@ -217,44 +261,74 @@ def test_screen_rsi_divergence_exclude_failed_breakouts_filters_bearish(
     assert len(results) == 0
 
 
-def test_screen_rsi_divergence_price_filter_min(mock_ohlc_with_rsi, mock_bullish_divergence_result):
+def test_screen_rsi_divergence_price_filter_min(
+    mock_ohlc_with_rsi, mock_bullish_divergence_result
+):
     """Test min_price filter excludes low-priced stocks."""
-    with patch("stockcharts.screener.rsi_divergence.fetch_ohlc", return_value=mock_ohlc_with_rsi):
-        with patch("stockcharts.screener.rsi_divergence.compute_rsi", return_value=mock_ohlc_with_rsi["RSI"]):
+    with patch(
+        "stockcharts.screener.rsi_divergence.fetch_ohlc",
+        return_value=mock_ohlc_with_rsi,
+    ):
+        with patch(
+            "stockcharts.screener.rsi_divergence.compute_rsi",
+            return_value=mock_ohlc_with_rsi["RSI"],
+        ):
             with patch(
                 "stockcharts.screener.rsi_divergence.detect_divergence",
                 return_value=mock_bullish_divergence_result,
             ):
                 # Current price is ~149.5, set min above that
                 results = screen_rsi_divergence(
-                    tickers=["TEST"], divergence_type="bullish", min_price=200.0, lookback=60
+                    tickers=["TEST"],
+                    divergence_type="bullish",
+                    min_price=200.0,
+                    lookback=60,
                 )
 
     # Should be filtered out
     assert len(results) == 0
 
 
-def test_screen_rsi_divergence_price_filter_max(mock_ohlc_with_rsi, mock_bullish_divergence_result):
+def test_screen_rsi_divergence_price_filter_max(
+    mock_ohlc_with_rsi, mock_bullish_divergence_result
+):
     """Test max_price filter excludes high-priced stocks."""
-    with patch("stockcharts.screener.rsi_divergence.fetch_ohlc", return_value=mock_ohlc_with_rsi):
-        with patch("stockcharts.screener.rsi_divergence.compute_rsi", return_value=mock_ohlc_with_rsi["RSI"]):
+    with patch(
+        "stockcharts.screener.rsi_divergence.fetch_ohlc",
+        return_value=mock_ohlc_with_rsi,
+    ):
+        with patch(
+            "stockcharts.screener.rsi_divergence.compute_rsi",
+            return_value=mock_ohlc_with_rsi["RSI"],
+        ):
             with patch(
                 "stockcharts.screener.rsi_divergence.detect_divergence",
                 return_value=mock_bullish_divergence_result,
             ):
                 # Current price is ~149.5, set max below that
                 results = screen_rsi_divergence(
-                    tickers=["TEST"], divergence_type="bullish", max_price=50.0, lookback=60
+                    tickers=["TEST"],
+                    divergence_type="bullish",
+                    max_price=50.0,
+                    lookback=60,
                 )
 
     # Should be filtered out
     assert len(results) == 0
 
 
-def test_screen_rsi_divergence_volume_filter(mock_ohlc_with_rsi, mock_bullish_divergence_result):
+def test_screen_rsi_divergence_volume_filter(
+    mock_ohlc_with_rsi, mock_bullish_divergence_result
+):
     """Test min_volume filter excludes low-volume stocks."""
-    with patch("stockcharts.screener.rsi_divergence.fetch_ohlc", return_value=mock_ohlc_with_rsi):
-        with patch("stockcharts.screener.rsi_divergence.compute_rsi", return_value=mock_ohlc_with_rsi["RSI"]):
+    with patch(
+        "stockcharts.screener.rsi_divergence.fetch_ohlc",
+        return_value=mock_ohlc_with_rsi,
+    ):
+        with patch(
+            "stockcharts.screener.rsi_divergence.compute_rsi",
+            return_value=mock_ohlc_with_rsi["RSI"],
+        ):
             with patch(
                 "stockcharts.screener.rsi_divergence.detect_divergence",
                 return_value=mock_bullish_divergence_result,
@@ -271,15 +345,25 @@ def test_screen_rsi_divergence_volume_filter(mock_ohlc_with_rsi, mock_bullish_di
     assert len(results) == 0
 
 
-def test_screen_rsi_divergence_no_divergence_excludes(mock_ohlc_with_rsi, mock_no_divergence_result):
+def test_screen_rsi_divergence_no_divergence_excludes(
+    mock_ohlc_with_rsi, mock_no_divergence_result
+):
     """Test that stocks with no divergence are excluded."""
-    with patch("stockcharts.screener.rsi_divergence.fetch_ohlc", return_value=mock_ohlc_with_rsi):
-        with patch("stockcharts.screener.rsi_divergence.compute_rsi", return_value=mock_ohlc_with_rsi["RSI"]):
+    with patch(
+        "stockcharts.screener.rsi_divergence.fetch_ohlc",
+        return_value=mock_ohlc_with_rsi,
+    ):
+        with patch(
+            "stockcharts.screener.rsi_divergence.compute_rsi",
+            return_value=mock_ohlc_with_rsi["RSI"],
+        ):
             with patch(
                 "stockcharts.screener.rsi_divergence.detect_divergence",
                 return_value=mock_no_divergence_result,
             ):
-                results = screen_rsi_divergence(tickers=["TEST"], divergence_type="all", lookback=60)
+                results = screen_rsi_divergence(
+                    tickers=["TEST"], divergence_type="all", lookback=60
+                )
 
     assert len(results) == 0
 
@@ -302,9 +386,18 @@ def test_screen_rsi_divergence_3point_with_scoring(mock_ohlc_with_rsi):
         "bearish_indices": None,
     }
 
-    with patch("stockcharts.screener.rsi_divergence.fetch_ohlc", return_value=mock_ohlc_with_rsi):
-        with patch("stockcharts.screener.rsi_divergence.compute_rsi", return_value=mock_ohlc_with_rsi["RSI"]):
-            with patch("stockcharts.screener.rsi_divergence.detect_divergence", return_value=three_point_result):
+    with patch(
+        "stockcharts.screener.rsi_divergence.fetch_ohlc",
+        return_value=mock_ohlc_with_rsi,
+    ):
+        with patch(
+            "stockcharts.screener.rsi_divergence.compute_rsi",
+            return_value=mock_ohlc_with_rsi["RSI"],
+        ):
+            with patch(
+                "stockcharts.screener.rsi_divergence.detect_divergence",
+                return_value=three_point_result,
+            ):
                 results = screen_rsi_divergence(
                     tickers=["TEST"],
                     divergence_type="bullish",
@@ -319,10 +412,18 @@ def test_screen_rsi_divergence_3point_with_scoring(mock_ohlc_with_rsi):
     assert len(results[0].bullish_indices) == 6  # 3-point has 6 indices
 
 
-def test_screen_rsi_divergence_ema_deriv_pivot_method(mock_ohlc_with_rsi, mock_bullish_divergence_result):
+def test_screen_rsi_divergence_ema_deriv_pivot_method(
+    mock_ohlc_with_rsi, mock_bullish_divergence_result
+):
     """Test screener with ema-deriv pivot detection method."""
-    with patch("stockcharts.screener.rsi_divergence.fetch_ohlc", return_value=mock_ohlc_with_rsi):
-        with patch("stockcharts.screener.rsi_divergence.compute_rsi", return_value=mock_ohlc_with_rsi["RSI"]):
+    with patch(
+        "stockcharts.screener.rsi_divergence.fetch_ohlc",
+        return_value=mock_ohlc_with_rsi,
+    ):
+        with patch(
+            "stockcharts.screener.rsi_divergence.compute_rsi",
+            return_value=mock_ohlc_with_rsi["RSI"],
+        ):
             with patch(
                 "stockcharts.screener.rsi_divergence.detect_divergence",
                 return_value=mock_bullish_divergence_result,

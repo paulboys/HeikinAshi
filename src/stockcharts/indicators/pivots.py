@@ -7,7 +7,7 @@ Returns pivot indices for price & RSI along with metadata.
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 import pandas as pd
 
@@ -30,7 +30,7 @@ def ema_derivative_pivots(
     rsi_col: str = "RSI",
     price_span: int = 5,
     rsi_span: int = 5,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Detect pivot highs/lows via sign changes in first derivative of EMA-smoothed series.
 
     Method:

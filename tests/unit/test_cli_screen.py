@@ -62,7 +62,10 @@ def test_main_screen_successful_run(mock_screen_results, tmp_path):
     """Test successful screening with results saved to CSV."""
     output_file = tmp_path / "test_output.csv"
 
-    with patch("sys.argv", ["stockcharts-screen", "--color", "green", "--output", str(output_file)]):
+    with patch(
+        "sys.argv",
+        ["stockcharts-screen", "--color", "green", "--output", str(output_file)],
+    ):
         with patch("stockcharts.cli.screen_nasdaq", return_value=mock_screen_results):
             with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                 result = main_screen()
@@ -86,7 +89,10 @@ def test_main_screen_no_results(mock_empty_results, tmp_path):
     """Test screening with no matching results."""
     output_file = tmp_path / "empty_output.csv"
 
-    with patch("sys.argv", ["stockcharts-screen", "--color", "red", "--output", str(output_file)]):
+    with patch(
+        "sys.argv",
+        ["stockcharts-screen", "--color", "red", "--output", str(output_file)],
+    ):
         with patch("stockcharts.cli.screen_nasdaq", return_value=mock_empty_results):
             with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                 result = main_screen()
@@ -130,8 +136,19 @@ def test_main_screen_input_filter_success(mock_screen_results, tmp_path):
 
     output_file = tmp_path / "filtered_output.csv"
 
-    with patch("sys.argv", ["stockcharts-screen", "--input-filter", str(filter_file), "--output", str(output_file)]):
-        with patch("stockcharts.cli.screen_nasdaq", return_value=mock_screen_results) as mock_screen:
+    with patch(
+        "sys.argv",
+        [
+            "stockcharts-screen",
+            "--input-filter",
+            str(filter_file),
+            "--output",
+            str(output_file),
+        ],
+    ):
+        with patch(
+            "stockcharts.cli.screen_nasdaq", return_value=mock_screen_results
+        ) as mock_screen:
             with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                 result = main_screen()
 
@@ -163,7 +180,9 @@ def test_main_screen_with_filters(mock_screen_results, tmp_path):
             str(output_file),
         ],
     ):
-        with patch("stockcharts.cli.screen_nasdaq", return_value=mock_screen_results) as mock_screen:
+        with patch(
+            "stockcharts.cli.screen_nasdaq", return_value=mock_screen_results
+        ) as mock_screen:
             with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                 result = main_screen()
 
@@ -209,8 +228,13 @@ def test_main_screen_with_limit(mock_screen_results, tmp_path):
     """Test screening with ticker limit."""
     output_file = tmp_path / "limited.csv"
 
-    with patch("sys.argv", ["stockcharts-screen", "--limit", "100", "--output", str(output_file)]):
-        with patch("stockcharts.cli.screen_nasdaq", return_value=mock_screen_results) as mock_screen:
+    with patch(
+        "sys.argv",
+        ["stockcharts-screen", "--limit", "100", "--output", str(output_file)],
+    ):
+        with patch(
+            "stockcharts.cli.screen_nasdaq", return_value=mock_screen_results
+        ) as mock_screen:
             with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                 result = main_screen()
 
@@ -240,7 +264,9 @@ def test_main_screen_custom_period_and_lookback(mock_screen_results, tmp_path):
             str(output_file),
         ],
     ):
-        with patch("stockcharts.cli.screen_nasdaq", return_value=mock_screen_results) as mock_screen:
+        with patch(
+            "stockcharts.cli.screen_nasdaq", return_value=mock_screen_results
+        ) as mock_screen:
             with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                 result = main_screen()
 
@@ -271,7 +297,9 @@ def test_main_screen_custom_date_range(mock_screen_results, tmp_path):
             str(output_file),
         ],
     ):
-        with patch("stockcharts.cli.screen_nasdaq", return_value=mock_screen_results) as mock_screen:
+        with patch(
+            "stockcharts.cli.screen_nasdaq", return_value=mock_screen_results
+        ) as mock_screen:
             result = main_screen()
 
     assert result == 0
@@ -286,8 +314,12 @@ def test_main_screen_debug_flag(mock_screen_results, tmp_path):
     """Test --debug flag enables detailed error messages."""
     output_file = tmp_path / "debug.csv"
 
-    with patch("sys.argv", ["stockcharts-screen", "--debug", "--output", str(output_file)]):
-        with patch("stockcharts.cli.screen_nasdaq", return_value=mock_screen_results) as mock_screen:
+    with patch(
+        "sys.argv", ["stockcharts-screen", "--debug", "--output", str(output_file)]
+    ):
+        with patch(
+            "stockcharts.cli.screen_nasdaq", return_value=mock_screen_results
+        ) as mock_screen:
             result = main_screen()
 
     assert result == 0
