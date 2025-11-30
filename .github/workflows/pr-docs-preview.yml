@@ -1,0 +1,59 @@
+name: PR Docs Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build-and-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements-docs.txt ]; then pip install -r requirements-docs.txt; fi
+          pip install mkdocs mkdocs-material mkdocstrings[python]
+          pip install -e .
+
+      - name: Build site
+        run: |
+          mkdocs build --strict
+
+      - name: Publish PR preview to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          destination_dir: pr-preview/${{ github.event.number }}
+          keep_files: true
+          force_orphan: false
+          commit_message: "docs: PR #${{ github.event.number }} preview"
+
+      - name: Comment preview link on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.issue.number;
+            const previewUrl = `https://paulboys.github.io/HeikinAshi/pr-preview/${prNumber}/`;
+            const body = `📚 Documentation preview for PR #${prNumber}:\n\n${previewUrl}`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body,
+            });
