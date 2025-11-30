@@ -15,6 +15,15 @@ nav:
   - Parameters: parameters.md
   - Volume Filtering: volume.md
   - Trading Styles: trading_styles.md
+  - API Reference:
+      - Overview: api/index.md
+      - Divergence Detection: api/divergence.md
+      - Pivot Detection: api/pivots.md
+      - RSI Indicator: api/rsi.md
+      - Screener Functions: api/screener.md
+      - Data Fetching: api/data.md
+  - Contributing: contributing.md
+  - Copilot Guide: copilot.md
   - Roadmap: roadmap.md
   - Legacy Mapping: legacy.md
   - Deprecation Notice: DEPRECATION_NOTICE.md
@@ -49,6 +58,18 @@ markdown_extensions:
 
 plugins:
   - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            members_order: source
+            heading_level: 2
 
 extra:
   social:
