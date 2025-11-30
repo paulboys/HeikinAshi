@@ -6,6 +6,7 @@ HA_Open = (prev_HA_Open + prev_HA_Close) / 2  (seed first row as (O0 + C0)/2)
 HA_High = max(H, HA_Open, HA_Close)
 HA_Low = min(L, HA_Open, HA_Close)
 """
+
 from __future__ import annotations
 
 import pandas as pd
@@ -38,21 +39,36 @@ def heiken_ashi(df: pd.DataFrame) -> pd.DataFrame:
     for i in range(1, len(df)):
         ha_open[i] = (ha_open[i - 1] + ha_close[i - 1]) / 2.0
 
-    ha_high = pd.concat([
-        pd.Series(h),
-        pd.Series(ha_open),
-        pd.Series(ha_close),
-    ], axis=1).max(axis=1).values
-    ha_low = pd.concat([
-        pd.Series(l),
-        pd.Series(ha_open),
-        pd.Series(ha_close),
-    ], axis=1).min(axis=1).values
+    ha_high = (
+        pd.concat(
+            [
+                pd.Series(h),
+                pd.Series(ha_open),
+                pd.Series(ha_close),
+            ],
+            axis=1,
+        )
+        .max(axis=1)
+        .values
+    )
+    ha_low = (
+        pd.concat(
+            [
+                pd.Series(l),
+                pd.Series(ha_open),
+                pd.Series(ha_close),
+            ],
+            axis=1,
+        )
+        .min(axis=1)
+        .values
+    )
 
     ha["HA_Open"] = ha_open
     ha["HA_Close"] = ha_close
     ha["HA_High"] = ha_high
     ha["HA_Low"] = ha_low
     return ha[["HA_Open", "HA_High", "HA_Low", "HA_Close"]]
+
 
 __all__ = ["heiken_ashi"]

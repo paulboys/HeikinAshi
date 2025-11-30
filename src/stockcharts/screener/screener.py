@@ -2,22 +2,24 @@
 
 Screens NASDAQ stocks for bullish (green) or bearish (red) Heiken Ashi patterns.
 """
+
 from __future__ import annotations
 
 import time
-from typing import List, Literal, Optional
 from dataclasses import dataclass
+from typing import List, Literal, Optional
 
 import pandas as pd
 
-from stockcharts.data.fetch import fetch_ohlc
 from stockcharts.charts.heiken_ashi import heiken_ashi
+from stockcharts.data.fetch import fetch_ohlc
 from stockcharts.screener.nasdaq import get_nasdaq_tickers
 
 
 @dataclass
 class ScreenResult:
     """Result for a single ticker screening."""
+
     ticker: str
     color: Literal["green", "red"]
     previous_color: Literal["green", "red"]
@@ -31,14 +33,14 @@ class ScreenResult:
 
 def get_candle_color(ha_df: pd.DataFrame, index: int = -1) -> Literal["green", "red"]:
     """Determine if a Heiken Ashi candle is green or red.
-    
+
     Parameters
     ----------
     ha_df : pd.DataFrame
         Heiken Ashi DataFrame with columns HA_Open, HA_Close
     index : int
         Index of the candle to check (-1 for most recent, -2 for previous, etc.)
-    
+
     Returns
     -------
     "green" if HA_Close >= HA_Open (bullish), "red" otherwise (bearish)
@@ -53,10 +55,10 @@ def screen_ticker(
     lookback: Optional[str] = None,
     start: Optional[str] = None,
     end: Optional[str] = None,
-    debug: bool = False
+    debug: bool = False,
 ) -> Optional[ScreenResult]:
     """Screen a single ticker for its latest Heiken Ashi candle color.
-    
+
     Parameters
     ----------
     ticker : str
@@ -69,36 +71,38 @@ def screen_ticker(
         Start date YYYY-MM-DD
     end : str | None
         End date YYYY-MM-DD
-    
+
     Returns
     -------
     ScreenResult or None if data unavailable or error occurs
     """
     try:
         # Fetch recent data
-        df = fetch_ohlc(ticker, interval=period, lookback=lookback, start=start, end=end)
-        
+        df = fetch_ohlc(
+            ticker, interval=period, lookback=lookback, start=start, end=end
+        )
+
         if df.empty or len(df) < 2:
             return None
-        
+
         # Compute Heiken Ashi
         ha = heiken_ashi(df)
-        
+
         # Need at least 2 candles to detect color change
         if ha.empty or len(ha) < 2:
             return None
-        
+
         # Get color of most recent candle and previous candle
         current_color = get_candle_color(ha, index=-1)
         previous_color = get_candle_color(ha, index=-2)
         color_changed = current_color != previous_color
-        
+
         last_row = ha.iloc[-1]
-        
+
         # Calculate average volume (use last 20 periods or all available if less)
         volume_window = min(20, len(df))
-        avg_volume = float(df['Volume'].tail(volume_window).mean())
-        
+        avg_volume = float(df["Volume"].tail(volume_window).mean())
+
         return ScreenResult(
             ticker=ticker,
             color=current_color,
@@ -108,9 +112,9 @@ def screen_ticker(
             ha_close=float(last_row["HA_Close"]),
             last_date=str(ha.index[-1].date()),
             interval=period,  # Store the aggregation period
-            avg_volume=avg_volume
+            avg_volume=avg_volume,
         )
-    
+
     except Exception as e:
         # Silently skip tickers with errors (delisted, no data, etc.)
         if debug:
@@ -131,10 +135,10 @@ def screen_nasdaq(
     debug: bool = False,
     min_volume: Optional[float] = None,
     min_price: Optional[float] = None,
-    ticker_filter: Optional[List[str]] = None
+    ticker_filter: Optional[List[str]] = None,
 ) -> List[ScreenResult]:
     """Screen NASDAQ stocks for Heiken Ashi candle colors.
-    
+
     Parameters
     ----------
     color_filter : "green" | "red" | "all"
@@ -168,7 +172,7 @@ def screen_nasdaq(
         Optional list of ticker symbols to screen. If provided, only these tickers
         will be screened instead of all NASDAQ stocks. Useful for filtering by
         a pre-screened list (e.g., from RSI divergence results).
-    
+
     Returns
     -------
     List[ScreenResult]
@@ -181,23 +185,29 @@ def screen_nasdaq(
             tickers = tickers[:limit]
     else:
         tickers = get_nasdaq_tickers(limit=limit)
-    
+
     results = []
-    
+
     change_msg = " that just changed color" if changed_only else ""
     filter_msg = " (filtered list)" if ticker_filter is not None else ""
     if verbose:
-        print(f"Screening {len(tickers)} tickers{filter_msg} for {color_filter} "
-              f"Heiken Ashi candles{change_msg} ({period} period)...")
+        print(
+            f"Screening {len(tickers)} tickers{filter_msg} for {color_filter} "
+            f"Heiken Ashi candles{change_msg} ({period} period)..."
+        )
         print("-" * 70)
-    
+
     for i, ticker in enumerate(tickers, 1):
         if verbose and i % 10 == 0:
-            print(f"Progress: {i}/{len(tickers)} tickers screened, "
-                  f"{len(results)} matches found...")
-        
-        result = screen_ticker(ticker, period=period, lookback=lookback, start=start, end=end, debug=debug)
-        
+            print(
+                f"Progress: {i}/{len(tickers)} tickers screened, "
+                f"{len(results)} matches found..."
+            )
+
+        result = screen_ticker(
+            ticker, period=period, lookback=lookback, start=start, end=end, debug=debug
+        )
+
         if result is not None:
             # Apply color filter
             if color_filter == "all" or result.color == color_filter:
@@ -208,15 +218,17 @@ def screen_nasdaq(
                         # Apply price filter if specified
                         if min_price is None or result.ha_close >= min_price:
                             results.append(result)
-        
+
         # Rate limiting
         if delay > 0 and i < len(tickers):
             time.sleep(delay)
-    
+
     if verbose:
         print("-" * 70)
-        print(f"Screening complete: {len(results)} {color_filter} candles{change_msg} found")
-    
+        print(
+            f"Screening complete: {len(results)} {color_filter} candles{change_msg} found"
+        )
+
     return sorted(results, key=lambda x: x.ticker)
 
 

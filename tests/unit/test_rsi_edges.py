@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+
 from stockcharts.indicators.rsi import compute_rsi
 
 
@@ -11,7 +12,7 @@ def test_rsi_invalid_period():
 
 
 def test_rsi_constant_series():
-    prices = pd.Series([100]*50)
+    prices = pd.Series([100] * 50)
     rsi = compute_rsi(prices, period=14)
     assert len(rsi) == len(prices)
     # RSI may be NaN at leading positions; ensure values are within bounds where not NaN

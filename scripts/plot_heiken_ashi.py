@@ -9,22 +9,24 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
 
-from stockcharts.data.fetch import fetch_ohlc
 from stockcharts.charts.heiken_ashi import heiken_ashi
+from stockcharts.data.fetch import fetch_ohlc
 
 
-def plot_heiken_ashi(ticker: str, start: str | None, end: str | None, interval: str, output: Path) -> None:
+def plot_heiken_ashi(
+    ticker: str, start: str | None, end: str | None, interval: str, output: Path
+) -> None:
     df = fetch_ohlc(ticker, start=start, end=end, interval=interval)
     ha = heiken_ashi(df)
 
     fig, ax = plt.subplots(figsize=(10, 5))
-    
+
     # Convert dates to matplotlib date numbers for x-axis
     dates = mdates.date2num(ha.index.to_pydatetime())
-    
+
     # Calculate bar width based on data interval (in days)
     if interval == "1d":
         width = 0.6
@@ -34,27 +36,43 @@ def plot_heiken_ashi(ticker: str, start: str | None, end: str | None, interval: 
         width = 20.0
     else:
         width = 0.6
-    
+
     # Basic candlestick using HA values with dates
-    colors = ["green" if ha_close >= ha_open else "red" for ha_open, ha_close in zip(ha["HA_Open"], ha["HA_Close"])]
+    colors = [
+        "green" if ha_close >= ha_open else "red"
+        for ha_open, ha_close in zip(ha["HA_Open"], ha["HA_Close"])
+    ]
 
     for i, (date_num, (idx, row)) in enumerate(zip(dates, ha.iterrows())):
         # Vertical line for high-low range
-        ax.plot([date_num, date_num], [row["HA_Low"], row["HA_High"]], color=colors[i], linewidth=1)
+        ax.plot(
+            [date_num, date_num],
+            [row["HA_Low"], row["HA_High"]],
+            color=colors[i],
+            linewidth=1,
+        )
         # Rectangle for open-close body
         lower = min(row["HA_Open"], row["HA_Close"])
         upper = max(row["HA_Open"], row["HA_Close"])
-        ax.add_patch(plt.Rectangle((date_num - width / 2, lower), width, upper - lower if upper - lower != 0 else 0.001, color=colors[i], alpha=0.7))
+        ax.add_patch(
+            plt.Rectangle(
+                (date_num - width / 2, lower),
+                width,
+                upper - lower if upper - lower != 0 else 0.001,
+                color=colors[i],
+                alpha=0.7,
+            )
+        )
 
     # Format x-axis as dates
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
     ax.xaxis.set_major_locator(mdates.AutoDateLocator())
     fig.autofmt_xdate()  # Rotate date labels for better readability
-    
+
     # Ensure dates are visible at the bottom
     ax.set_xlabel("Date")
-    plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha='right')
-    
+    plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha="right")
+
     ax.set_title(f"Heiken Ashi: {ticker} ({interval})")
     ax.set_ylabel("Price")
     ax.grid(True, alpha=0.3)

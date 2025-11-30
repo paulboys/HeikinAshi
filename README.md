@@ -1,6 +1,10 @@
 # StockCharts
 
 [![CI](https://github.com/paulboys/HeikinAshi/actions/workflows/ci.yml/badge.svg)](https://github.com/paulboys/HeikinAshi/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/paulboys/HeikinAshi/branch/main/graph/badge.svg)](https://codecov.io/gh/paulboys/HeikinAshi)
+[![Docs](https://img.shields.io/website?url=https%3A%2F%2Fpaulboys.github.io%2FHeikinAshi%2F&label=docs)](https://paulboys.github.io/HeikinAshi/)
+
+[![CI](https://github.com/paulboys/HeikinAshi/actions/workflows/ci.yml/badge.svg)](https://github.com/paulboys/HeikinAshi/actions/workflows/ci.yml)
 [![PyPI version](https://img.shields.io/pypi/v/stockcharts.svg)](https://pypi.org/project/stockcharts/)
 [![Python versions](https://img.shields.io/pypi/pyversions/stockcharts.svg)](https://pypi.org/project/stockcharts/)
 [![Downloads](https://static.pepy.tech/badge/stockcharts)](https://pepy.tech/project/stockcharts)
