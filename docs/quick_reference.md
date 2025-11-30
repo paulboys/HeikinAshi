@@ -2,8 +2,10 @@
 
 ## Core Commands
 ```
-stockcharts-screen --color green --interval 1d
-stockcharts-screen --color red --interval 1wk
+stockcharts-screen --color green --period 1d
+stockcharts-screen --color red --period 1wk
+stockcharts-screen --min-run-percentile 90 --period 1d          # Extended runs
+stockcharts-screen --max-run-percentile 25 --period 1d          # Early runs
 stockcharts-rsi-divergence --type bullish --min-price 10
 stockcharts-rsi-divergence --type bearish --min-volume 2_000_000
 stockcharts-plot-divergence --ticker NVDA --period 6mo
@@ -14,7 +16,9 @@ stockcharts-plot-divergence --ticker NVDA --period 6mo
 |------|---------|
 | Bullish divergences mid-price | `stockcharts-rsi-divergence --type bullish --min-price 10 --max-price 100 --period 6mo` |
 | Bearish exhaustion high caps | `stockcharts-rsi-divergence --type bearish --min-price 100 --period 1y` |
-| Green HA weekly continuation | `stockcharts-screen --color green --interval 1wk` |
+| Green HA weekly continuation | `stockcharts-screen --color green --period 1wk` |
+| Extended HA runs (top decile) | `stockcharts-screen --min-run-percentile 90 --period 1d` |
+| Mid-maturity HA runs (40–70%) | `stockcharts-screen --min-run-percentile 40 --max-run-percentile 70 --period 1d` |
 | Divergences liquid only | `stockcharts-rsi-divergence --min-volume 5_000_000` |
 | Intersect HA + RSI | `stockcharts-rsi-divergence --input-filter results/ha_green.csv --type bullish` |
 
@@ -54,8 +58,8 @@ stockcharts-screen --color all --output results/morning_scan.csv
 
 ### Weekly Bullish/Bearish Sets
 ```
-stockcharts-screen --color green --interval 1wk --output results/weekly_bullish.csv
-stockcharts-screen --color red --interval 1wk --output results/weekly_bearish.csv
+stockcharts-screen --color green --period 1wk --output results/weekly_bullish.csv
+stockcharts-screen --color red --period 1wk --output results/weekly_bearish.csv
 ```
 
 ### Batch Chart Generation (PowerShell)
@@ -68,7 +72,10 @@ foreach ($t in $tickers) { python scripts\plot_heiken_ashi.py --ticker $t --outp
 ```python
 from stockcharts.data.fetch import fetch_ohlc
 from stockcharts.charts.heiken_ashi import heiken_ashi
-df = fetch_ohlc('AAPL', interval='1d')
+from stockcharts.indicators.heiken_runs import compute_ha_run_stats
+
+df = fetch_ohlc('AAPL', period='1d', lookback='3mo')
 ha = heiken_ashi(df)
-print(ha.tail())
+stats = compute_ha_run_stats(ha)
+print(stats['run_length'], stats['run_percentile'])
 ```

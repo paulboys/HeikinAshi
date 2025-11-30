@@ -9,6 +9,7 @@ This section provides detailed API documentation for the StockCharts package, au
 - **[RSI Indicator](rsi.md)** - Relative Strength Index calculation
 - **[Screener](screener.md)** - Stock screening and filtering logic
 - **[Data Fetching](data.md)** - Market data retrieval and caching
+- **[Heiken Ashi Runs](heiken_runs.md)** - Run length and percentile statistics for trend maturity
 
 ## Usage
 
