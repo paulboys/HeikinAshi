@@ -31,8 +31,11 @@ Thank you for contributing to StockCharts! This guide outlines our expectations 
 - [ ] CI passes locally (`pytest`, `mkdocs build --strict`)
 
 ## Releasing
-- Semantic versioning. Bump version when features/changes warrant.
-- Tag releases; PyPI publish is handled via GitHub Actions.
+- **Semantic versioning** (MAJOR.MINOR.PATCH): Breaking changes bump major, features bump minor, fixes bump patch.
+- **Single source of truth**: Version is defined only in `pyproject.toml`. The package reads it via `importlib.metadata`.
+- To bump version: Edit `version = "X.Y.Z"` in `pyproject.toml` only. Do not edit `__init__.py`.
+- Tag releases with `git tag vX.Y.Z` after merging; PyPI publish is handled via GitHub Actions.
+- Verify version: `python -c "from stockcharts import __version__; print(__version__)"` or `stockcharts-screen --version`.
 
 ## Questions
 Open a GitHub issue or start a discussion. We appreciate your help!

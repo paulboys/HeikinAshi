@@ -47,9 +47,9 @@ results/
 *.png
 !heiken_ashi.png
 
-# Test files
-test_*.py
-debug_*.py
+# Test files (exclude test scripts in root, but include tests/ directory)
+/test_*.py
+/debug_*.py
 test_period.py
 test_nasdaq_fetch.py
 

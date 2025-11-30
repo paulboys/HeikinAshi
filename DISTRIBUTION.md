@@ -92,13 +92,15 @@ pytest tests/
 
 ### 1. Update Version Number
 
-Edit `pyproject.toml`:
+Edit `pyproject.toml` (single source of truth):
 
 ```toml
 [project]
 name = "stockcharts"
-version = "0.2.0"  # Increment this
+version = "0.2.0"  # Increment this - package reads via importlib.metadata
 ```
+
+**Note:** Do not edit `__version__` in `src/stockcharts/__init__.py` - it reads from package metadata automatically.
 
 ### 2. Build Distribution Files
 
