@@ -798,7 +798,13 @@ Examples:
         help="Output directory for chart images (default: charts/divergence/)",
     )
 
-    parser.add_argument("--interval", default="1d", help="Data aggregation interval (default: 1d)")
+    # Prefer --period for consistency; keep --interval as a deprecated alias
+    parser.add_argument("--period", default="1d", help="Data aggregation period (default: 1d)")
+    parser.add_argument(
+        "--interval",
+        default=None,
+        help="[Deprecated] Use --period instead (was: Data aggregation interval)",
+    )
 
     parser.add_argument(
         "--lookback",
@@ -890,7 +896,10 @@ Examples:
 
     print(f"Generating Price/RSI divergence charts for {len(tickers)} stocks...")
     print(f"Output directory: {args.output_dir}")
-    print(f"Interval: {args.interval}, Lookback: {args.lookback}, RSI Period: {args.rsi_period}")
+    # Backward compat: if --interval provided, override period
+    if getattr(args, "interval", None):
+        args.period = args.interval
+    print(f"Period: {args.period}, Lookback: {args.lookback}, RSI Period: {args.rsi_period}")
     print()
 
     import json
@@ -900,7 +909,7 @@ Examples:
         print(f"[{i}/{len(tickers)}] Plotting {ticker}...", end=" ")
 
         try:
-            data = fetch_ohlc(ticker, interval=args.interval, lookback=args.lookback)
+            data = fetch_ohlc(ticker, interval=args.period, lookback=args.lookback)
 
             # Try to get precomputed divergence indices from CSV
             precomputed = None
@@ -945,7 +954,7 @@ Examples:
                 precomputed_divergence=precomputed,
             )
 
-            output_path = os.path.join(args.output_dir, f"{ticker}_{args.interval}.png")
+            output_path = os.path.join(args.output_dir, f"{ticker}_{args.period}.png")
             fig.savefig(output_path, dpi=150, bbox_inches="tight")
             plt.close(fig)
 

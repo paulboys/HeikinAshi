@@ -61,11 +61,11 @@ for r in results:
 
 ## Plotting
 ```
-stockcharts-plot-divergence --ticker NVDA --period 6mo --interval 1d
+stockcharts-plot-divergence --ticker NVDA --period 6mo --period 1d
 ```
 Overlays price + RSI + detected divergence markers (using precomputed indices if provided).
 
-Note: `stockcharts-plot-divergence` currently uses `--interval` for aggregation (`1d`, `1wk`, `1mo`). Other commands have standardized on `--period`; plot divergence will migrate in a future release. This discrepancy is intentional—use `--interval` here until deprecation notice is published.
+Note: `stockcharts-plot-divergence` now uses `--period` for aggregation (`1d`, `1wk`, `1mo`) for consistency with other commands. The legacy `--interval` flag remains as a deprecated alias.
 
 ## Enhancements Implemented
 - Input filtering to intersect signals with HA screener output.

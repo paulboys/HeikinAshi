@@ -242,7 +242,7 @@ stockcharts-plot-divergence --max-plots 20 --rsi-period 21
 #### `stockcharts-plot-divergence` (Divergence Chart Generation)
 - `--input`: Input CSV file from RSI divergence screener
 - `--output-dir`: Directory for chart images (default: charts/divergence/)
-- `--interval`: Data aggregation interval: `1d`, `1wk`, `1mo` (default: 1d)
+- `--period`: Data aggregation period: `1d`, `1wk`, `1mo` (default: 1d)
 - `--lookback`: Historical data window (default: 3mo)
 - `--rsi-period`: RSI calculation period (default: 14)
 - `--swing-window`: Window for swing point detection (default: 5)
