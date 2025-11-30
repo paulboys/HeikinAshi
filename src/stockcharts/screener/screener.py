@@ -186,7 +186,7 @@ def screen_nasdaq(
     else:
         tickers = get_nasdaq_tickers(limit=limit)
 
-    results = []
+    results: list[ScreenResult] = []
 
     change_msg = " that just changed color" if changed_only else ""
     filter_msg = " (filtered list)" if ticker_filter is not None else ""

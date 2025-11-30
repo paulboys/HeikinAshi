@@ -28,7 +28,7 @@ jobs:
 
       - name: Install dev tooling (mypy, ruff, pydocstyle)
         run: |
-          pip install mypy ruff pydocstyle
+          pip install mypy ruff pydocstyle pandas-stubs types-requests
 
       - name: Static analysis (ruff)
         run: |

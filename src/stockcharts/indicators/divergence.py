@@ -208,7 +208,7 @@ def find_three_point_sequences(
         )
 
     # Sort by score descending (highest conviction first)
-    candidates.sort(key=lambda x: x["score"], reverse=True)
+    candidates.sort(key=lambda x: float(x["score"]), reverse=True)  # type: ignore[arg-type]
     return candidates
 
 

@@ -15,28 +15,34 @@ from stockcharts.screener.screener import (
 
 def test_get_candle_color_green():
     """Test get_candle_color returns green for bullish candle."""
-    df = pd.DataFrame({
-        "HA_Open": [100.0],
-        "HA_Close": [105.0],
-    })
+    df = pd.DataFrame(
+        {
+            "HA_Open": [100.0],
+            "HA_Close": [105.0],
+        }
+    )
     assert get_candle_color(df) == "green"
 
 
 def test_get_candle_color_red():
     """Test get_candle_color returns red for bearish candle."""
-    df = pd.DataFrame({
-        "HA_Open": [105.0],
-        "HA_Close": [100.0],
-    })
+    df = pd.DataFrame(
+        {
+            "HA_Open": [105.0],
+            "HA_Close": [100.0],
+        }
+    )
     assert get_candle_color(df) == "red"
 
 
 def test_get_candle_color_previous():
     """Test get_candle_color can check previous candle."""
-    df = pd.DataFrame({
-        "HA_Open": [100.0, 105.0],
-        "HA_Close": [105.0, 103.0],
-    })
+    df = pd.DataFrame(
+        {
+            "HA_Open": [100.0, 105.0],
+            "HA_Close": [105.0, 103.0],
+        }
+    )
     assert get_candle_color(df, index=-2) == "green"
     assert get_candle_color(df, index=-1) == "red"
 
@@ -45,9 +51,9 @@ def test_get_candle_color_previous():
 def test_screen_ticker_fetch_error(mock_fetch):
     """Test screen_ticker handles fetch errors gracefully."""
     mock_fetch.side_effect = Exception("Network error")
-    
+
     result = screen_ticker("AAPL", debug=True)
-    
+
     assert result is None
 
 
@@ -55,9 +61,9 @@ def test_screen_ticker_fetch_error(mock_fetch):
 def test_screen_ticker_empty_df(mock_fetch):
     """Test screen_ticker handles empty DataFrame."""
     mock_fetch.return_value = pd.DataFrame()
-    
+
     result = screen_ticker("AAPL")
-    
+
     assert result is None
 
 
@@ -78,9 +84,9 @@ def test_screen_nasdaq_ticker_filter(mock_screen_ticker, mock_get_tickers):
         avg_volume=50000000.0,
     )
     mock_screen_ticker.return_value = result
-    
+
     results = screen_nasdaq(ticker_filter=["AAPL"], delay=0, verbose=False)
-    
+
     # Should not have called get_nasdaq_tickers
     mock_get_tickers.assert_not_called()
     assert len(results) > 0
@@ -91,7 +97,7 @@ def test_screen_nasdaq_ticker_filter(mock_screen_ticker, mock_get_tickers):
 def test_screen_nasdaq_handles_errors(mock_screen_ticker, mock_get_tickers):
     """Test screen_nasdaq continues after individual ticker errors."""
     mock_get_tickers.return_value = ["AAPL", "INVALID", "MSFT"]
-    
+
     result1 = ScreenResult(
         ticker="AAPL",
         color="green",
@@ -103,7 +109,7 @@ def test_screen_nasdaq_handles_errors(mock_screen_ticker, mock_get_tickers):
         interval="1d",
         avg_volume=50000000.0,
     )
-    
+
     result2 = ScreenResult(
         ticker="MSFT",
         color="red",
@@ -115,11 +121,10 @@ def test_screen_nasdaq_handles_errors(mock_screen_ticker, mock_get_tickers):
         interval="1d",
         avg_volume=40000000.0,
     )
-    
+
     mock_screen_ticker.side_effect = [result1, None, result2]
-    
+
     results = screen_nasdaq(delay=0, limit=3, verbose=False)
-    
+
     # Should have 2 successful results, skipping the None
     assert len(results) == 2
-

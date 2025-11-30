@@ -116,8 +116,8 @@ def screen_rsi_divergence(
     total = len(tickers)
 
     for i, ticker_info in enumerate(tickers, 1):
-        if isinstance(ticker_info, tuple):
-            ticker, company_name = ticker_info
+        if isinstance(ticker_info, tuple):  # type: ignore[unreachable]
+            ticker, company_name = ticker_info  # type: ignore[unreachable]
         else:
             ticker = ticker_info
             company_name = ticker

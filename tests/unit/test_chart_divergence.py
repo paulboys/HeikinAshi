@@ -4,9 +4,11 @@ import pandas as pd
 import pytest
 from matplotlib.figure import Figure
 
-from stockcharts.charts.divergence import (_convert_precomputed_to_df,
-                                           _find_divergence_points,
-                                           plot_price_rsi)
+from stockcharts.charts.divergence import (
+    _convert_precomputed_to_df,
+    _find_divergence_points,
+    plot_price_rsi,
+)
 
 
 @pytest.fixture

@@ -26,7 +26,7 @@ def plot_price_rsi(
     figsize: tuple[float, float] = (14, 10),
     overbought: float = 70.0,
     oversold: float = 30.0,
-    precomputed_divergence: dict = None,
+    precomputed_divergence: dict | None = None,
 ) -> Figure:
     """
     Create a two-panel chart with candlestick price and RSI indicator.
