@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+_No changes yet._
+
+## [0.6.0] - 2025-11-30
 ### Added
 - Heiken Ashi run statistics (`run_length`, `run_percentile`) included in screener output CSV.
 - CLI filters `--min-run-percentile` and `--max-run-percentile` to target extended or early runs.
@@ -101,7 +104,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and 
 - Initial RSI divergence screener and chart plotting.
 - Heiken Ashi NASDAQ screener.
 
-[Unreleased]: https://github.com/paulboys/HeikinAshi/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/paulboys/HeikinAshi/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/paulboys/HeikinAshi/releases/tag/v0.6.0
+[0.5.0]: https://github.com/paulboys/HeikinAshi/releases/tag/v0.5.0
 [0.5.0]: https://github.com/paulboys/HeikinAshi/releases/tag/v0.5.0
 [0.4.1]: https://github.com/paulboys/HeikinAshi/releases/tag/v0.4.1
 [0.4.0]: https://github.com/paulboys/HeikinAshi/releases/tag/v0.4.0
