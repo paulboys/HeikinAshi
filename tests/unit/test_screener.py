@@ -81,6 +81,8 @@ def test_screen_nasdaq_ticker_filter(mock_screen_ticker, mock_get_tickers):
         last_date="2024-01-15",
         interval="1d",
         avg_volume=50000000.0,
+        run_length=3,
+        run_percentile=75.0,
     )
     mock_screen_ticker.return_value = result
 
@@ -107,6 +109,8 @@ def test_screen_nasdaq_handles_errors(mock_screen_ticker, mock_get_tickers):
         last_date="2024-01-15",
         interval="1d",
         avg_volume=50000000.0,
+        run_length=3,
+        run_percentile=75.0,
     )
 
     result2 = ScreenResult(
@@ -119,6 +123,8 @@ def test_screen_nasdaq_handles_errors(mock_screen_ticker, mock_get_tickers):
         last_date="2024-01-15",
         interval="1d",
         avg_volume=40000000.0,
+        run_length=2,
+        run_percentile=50.0,
     )
 
     mock_screen_ticker.side_effect = [result1, None, result2]
@@ -127,3 +133,32 @@ def test_screen_nasdaq_handles_errors(mock_screen_ticker, mock_get_tickers):
 
     # Should have 2 successful results, skipping the None
     assert len(results) == 2
+
+
+@patch("stockcharts.screener.screener.fetch_ohlc")
+def test_screen_ticker_includes_run_stats(mock_fetch):
+    """Test that screen_ticker computes and includes run statistics."""
+    # Create mock OHLC data
+    dates = pd.date_range("2024-01-01", periods=10, freq="D")
+    mock_df = pd.DataFrame(
+        {
+            "Open": [100, 101, 102, 103, 104, 105, 106, 107, 108, 109],
+            "High": [102, 103, 104, 105, 106, 107, 108, 109, 110, 111],
+            "Low": [98, 99, 100, 101, 102, 103, 104, 105, 106, 107],
+            "Close": [101, 102, 103, 104, 105, 106, 107, 108, 109, 110],
+            "Volume": [1000000] * 10,
+        },
+        index=dates,
+    )
+    mock_fetch.return_value = mock_df
+
+    result = screen_ticker("AAPL")
+
+    # Should successfully return result with run stats
+    assert result is not None
+    assert hasattr(result, "run_length")
+    assert hasattr(result, "run_percentile")
+    assert isinstance(result.run_length, int)
+    assert isinstance(result.run_percentile, float)
+    assert result.run_length > 0
+    assert 0.0 <= result.run_percentile <= 100.0

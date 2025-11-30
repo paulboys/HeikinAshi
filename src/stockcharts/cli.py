@@ -216,6 +216,8 @@ Examples:
                     "period": r.interval,
                     "color_changed": r.color_changed,
                     "avg_volume": r.avg_volume,
+                    "run_length": r.run_length,
+                    "run_percentile": r.run_percentile,
                 }
                 for r in results
             ]
