@@ -6,6 +6,22 @@ indicator subplots, highlighting detected divergences.
 
 from __future__ import annotations
 
+import os
+
+import matplotlib
+
+try:
+    # Fallback to non-interactive backend in headless environments lacking Tk
+    if "MPLBACKEND" not in os.environ:
+        current_backend = matplotlib.get_backend().lower()
+        if "tk" in current_backend:
+            try:  # pragma: no cover - environment dependent
+                import tkinter  # type: ignore  # noqa: F401
+            except Exception:
+                matplotlib.use("Agg", force=True)
+except Exception:
+    # If backend introspection fails, proceed; matplotlib will handle defaults.
+    pass
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
