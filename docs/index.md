@@ -43,5 +43,9 @@ Open issues or pull requests for feature requests, bug fixes, or doc improvement
 - Source Code: https://github.com/paulboys/HeikinAshi
 - PyPI: https://pypi.org/project/stockcharts/
 
+## API Reference
+Auto-generated API docs are available under the API section of the navigation.
+Direct link: https://paulboys.github.io/HeikinAshi/api/
+
 ## License
 MIT License. See repository root `LICENSE` file.
