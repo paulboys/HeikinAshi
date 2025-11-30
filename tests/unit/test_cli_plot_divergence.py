@@ -1,4 +1,4 @@
-"""Unit tests for CLI main_plot_divergence function."""
+"""Targeted tests for CLI main_plot_divergence to improve coverage."""
 
 from io import StringIO
 from unittest.mock import MagicMock, patch
@@ -7,6 +7,60 @@ import pandas as pd
 import pytest
 
 from stockcharts.cli import main_plot_divergence
+
+
+def _df_with_rsi(n: int = 60) -> pd.DataFrame:
+    dates = pd.date_range("2024-01-01", periods=n, freq="D")
+    df = pd.DataFrame(
+        {
+            "Open": [100 + i * 0.5 for i in range(n)],
+            "High": [105 + i * 0.5 for i in range(n)],
+            "Low": [95 + i * 0.5 for i in range(n)],
+            "Close": [102 + i * 0.5 for i in range(n)],
+            "Volume": [1000000] * n,
+        },
+        index=dates,
+    )
+    # Flat RSI makes plotting simple
+    df["RSI"] = 50.0
+    return df
+
+
+def test_main_plot_divergence_precomputed(tmp_path):
+    output_dir = tmp_path / "div_charts"
+
+    # Create a minimal CSV with required columns used by the CLI
+    csv_path = tmp_path / "precomputed.csv"
+    csv_path.write_text("Ticker,RSI,Close\nTEST,50,100\n")
+
+    with patch(
+        "sys.argv",
+        [
+            "stockcharts-plot-divergence",
+            "--input",
+            str(csv_path),
+            "--output-dir",
+            str(output_dir),
+        ],
+    ):
+        # Provide OHLC data with RSI
+        with patch("stockcharts.cli.fetch_ohlc", return_value=_df_with_rsi()) as mock_fetch:
+            # Patch Figure.savefig since CLI calls fig.savefig
+            from matplotlib.figure import Figure
+
+            with patch.object(Figure, "savefig") as mock_savefig:
+                with patch("matplotlib.pyplot.close"):
+                    with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+                        result = main_plot_divergence()
+
+    assert result == 0
+    assert output_dir.exists()
+    assert mock_fetch.call_count >= 1
+    assert mock_savefig.call_count >= 1
+    assert "Completed" in mock_stdout.getvalue()
+
+
+# Additional tests for main_plot_divergence with precomputed indices
 
 
 @pytest.fixture
