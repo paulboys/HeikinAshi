@@ -7,7 +7,10 @@ from unittest.mock import patch
 
 import pandas as pd
 
-from stockcharts.screener.rsi_divergence import save_results_to_csv, screen_rsi_divergence
+from stockcharts.screener.rsi_divergence import (
+    save_results_to_csv,
+    screen_rsi_divergence,
+)
 
 
 def test_rsi_divergence_screen_csv_output(mock_yfinance_download, tmp_path):
