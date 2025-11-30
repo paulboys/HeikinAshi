@@ -339,8 +339,8 @@ Examples:
             # Create chart
             fig, ax = plt.subplots(figsize=(14, 7))
 
-            # Convert datetime index to matplotlib dates
-            dates = mdates.date2num(ha_data.index.to_pydatetime())
+            # Convert index to datetime explicitly for matplotlib
+            dates = mdates.date2num(pd.to_datetime(ha_data.index).to_pydatetime())
 
             for idx in range(len(ha_data)):
                 date = dates[idx]

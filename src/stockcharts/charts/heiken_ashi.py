@@ -26,11 +26,11 @@ def heiken_ashi(df: pd.DataFrame) -> pd.DataFrame:
         raise ValueError(f"Input DataFrame missing required columns: {missing}")
 
     ha = pd.DataFrame(index=df.index.copy())
-    # Flatten to 1D arrays (handles both single and multi-level column indexes)
-    o = df["Open"].values.flatten()
-    h = df["High"].values.flatten()
-    low = df["Low"].values.flatten()
-    c = df["Close"].values.flatten()
+    # Convert to numpy arrays and flatten to 1D (handles ExtensionArray)
+    o = df["Open"].to_numpy().ravel()
+    h = df["High"].to_numpy().ravel()
+    low = df["Low"].to_numpy().ravel()
+    c = df["Close"].to_numpy().ravel()
 
     ha_close = (o + h + low + c) / 4.0
     ha_open = ha_close.copy()

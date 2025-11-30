@@ -4,11 +4,7 @@ Provides public version constant for CLI and user introspection.
 Version is read from package metadata (pyproject.toml).
 """
 
-try:
-    from importlib.metadata import PackageNotFoundError, version
-except ImportError:
-    # Python < 3.8
-    from importlib_metadata import PackageNotFoundError, version  # type: ignore[assignment]
+from importlib.metadata import PackageNotFoundError, version
 
 try:
     __version__ = version("stockcharts")

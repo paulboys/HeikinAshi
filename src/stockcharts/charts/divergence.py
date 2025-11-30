@@ -109,7 +109,9 @@ def plot_price_rsi(
     return fig
 
 
-def _convert_precomputed_to_df(df: pd.DataFrame, precomputed: dict) -> pd.DataFrame:
+from typing import Optional
+
+def _convert_precomputed_to_df(df: pd.DataFrame, precomputed: dict) -> Optional[pd.DataFrame]:
     """
     Convert precomputed divergence indices to DataFrame format.
 
@@ -209,7 +211,7 @@ def _convert_precomputed_to_df(df: pd.DataFrame, precomputed: dict) -> pd.DataFr
     return pd.DataFrame(divergences) if divergences else None
 
 
-def _find_divergence_points(df: pd.DataFrame, window: int) -> pd.DataFrame:
+def _find_divergence_points(df: pd.DataFrame, window: int) -> Optional[pd.DataFrame]:
     """
     Find divergence points in price and RSI.
 
@@ -339,7 +341,9 @@ def _plot_candlesticks(ax: Axes, df: pd.DataFrame) -> None:
     # Set x-axis ticks to dates
     tick_spacing = max(len(df) // 10, 1)
     ax.set_xticks(x[::tick_spacing])
-    ax.set_xticklabels(df.index[::tick_spacing].strftime("%Y-%m-%d"))
+    # Ensure datetime index for strftime
+    dates = pd.to_datetime(df.index[::tick_spacing])
+    ax.set_xticklabels(dates.strftime("%Y-%m-%d"))
 
 
 def _plot_rsi(ax: Axes, df: pd.DataFrame, overbought: float, oversold: float) -> None:
@@ -371,7 +375,8 @@ def _plot_rsi(ax: Axes, df: pd.DataFrame, overbought: float, oversold: float) ->
     # Set x-axis ticks to dates
     tick_spacing = max(len(df) // 10, 1)
     ax.set_xticks(x[::tick_spacing])
-    ax.set_xticklabels(df.index[::tick_spacing].strftime("%Y-%m-%d"))
+    dates = pd.to_datetime(df.index[::tick_spacing])
+    ax.set_xticklabels(dates.strftime("%Y-%m-%d"))
 
 
 def _plot_price_divergences(
