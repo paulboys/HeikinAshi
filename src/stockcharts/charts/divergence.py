@@ -86,14 +86,7 @@ def plot_price_rsi(
     )
     ax1.grid(True, alpha=0.3, linestyle="--")
     if divergence_data is not None:
-        ax1.legend(loc="upper left", fontsize=10)
-
-    # Plot RSI on bottom panel
-    _plot_rsi(ax2, df, overbought=overbought, oversold=oversold)
-
-    # Add divergence markers to RSI chart
-    if divergence_data is not None:
-        _plot_rsi_divergences(ax2, df, divergence_data)
+        pass
 
     # Format bottom panel
     ax2.set_ylabel("RSI", fontsize=12, fontweight="bold")
@@ -109,9 +102,9 @@ def plot_price_rsi(
     return fig
 
 
-from typing import Optional
-
-def _convert_precomputed_to_df(df: pd.DataFrame, precomputed: dict) -> Optional[pd.DataFrame]:
+def _convert_precomputed_to_df(
+    df: pd.DataFrame, precomputed: dict
+) -> pd.DataFrame | None:
     """
     Convert precomputed divergence indices to DataFrame format.
 
@@ -211,7 +204,7 @@ def _convert_precomputed_to_df(df: pd.DataFrame, precomputed: dict) -> Optional[
     return pd.DataFrame(divergences) if divergences else None
 
 
-def _find_divergence_points(df: pd.DataFrame, window: int) -> Optional[pd.DataFrame]:
+def _find_divergence_points(df: pd.DataFrame, window: int) -> pd.DataFrame | None:
     """
     Find divergence points in price and RSI.
 

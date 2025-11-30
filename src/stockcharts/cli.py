@@ -10,10 +10,8 @@ from matplotlib.patches import Rectangle
 
 from stockcharts.charts.heiken_ashi import heiken_ashi
 from stockcharts.data.fetch import fetch_ohlc
-from stockcharts.screener.rsi_divergence import (
-    save_results_to_csv,
-    screen_rsi_divergence,
-)
+from stockcharts.screener.rsi_divergence import (save_results_to_csv,
+                                                 screen_rsi_divergence)
 from stockcharts.screener.screener import screen_nasdaq
 
 

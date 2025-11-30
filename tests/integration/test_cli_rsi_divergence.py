@@ -10,10 +10,8 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from stockcharts.screener.rsi_divergence import (
-    save_results_to_csv,
-    screen_rsi_divergence,
-)
+from stockcharts.screener.rsi_divergence import (save_results_to_csv,
+                                                 screen_rsi_divergence)
 
 
 def test_rsi_divergence_screen_csv_output(mock_yfinance_download, tmp_path):

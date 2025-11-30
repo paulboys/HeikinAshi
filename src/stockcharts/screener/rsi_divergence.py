@@ -6,11 +6,9 @@ from typing import Optional
 import pandas as pd
 
 from stockcharts.data.fetch import fetch_ohlc
-from stockcharts.indicators.divergence import (
-    check_breakout_occurred,
-    check_failed_breakout,
-    detect_divergence,
-)
+from stockcharts.indicators.divergence import (check_breakout_occurred,
+                                               check_failed_breakout,
+                                               detect_divergence)
 from stockcharts.indicators.rsi import compute_rsi
 from stockcharts.screener.nasdaq import get_nasdaq_tickers
 
@@ -116,10 +114,10 @@ def screen_rsi_divergence(
     total = len(tickers)
 
     for i, ticker_info in enumerate(tickers, 1):
-        if isinstance(ticker_info, tuple):  # type: ignore[unreachable]
-            ticker, company_name = ticker_info  # type: ignore[unreachable]
+        if isinstance(ticker_info, tuple):
+            ticker, company_name = ticker_info
         else:
-            ticker = ticker_info
+            ticker = str(ticker_info)
             company_name = ticker
 
         print(f"[{i}/{total}] Screening {ticker}...", end="\r")

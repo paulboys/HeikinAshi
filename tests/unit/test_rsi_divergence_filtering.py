@@ -5,11 +5,9 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from stockcharts.screener.rsi_divergence import (
-    RSIDivergenceResult,
-    save_results_to_csv,
-    screen_rsi_divergence,
-)
+from stockcharts.screener.rsi_divergence import (RSIDivergenceResult,
+                                                 save_results_to_csv,
+                                                 screen_rsi_divergence)
 
 
 @pytest.fixture
