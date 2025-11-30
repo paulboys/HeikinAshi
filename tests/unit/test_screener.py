@@ -135,6 +135,169 @@ def test_screen_nasdaq_handles_errors(mock_screen_ticker, mock_get_tickers):
     assert len(results) == 2
 
 
+@patch("stockcharts.screener.screener.get_nasdaq_tickers")
+@patch("stockcharts.screener.screener.screen_ticker")
+def test_screen_nasdaq_min_run_percentile_filter(mock_screen_ticker, mock_get_tickers):
+    """Test screen_nasdaq filters by minimum run percentile."""
+    mock_get_tickers.return_value = ["TICK1", "TICK2", "TICK3"]
+
+    # Create results with different run percentiles
+    result1 = ScreenResult(
+        ticker="TICK1",
+        color="green",
+        previous_color="red",
+        color_changed=False,
+        ha_open=100.0,
+        ha_close=105.0,
+        last_date="2024-01-15",
+        interval="1d",
+        avg_volume=1000000.0,
+        run_length=10,
+        run_percentile=95.0,  # High percentile - should pass
+    )
+
+    result2 = ScreenResult(
+        ticker="TICK2",
+        color="red",
+        previous_color="red",
+        color_changed=False,
+        ha_open=200.0,
+        ha_close=195.0,
+        last_date="2024-01-15",
+        interval="1d",
+        avg_volume=2000000.0,
+        run_length=2,
+        run_percentile=30.0,  # Low percentile - should be filtered
+    )
+
+    result3 = ScreenResult(
+        ticker="TICK3",
+        color="green",
+        previous_color="green",
+        color_changed=False,
+        ha_open=150.0,
+        ha_close=155.0,
+        last_date="2024-01-15",
+        interval="1d",
+        avg_volume=1500000.0,
+        run_length=8,
+        run_percentile=92.0,  # High percentile - should pass
+    )
+
+    mock_screen_ticker.side_effect = [result1, result2, result3]
+
+    # Filter for only high percentile runs (>= 90)
+    results = screen_nasdaq(delay=0, limit=3, verbose=False, min_run_percentile=90.0)
+
+    assert len(results) == 2
+    assert results[0].ticker == "TICK1"
+    assert results[1].ticker == "TICK3"
+
+
+@patch("stockcharts.screener.screener.get_nasdaq_tickers")
+@patch("stockcharts.screener.screener.screen_ticker")
+def test_screen_nasdaq_max_run_percentile_filter(mock_screen_ticker, mock_get_tickers):
+    """Test screen_nasdaq filters by maximum run percentile."""
+    mock_get_tickers.return_value = ["TICK1", "TICK2"]
+
+    result1 = ScreenResult(
+        ticker="TICK1",
+        color="green",
+        previous_color="red",
+        color_changed=False,
+        ha_open=100.0,
+        ha_close=105.0,
+        last_date="2024-01-15",
+        interval="1d",
+        avg_volume=1000000.0,
+        run_length=1,
+        run_percentile=15.0,  # Low percentile - should pass
+    )
+
+    result2 = ScreenResult(
+        ticker="TICK2",
+        color="red",
+        previous_color="red",
+        color_changed=False,
+        ha_open=200.0,
+        ha_close=195.0,
+        last_date="2024-01-15",
+        interval="1d",
+        avg_volume=2000000.0,
+        run_length=10,
+        run_percentile=95.0,  # High percentile - should be filtered
+    )
+
+    mock_screen_ticker.side_effect = [result1, result2]
+
+    # Filter for only low percentile runs (<= 25)
+    results = screen_nasdaq(delay=0, limit=2, verbose=False, max_run_percentile=25.0)
+
+    assert len(results) == 1
+    assert results[0].ticker == "TICK1"
+    assert results[0].run_percentile == 15.0
+
+
+@patch("stockcharts.screener.screener.get_nasdaq_tickers")
+@patch("stockcharts.screener.screener.screen_ticker")
+def test_screen_nasdaq_run_percentile_range(mock_screen_ticker, mock_get_tickers):
+    """Test screen_nasdaq with both min and max run percentile."""
+    mock_get_tickers.return_value = ["TICK1", "TICK2", "TICK3"]
+
+    result1 = ScreenResult(
+        ticker="TICK1",
+        color="green",
+        previous_color="red",
+        color_changed=False,
+        ha_open=100.0,
+        ha_close=105.0,
+        last_date="2024-01-15",
+        interval="1d",
+        avg_volume=1000000.0,
+        run_length=3,
+        run_percentile=55.0,  # In range [50-75] - should pass
+    )
+
+    result2 = ScreenResult(
+        ticker="TICK2",
+        color="red",
+        previous_color="red",
+        color_changed=False,
+        ha_open=200.0,
+        ha_close=195.0,
+        last_date="2024-01-15",
+        interval="1d",
+        avg_volume=2000000.0,
+        run_length=10,
+        run_percentile=95.0,  # Above range - should be filtered
+    )
+
+    result3 = ScreenResult(
+        ticker="TICK3",
+        color="green",
+        previous_color="green",
+        color_changed=False,
+        ha_open=150.0,
+        ha_close=155.0,
+        last_date="2024-01-15",
+        interval="1d",
+        avg_volume=1500000.0,
+        run_length=2,
+        run_percentile=65.0,  # In range [50-75] - should pass
+    )
+
+    mock_screen_ticker.side_effect = [result1, result2, result3]
+
+    # Filter for runs in 50-75 percentile range
+    results = screen_nasdaq(
+        delay=0, limit=3, verbose=False, min_run_percentile=50.0, max_run_percentile=75.0
+    )
+
+    assert len(results) == 2
+    assert results[0].ticker == "TICK1"
+    assert results[1].ticker == "TICK3"
+
+
 @patch("stockcharts.screener.screener.fetch_ohlc")
 def test_screen_ticker_includes_run_stats(mock_fetch):
     """Test that screen_ticker computes and includes run statistics."""
