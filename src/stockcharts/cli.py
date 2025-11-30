@@ -73,9 +73,9 @@ Examples:
 
     parser.add_argument(
         "--color",
-        choices=["red", "green"],
+        choices=["red", "green", "all"],
         default="green",
-        help="Filter by current Heiken Ashi candle color (default: green)",
+        help="Filter by current Heiken Ashi candle color (default: green; use 'all' to include both colors)",
     )
 
     parser.add_argument(
