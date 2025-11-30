@@ -83,12 +83,15 @@ def plot_price_rsi(
     )
     ax1.grid(True, alpha=0.3, linestyle="--")
     if divergence_data is not None:
-        pass
+        # Show legend entries for divergence annotations
+        ax1.legend(loc="upper left", fontsize=10)
 
     # Format bottom panel
     ax2.set_ylabel("RSI", fontsize=12, fontweight="bold")
     ax2.set_xlabel("Date", fontsize=12, fontweight="bold")
     ax2.grid(True, alpha=0.3, linestyle="--")
+    # Plot RSI and levels
+    _plot_rsi(ax2, df, overbought=overbought, oversold=oversold)
     ax2.legend(loc="upper left", fontsize=10)
     ax2.set_ylim(0, 100)
 
