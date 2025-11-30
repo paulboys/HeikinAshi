@@ -41,7 +41,7 @@ def test_screener_min_price_filter(mock_fetch_and_tickers):
     results = screen_nasdaq(color_filter="green", changed_only=False, min_price=5.0, limit=2)
     assert isinstance(results, list)
     for r in results:
-        assert r.last_close >= 5.0
+        assert r.ha_close >= 5.0
 
 
 def test_screener_csv_output(tmp_path, mock_fetch_and_tickers):
@@ -53,6 +53,8 @@ def test_screener_csv_output(tmp_path, mock_fetch_and_tickers):
             "Price": r.ha_close,
             "Volume": r.avg_volume,
             "Color": r.color,
+            "Run_Length": r.run_length,
+            "Run_Percentile": r.run_percentile,
         }
         for r in results
     ]
@@ -60,7 +62,11 @@ def test_screener_csv_output(tmp_path, mock_fetch_and_tickers):
     if rows:
         pd.DataFrame(rows).to_csv(out, index=False)
         df = pd.read_csv(out)
-        assert set(["Ticker", "Price", "Volume", "Color"]).issubset(df.columns)
+        expected_cols = ["Ticker", "Price", "Volume", "Color", "Run_Length", "Run_Percentile"]
+        assert set(expected_cols).issubset(df.columns)
+        # Verify run stats are valid
+        assert all(df["Run_Length"] > 0)
+        assert all((df["Run_Percentile"] >= 0) & (df["Run_Percentile"] <= 100))
     else:
         # If no results, ensure we don't write empty CSV and test passes gracefully
         assert not out.exists()

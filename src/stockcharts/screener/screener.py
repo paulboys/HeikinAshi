@@ -13,6 +13,7 @@ import pandas as pd
 
 from stockcharts.charts.heiken_ashi import heiken_ashi
 from stockcharts.data.fetch import fetch_ohlc
+from stockcharts.indicators.heiken_runs import compute_ha_run_stats
 from stockcharts.screener.nasdaq import get_nasdaq_tickers
 
 
@@ -29,6 +30,8 @@ class ScreenResult:
     last_date: str
     interval: str
     avg_volume: float
+    run_length: int
+    run_percentile: float
 
 
 def get_candle_color(ha_df: pd.DataFrame, index: int = -1) -> Literal["green", "red"]:
@@ -103,6 +106,9 @@ def screen_ticker(
         volume_window = min(20, len(df))
         avg_volume = float(df["Volume"].tail(volume_window).mean())
 
+        # Compute run statistics
+        run_stats = compute_ha_run_stats(ha)
+
         return ScreenResult(
             ticker=ticker,
             color=current_color,
@@ -113,6 +119,8 @@ def screen_ticker(
             last_date=str(ha.index[-1].date()),
             interval=period,  # Store the aggregation period
             avg_volume=avg_volume,
+            run_length=int(run_stats["run_length"]),
+            run_percentile=float(run_stats["run_percentile"]),
         )
 
     except Exception as e:

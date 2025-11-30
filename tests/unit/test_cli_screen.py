@@ -25,6 +25,8 @@ def mock_screen_results():
             last_date="2024-01-15",
             interval="1d",
             avg_volume=50000000,
+            run_length=5,
+            run_percentile=85.0,
         ),
         ScreenResult(
             ticker="MSFT",
@@ -36,6 +38,8 @@ def mock_screen_results():
             last_date="2024-01-15",
             interval="1d",
             avg_volume=25000000,
+            run_length=12,
+            run_percentile=95.0,
         ),
     ]
 
