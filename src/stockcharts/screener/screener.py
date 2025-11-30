@@ -71,6 +71,8 @@ def screen_ticker(
         Start date YYYY-MM-DD
     end : str | None
         End date YYYY-MM-DD
+    debug : bool
+        When True, prints detailed error information during screening.
 
     Returns:
     -------
@@ -170,6 +172,8 @@ def screen_nasdaq(
         Optional list of ticker symbols to screen. If provided, only these tickers
         will be screened instead of all NASDAQ stocks. Useful for filtering by
         a pre-screened list (e.g., from RSI divergence results).
+    debug : bool
+        When True, enables debug output in underlying ticker screening.
 
     Returns:
     -------

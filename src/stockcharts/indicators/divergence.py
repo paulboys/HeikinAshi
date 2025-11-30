@@ -51,8 +51,7 @@ def find_three_point_sequences(
     atr_period: int = 14,
     require_strict_order: bool = False,
 ) -> list[dict[str, Any]]:
-    """
-    Find and score 3-point divergence sequences from pivot indices.
+    """Find and score 3-point divergence sequences from pivot indices.
 
     Returns candidate triples (3 consecutive pivots) that form valid divergence patterns,
     sorted by conviction score (higher = stronger signal).
@@ -201,8 +200,7 @@ def find_three_point_sequences(
 
 
 def find_swing_points(series: pd.Series, window: int = 5) -> tuple[pd.Series, pd.Series]:
-    """
-    Find swing highs and lows in a price or indicator series.
+    """Find swing highs and lows in a price or indicator series.
 
     A swing high is a local maximum (higher than surrounding points).
     A swing low is a local minimum (lower than surrounding points).
@@ -261,8 +259,7 @@ def detect_divergence(
     min_magnitude_atr_mult: float = 0.5,
     atr_period: int = 14,
 ) -> dict[str, Any]:
-    """
-    Detect bullish and bearish divergences between price and RSI.
+    """Detect bullish and bearish divergences between price and RSI.
 
     Bullish Divergence (potential reversal up):
     - Price makes lower lows (2 or 3 points)
@@ -600,8 +597,7 @@ def check_breakout_occurred(
     threshold: float = 0.05,
     price_col: str = "Close",
 ) -> bool:
-    """
-    Check if a breakout has already occurred after divergence detection.
+    """Check if a breakout has already occurred after divergence detection.
 
     For bullish divergence: Price moved up significantly from divergence point.
     For bearish divergence: Price moved down significantly from divergence point.
@@ -644,8 +640,7 @@ def check_failed_breakout(
     reversal_threshold: float = 0.01,
     price_col: str = "Close",
 ) -> bool:
-    """
-    Check if divergence led to a failed breakout attempt.
+    """Check if divergence led to a failed breakout attempt.
 
     A failed breakout means price tried to move in the divergence direction
     but reversed and closed back near/below the divergence level.

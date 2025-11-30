@@ -66,8 +66,7 @@ def screen_rsi_divergence(
     min_magnitude_atr_mult: float = 0.5,
     atr_period: int = 14,
 ) -> list[RSIDivergenceResult]:
-    """
-    Screen stocks for RSI divergences.
+    """Screen stocks for RSI divergences.
 
     Args:
         tickers: List of ticker symbols (if None, uses all NASDAQ)

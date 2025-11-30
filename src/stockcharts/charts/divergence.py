@@ -28,8 +28,7 @@ def plot_price_rsi(
     oversold: float = 30.0,
     precomputed_divergence: dict | None = None,
 ) -> Figure:
-    """
-    Create a two-panel chart with candlestick price and RSI indicator.
+    """Create a two-panel chart with candlestick price and RSI indicator.
 
     Args:
         df: DataFrame with OHLC data (columns: Open, High, Low, Close)
@@ -101,8 +100,7 @@ def plot_price_rsi(
 
 
 def _convert_precomputed_to_df(df: pd.DataFrame, precomputed: dict) -> pd.DataFrame | None:
-    """
-    Convert precomputed divergence indices to DataFrame format.
+    """Convert precomputed divergence indices to DataFrame format.
 
     Args:
         df: Full OHLC DataFrame with RSI
@@ -201,8 +199,7 @@ def _convert_precomputed_to_df(df: pd.DataFrame, precomputed: dict) -> pd.DataFr
 
 
 def _find_divergence_points(df: pd.DataFrame, window: int) -> pd.DataFrame | None:
-    """
-    Find divergence points in price and RSI.
+    """Find divergence points in price and RSI.
 
     Returns DataFrame with columns:
         - divergence_type: 'bullish' or 'bearish'
