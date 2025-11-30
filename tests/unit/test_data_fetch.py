@@ -1,6 +1,5 @@
 from unittest.mock import patch
 
-import pandas as pd
 import pytest
 
 from stockcharts.data.fetch import fetch_ohlc

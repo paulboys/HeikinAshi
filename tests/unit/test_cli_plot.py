@@ -1,8 +1,7 @@
 """Unit tests for CLI main_plot function."""
 
-import os
 from io import StringIO
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pandas as pd
 import pytest
@@ -110,9 +109,7 @@ def test_main_plot_successful_with_uppercase_ticker(
             str(output_dir),
         ],
     ):
-        with patch(
-            "stockcharts.cli.fetch_ohlc", return_value=mock_ohlc_data
-        ) as mock_fetch:
+        with patch("stockcharts.cli.fetch_ohlc", return_value=mock_ohlc_data) as mock_fetch:
             with patch("stockcharts.cli.heiken_ashi", return_value=mock_ha_data):
                 with patch("matplotlib.pyplot.savefig") as mock_savefig:
                     with patch("matplotlib.pyplot.close"):
@@ -197,9 +194,7 @@ def test_main_plot_fetch_exception_handled(sample_input_csv, tmp_path):
             str(output_dir),
         ],
     ):
-        with patch(
-            "stockcharts.cli.fetch_ohlc", side_effect=Exception("Network error")
-        ):
+        with patch("stockcharts.cli.fetch_ohlc", side_effect=Exception("Network error")):
             with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                 result = main_plot()
 
@@ -228,9 +223,7 @@ def test_main_plot_custom_period_and_lookback(
             "5d",
         ],
     ):
-        with patch(
-            "stockcharts.cli.fetch_ohlc", return_value=mock_ohlc_data
-        ) as mock_fetch:
+        with patch("stockcharts.cli.fetch_ohlc", return_value=mock_ohlc_data) as mock_fetch:
             with patch("stockcharts.cli.heiken_ashi", return_value=mock_ha_data):
                 with patch("matplotlib.pyplot.savefig"):
                     with patch("matplotlib.pyplot.close"):
@@ -244,9 +237,7 @@ def test_main_plot_custom_period_and_lookback(
     assert call_kwargs["lookback"] == "5d"
 
 
-def test_main_plot_no_disclaimer_flag(
-    sample_input_csv, mock_ohlc_data, mock_ha_data, tmp_path
-):
+def test_main_plot_no_disclaimer_flag(sample_input_csv, mock_ohlc_data, mock_ha_data, tmp_path):
     """Test --no-disclaimer flag suppresses disclaimer."""
     output_dir = tmp_path / "charts"
 

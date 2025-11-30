@@ -61,9 +61,7 @@ def plot_price_rsi(
         divergence_data = _find_divergence_points(recent_df, divergence_window)
 
     # Create figure with 2 subplots
-    fig, (ax1, ax2) = plt.subplots(
-        2, 1, figsize=figsize, height_ratios=[3, 1], sharex=True
-    )
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=figsize, height_ratios=[3, 1], sharex=True)
 
     # Plot candlesticks on top panel
     _plot_candlesticks(ax1, df)
@@ -102,9 +100,7 @@ def plot_price_rsi(
     return fig
 
 
-def _convert_precomputed_to_df(
-    df: pd.DataFrame, precomputed: dict
-) -> pd.DataFrame | None:
+def _convert_precomputed_to_df(df: pd.DataFrame, precomputed: dict) -> pd.DataFrame | None:
     """
     Convert precomputed divergence indices to DataFrame format.
 
@@ -233,12 +229,8 @@ def _find_divergence_points(df: pd.DataFrame, window: int) -> pd.DataFrame | Non
             p2_idx = price_low_idx[i + 1]
 
             # Find nearest RSI lows
-            rsi_near_p1 = [
-                idx for idx in rsi_low_idx if abs((idx - p1_idx).days) <= window * 2
-            ]
-            rsi_near_p2 = [
-                idx for idx in rsi_low_idx if abs((idx - p2_idx).days) <= window * 2
-            ]
+            rsi_near_p1 = [idx for idx in rsi_low_idx if abs((idx - p1_idx).days) <= window * 2]
+            rsi_near_p2 = [idx for idx in rsi_low_idx if abs((idx - p2_idx).days) <= window * 2]
 
             if rsi_near_p1 and rsi_near_p2:
                 r1_idx = min(rsi_near_p1, key=lambda x: abs((x - p1_idx).days))
@@ -270,12 +262,8 @@ def _find_divergence_points(df: pd.DataFrame, window: int) -> pd.DataFrame | Non
             p2_idx = price_high_idx[i + 1]
 
             # Find nearest RSI highs
-            rsi_near_p1 = [
-                idx for idx in rsi_high_idx if abs((idx - p1_idx).days) <= window * 2
-            ]
-            rsi_near_p2 = [
-                idx for idx in rsi_high_idx if abs((idx - p2_idx).days) <= window * 2
-            ]
+            rsi_near_p1 = [idx for idx in rsi_high_idx if abs((idx - p1_idx).days) <= window * 2]
+            rsi_near_p2 = [idx for idx in rsi_high_idx if abs((idx - p2_idx).days) <= window * 2]
 
             if rsi_near_p1 and rsi_near_p2:
                 r1_idx = min(rsi_near_p1, key=lambda x: abs((x - p1_idx).days))
@@ -306,10 +294,7 @@ def _plot_candlesticks(ax: Axes, df: pd.DataFrame) -> None:
     x = np.arange(len(df))
 
     # Determine candle colors
-    colors = [
-        "green" if close >= open_ else "red"
-        for open_, close in zip(df["Open"], df["Close"])
-    ]
+    colors = ["green" if close >= open_ else "red" for open_, close in zip(df["Open"], df["Close"])]
 
     # Plot wicks (high-low lines)
     for i, (high, low) in enumerate(zip(df["High"], df["Low"])):
@@ -372,9 +357,7 @@ def _plot_rsi(ax: Axes, df: pd.DataFrame, overbought: float, oversold: float) ->
     ax.set_xticklabels(dates.strftime("%Y-%m-%d"))
 
 
-def _plot_price_divergences(
-    ax: Axes, df: pd.DataFrame, divergences: pd.DataFrame
-) -> None:
+def _plot_price_divergences(ax: Axes, df: pd.DataFrame, divergences: pd.DataFrame) -> None:
     """Mark divergence points on price chart (supports 2-point and 3-point)."""
     np.arange(len(df))
 
@@ -408,21 +391,13 @@ def _plot_price_divergences(
             color = "green"
             marker = "^"
             num_points = len(swing_dates)
-            label = (
-                f"Bullish Divergence ({num_points}-point)"
-                if not bullish_labeled
-                else None
-            )
+            label = f"Bullish Divergence ({num_points}-point)" if not bullish_labeled else None
             bullish_labeled = True
         else:  # bearish
             color = "red"
             marker = "v"
             num_points = len(swing_dates)
-            label = (
-                f"Bearish Divergence ({num_points}-point)"
-                if not bearish_labeled
-                else None
-            )
+            label = f"Bearish Divergence ({num_points}-point)" if not bearish_labeled else None
             bearish_labeled = True
 
         # Plot divergence line connecting all points
@@ -450,9 +425,7 @@ def _plot_price_divergences(
         )
 
 
-def _plot_rsi_divergences(
-    ax: Axes, df: pd.DataFrame, divergences: pd.DataFrame
-) -> None:
+def _plot_rsi_divergences(ax: Axes, df: pd.DataFrame, divergences: pd.DataFrame) -> None:
     """Mark divergence points on RSI chart (supports 2-point and 3-point)."""
     np.arange(len(df))
 

@@ -1,15 +1,10 @@
-import os
 import subprocess
 import sys
-
-import pytest
 
 
 def run_cmd(args):
     # Run a CLI command and return (code, stdout, stderr)
-    proc = subprocess.Popen(
-        args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-    )
+    proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     out, err = proc.communicate()
     return proc.returncode, out, err
 
@@ -34,8 +29,6 @@ def test_cli_invalid_flag():
 
 def test_cli_missing_input_filter_file(tmp_path):
     missing = tmp_path / "nope.csv"
-    code, out, err = run_cmd(
-        ["stockcharts-screen", "--input-filter", str(missing), "--version"]
-    )
+    code, out, err = run_cmd(["stockcharts-screen", "--input-filter", str(missing), "--version"])
     # Should not crash; version exits early ignoring other args
     assert code == 0

@@ -16,12 +16,8 @@ import pandas as pd
 from stockcharts.indicators.pivots import ema_derivative_pivots
 
 # Tolerance constants to avoid false divergences due to minor RSI fluctuations
-BEARISH_RSI_TOLERANCE = (
-    0.5  # RSI must be at least 0.5 points lower for bearish divergence
-)
-BULLISH_RSI_TOLERANCE = (
-    0.5  # RSI must be at least 0.5 points higher for bullish divergence
-)
+BEARISH_RSI_TOLERANCE = 0.5  # RSI must be at least 0.5 points lower for bearish divergence
+BULLISH_RSI_TOLERANCE = 0.5  # RSI must be at least 0.5 points higher for bullish divergence
 
 
 def _compute_atr(df: pd.DataFrame, period: int = 14) -> pd.Series:
@@ -162,17 +158,9 @@ def find_three_point_sequences(
         span23 = abs(p2 - p3)
 
         mag_ok = False
-        if (
-            not np.isnan(atr_p1)
-            and atr_p1 > 0
-            and span12 >= min_magnitude_atr_mult * atr_p1
-        ):
+        if not np.isnan(atr_p1) and atr_p1 > 0 and span12 >= min_magnitude_atr_mult * atr_p1:
             mag_ok = True
-        if (
-            not np.isnan(atr_p2)
-            and atr_p2 > 0
-            and span23 >= min_magnitude_atr_mult * atr_p2
-        ):
+        if not np.isnan(atr_p2) and atr_p2 > 0 and span23 >= min_magnitude_atr_mult * atr_p2:
             mag_ok = True
 
         if not mag_ok:
@@ -212,9 +200,7 @@ def find_three_point_sequences(
     return candidates
 
 
-def find_swing_points(
-    series: pd.Series, window: int = 5
-) -> tuple[pd.Series, pd.Series]:
+def find_swing_points(series: pd.Series, window: int = 5) -> tuple[pd.Series, pd.Series]:
     """
     Find swing highs and lows in a price or indicator series.
 
@@ -479,9 +465,9 @@ def detect_divergence(
                 r3 = recent_df.loc[r3_idx, rsi_col]
 
                 # RSI should be ascending with tolerance
-                rsi_asc = (
-                    r2 - r1 >= max(BULLISH_RSI_TOLERANCE, rsi_sequence_tolerance)
-                ) and (r3 - r2 >= max(BULLISH_RSI_TOLERANCE, rsi_sequence_tolerance))
+                rsi_asc = (r2 - r1 >= max(BULLISH_RSI_TOLERANCE, rsi_sequence_tolerance)) and (
+                    r3 - r2 >= max(BULLISH_RSI_TOLERANCE, rsi_sequence_tolerance)
+                )
 
                 if price_desc and rsi_asc:
                     result["bullish"] = True
@@ -526,16 +512,9 @@ def detect_divergence(
                     result["bullish_indices"] = (p1_idx, p2_idx, r1_idx, r2_idx)
 
     # Detect Bearish Divergence (price higher highs, RSI lower highs)
-    if (
-        len(price_high_idx) >= min_swing_points
-        and len(rsi_high_idx) >= min_swing_points
-    ):
+    if len(price_high_idx) >= min_swing_points and len(rsi_high_idx) >= min_swing_points:
         # Try 3-point divergence first if requested
-        if (
-            min_swing_points == 3
-            and len(price_high_idx) >= 3
-            and len(rsi_high_idx) >= 3
-        ):
+        if min_swing_points == 3 and len(price_high_idx) >= 3 and len(rsi_high_idx) >= 3:
             p1_idx, p2_idx, p3_idx = (
                 price_high_idx[-3],
                 price_high_idx[-2],
@@ -563,9 +542,9 @@ def detect_divergence(
                 r3 = recent_df.loc[r3_idx, rsi_col]
 
                 # RSI should be descending with tolerance
-                rsi_desc = (
-                    r1 - r2 >= max(BEARISH_RSI_TOLERANCE, rsi_sequence_tolerance)
-                ) and (r2 - r3 >= max(BEARISH_RSI_TOLERANCE, rsi_sequence_tolerance))
+                rsi_desc = (r1 - r2 >= max(BEARISH_RSI_TOLERANCE, rsi_sequence_tolerance)) and (
+                    r2 - r3 >= max(BEARISH_RSI_TOLERANCE, rsi_sequence_tolerance)
+                )
 
                 if price_asc and rsi_desc:
                     result["bearish"] = True
@@ -585,11 +564,7 @@ def detect_divergence(
                     )
 
         # Fall back to 2-point if 3-point not found or min_swing_points==2
-        if (
-            not result["bearish"]
-            and len(price_high_idx) >= 2
-            and len(rsi_high_idx) >= 2
-        ):
+        if not result["bearish"] and len(price_high_idx) >= 2 and len(rsi_high_idx) >= 2:
             p1_idx, p2_idx = price_high_idx[-2], price_high_idx[-1]
 
             # Find corresponding RSI highs using bar distance

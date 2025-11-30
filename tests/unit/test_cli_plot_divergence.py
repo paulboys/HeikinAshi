@@ -1,6 +1,5 @@
 """Unit tests for CLI main_plot_divergence function."""
 
-import os
 from io import StringIO
 from unittest.mock import MagicMock, patch
 
@@ -60,9 +59,7 @@ def test_main_plot_divergence_version_flag():
 
 def test_main_plot_divergence_missing_input_file():
     """Test error handling when input CSV doesn't exist."""
-    with patch(
-        "sys.argv", ["stockcharts-plot-divergence", "--input", "nonexistent.csv"]
-    ):
+    with patch("sys.argv", ["stockcharts-plot-divergence", "--input", "nonexistent.csv"]):
         with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
             result = main_plot_divergence()
 
@@ -151,9 +148,7 @@ def test_main_plot_divergence_successful_with_lowercase_ticker(
     assert mock_plot.call_count == 2
 
 
-def test_main_plot_divergence_with_precomputed_indices(
-    sample_rsi_csv, mock_ohlc_data, tmp_path
-):
+def test_main_plot_divergence_with_precomputed_indices(sample_rsi_csv, mock_ohlc_data, tmp_path):
     """Test that precomputed divergence indices are parsed and passed."""
     output_dir = tmp_path / "div_charts"
 
@@ -182,9 +177,7 @@ def test_main_plot_divergence_with_precomputed_indices(
     assert "precomputed_divergence" in first_call_kwargs
 
 
-def test_main_plot_divergence_custom_parameters(
-    sample_rsi_csv, mock_ohlc_data, tmp_path
-):
+def test_main_plot_divergence_custom_parameters(sample_rsi_csv, mock_ohlc_data, tmp_path):
     """Test plotting with custom RSI period, interval, and lookback."""
     output_dir = tmp_path / "custom_charts"
 
@@ -206,9 +199,7 @@ def test_main_plot_divergence_custom_parameters(
             "7",
         ],
     ):
-        with patch(
-            "stockcharts.cli.fetch_ohlc", return_value=mock_ohlc_data
-        ) as mock_fetch:
+        with patch("stockcharts.cli.fetch_ohlc", return_value=mock_ohlc_data) as mock_fetch:
             with patch("stockcharts.charts.divergence.plot_price_rsi") as mock_plot:
                 mock_fig = MagicMock()
                 mock_plot.return_value = mock_fig
@@ -277,9 +268,7 @@ def test_main_plot_divergence_handles_exceptions(sample_rsi_csv, tmp_path):
             str(output_dir),
         ],
     ):
-        with patch(
-            "stockcharts.cli.fetch_ohlc", side_effect=Exception("Network error")
-        ):
+        with patch("stockcharts.cli.fetch_ohlc", side_effect=Exception("Network error")):
             with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                 result = main_plot_divergence()
 
@@ -289,9 +278,7 @@ def test_main_plot_divergence_handles_exceptions(sample_rsi_csv, tmp_path):
     assert "❌ Error" in output_text
 
 
-def test_main_plot_divergence_creates_output_directory(
-    sample_rsi_csv, mock_ohlc_data, tmp_path
-):
+def test_main_plot_divergence_creates_output_directory(sample_rsi_csv, mock_ohlc_data, tmp_path):
     """Test that output directory is created if it doesn't exist."""
     output_dir = tmp_path / "new_divergence_dir"
     assert not output_dir.exists()

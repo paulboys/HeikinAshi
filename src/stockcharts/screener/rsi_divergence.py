@@ -6,9 +6,11 @@ from typing import Optional
 import pandas as pd
 
 from stockcharts.data.fetch import fetch_ohlc
-from stockcharts.indicators.divergence import (check_breakout_occurred,
-                                               check_failed_breakout,
-                                               detect_divergence)
+from stockcharts.indicators.divergence import (
+    check_breakout_occurred,
+    check_failed_breakout,
+    detect_divergence,
+)
 from stockcharts.indicators.rsi import compute_rsi
 from stockcharts.screener.nasdaq import get_nasdaq_tickers
 
@@ -196,16 +198,10 @@ def screen_rsi_divergence(
                     # Get last price index (2-point: idx 1, 3-point: idx 2)
                     indices = div_result["bullish_indices"]
                     last_price_idx = indices[2] if len(indices) == 6 else indices[1]
-                    if check_breakout_occurred(
-                        df, last_price_idx, "bullish", breakout_threshold
-                    ):
+                    if check_breakout_occurred(df, last_price_idx, "bullish", breakout_threshold):
                         skip_bullish = True
 
-                if (
-                    not skip_bullish
-                    and exclude_failed_breakouts
-                    and div_result["bullish_indices"]
-                ):
+                if not skip_bullish and exclude_failed_breakouts and div_result["bullish_indices"]:
                     indices = div_result["bullish_indices"]
                     last_price_idx = indices[2] if len(indices) == 6 else indices[1]
                     if check_failed_breakout(
@@ -231,16 +227,10 @@ def screen_rsi_divergence(
                     # Get last price index (2-point: idx 1, 3-point: idx 2)
                     indices = div_result["bearish_indices"]
                     last_price_idx = indices[2] if len(indices) == 6 else indices[1]
-                    if check_breakout_occurred(
-                        df, last_price_idx, "bearish", breakout_threshold
-                    ):
+                    if check_breakout_occurred(df, last_price_idx, "bearish", breakout_threshold):
                         skip_bearish = True
 
-                if (
-                    not skip_bearish
-                    and exclude_failed_breakouts
-                    and div_result["bearish_indices"]
-                ):
+                if not skip_bearish and exclude_failed_breakouts and div_result["bearish_indices"]:
                     indices = div_result["bearish_indices"]
                     last_price_idx = indices[2] if len(indices) == 6 else indices[1]
                     if check_failed_breakout(
@@ -310,14 +300,10 @@ def save_results_to_csv(
                 "Bearish": r.bearish_divergence,
                 "Details": r.details,
                 "Bullish_Indices": (
-                    json.dumps(serialize_indices(r.bullish_indices))
-                    if r.bullish_indices
-                    else ""
+                    json.dumps(serialize_indices(r.bullish_indices)) if r.bullish_indices else ""
                 ),
                 "Bearish_Indices": (
-                    json.dumps(serialize_indices(r.bearish_indices))
-                    if r.bearish_indices
-                    else ""
+                    json.dumps(serialize_indices(r.bearish_indices)) if r.bearish_indices else ""
                 ),
             }
             for r in results

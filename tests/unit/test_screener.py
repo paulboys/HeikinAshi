@@ -3,10 +3,13 @@
 from unittest.mock import patch
 
 import pandas as pd
-import pytest
 
-from stockcharts.screener.screener import (ScreenResult, get_candle_color,
-                                           screen_nasdaq, screen_ticker)
+from stockcharts.screener.screener import (
+    ScreenResult,
+    get_candle_color,
+    screen_nasdaq,
+    screen_ticker,
+)
 
 
 def test_get_candle_color_green():

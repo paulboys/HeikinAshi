@@ -3,15 +3,11 @@ Integration tests for RSI divergence CLI workflow.
 Tests end-to-end behavior with mocked data fetching.
 """
 
-import os
-import tempfile
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pandas as pd
-import pytest
 
-from stockcharts.screener.rsi_divergence import (save_results_to_csv,
-                                                 screen_rsi_divergence)
+from stockcharts.screener.rsi_divergence import save_results_to_csv, screen_rsi_divergence
 
 
 def test_rsi_divergence_screen_csv_output(mock_yfinance_download, tmp_path):
@@ -40,9 +36,7 @@ def test_rsi_divergence_screen_csv_output(mock_yfinance_download, tmp_path):
         save_results_to_csv(results, str(output_file))
 
         # Verify CSV was created
-        assert (
-            output_file.exists()
-        ), "CSV output file should be created when results exist"
+        assert output_file.exists(), "CSV output file should be created when results exist"
 
         # Read and validate structure
         df = pd.read_csv(output_file)

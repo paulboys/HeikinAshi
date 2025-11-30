@@ -66,12 +66,8 @@ def ema_derivative_pivots(
     price_derivative = price_smoothed.diff()
     rsi_derivative = rsi_smoothed.diff()
 
-    price_lows = price_smoothed[
-        (price_derivative.shift(1) < 0) & (price_derivative > 0)
-    ].index
-    price_highs = price_smoothed[
-        (price_derivative.shift(1) > 0) & (price_derivative < 0)
-    ].index
+    price_lows = price_smoothed[(price_derivative.shift(1) < 0) & (price_derivative > 0)].index
+    price_highs = price_smoothed[(price_derivative.shift(1) > 0) & (price_derivative < 0)].index
     rsi_lows = rsi_smoothed[(rsi_derivative.shift(1) < 0) & (rsi_derivative > 0)].index
     rsi_highs = rsi_smoothed[(rsi_derivative.shift(1) > 0) & (rsi_derivative < 0)].index
 

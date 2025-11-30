@@ -4,9 +4,11 @@ import pandas as pd
 import pytest
 from matplotlib.figure import Figure
 
-from stockcharts.charts.divergence import (_convert_precomputed_to_df,
-                                           _find_divergence_points,
-                                           plot_price_rsi)
+from stockcharts.charts.divergence import (
+    _convert_precomputed_to_df,
+    _find_divergence_points,
+    plot_price_rsi,
+)
 
 
 @pytest.fixture
@@ -36,9 +38,7 @@ def sample_rsi_data():
 
 def test_plot_price_rsi_basic(sample_ohlc_data):
     """Test basic plot_price_rsi without divergence detection."""
-    fig = plot_price_rsi(
-        sample_ohlc_data, ticker="AAPL", show_divergence=False, figsize=(10, 8)
-    )
+    fig = plot_price_rsi(sample_ohlc_data, ticker="AAPL", show_divergence=False, figsize=(10, 8))
 
     assert isinstance(fig, Figure)
     assert len(fig.axes) == 2  # Price chart and RSI chart
@@ -135,9 +135,7 @@ def test_plot_price_rsi_auto_detect_divergence(sample_rsi_data, monkeypatch):
 
 def test_plot_price_rsi_custom_overbought_oversold(sample_ohlc_data):
     """Test custom overbought/oversold levels."""
-    fig = plot_price_rsi(
-        sample_ohlc_data, ticker="CUSTOM", overbought=80.0, oversold=20.0
-    )
+    fig = plot_price_rsi(sample_ohlc_data, ticker="CUSTOM", overbought=80.0, oversold=20.0)
 
     assert isinstance(fig, Figure)
 

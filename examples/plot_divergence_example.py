@@ -1,21 +1,18 @@
 """Example script demonstrating the price/RSI divergence plotting module."""
 
-import matplotlib.pyplot as plt
-
 from stockcharts.charts.divergence import plot_price_rsi
 from stockcharts.data.fetch import fetch_ohlc
 
 
-def main():
+def main() -> None:
     """Demonstrate divergence chart plotting for a single ticker."""
-
     # Example ticker with known divergences
     ticker = "AAPL"
 
     print(f"Fetching data for {ticker}...")
     df = fetch_ohlc(ticker, interval="1d", lookback="6mo")
 
-    print(f"Creating divergence chart...")
+    print("Creating divergence chart...")
     fig = plot_price_rsi(
         df,
         ticker=ticker,

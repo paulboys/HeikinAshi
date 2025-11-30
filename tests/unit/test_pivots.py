@@ -18,9 +18,7 @@ def test_ema_derivative_pivots_structure():
         index=pd.date_range("2025-01-01", periods=len(prices), freq="D"),
     )
 
-    piv = ema_derivative_pivots(
-        df, price_col="Close", rsi_col="RSI", price_span=3, rsi_span=3
-    )
+    piv = ema_derivative_pivots(df, price_col="Close", rsi_col="RSI", price_span=3, rsi_span=3)
     for key in ["price_highs", "price_lows", "rsi_highs", "rsi_lows"]:
         assert key in piv
         assert hasattr(piv[key], "__iter__")

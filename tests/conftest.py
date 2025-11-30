@@ -2,8 +2,8 @@
 Shared pytest fixtures and mocks for stockcharts tests.
 """
 
-from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
+from datetime import datetime
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd

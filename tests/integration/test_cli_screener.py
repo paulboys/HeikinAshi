@@ -1,12 +1,9 @@
-import os
 from unittest.mock import patch
 
 import pandas as pd
 import pytest
 
-from stockcharts.data.fetch import fetch_ohlc
-from stockcharts.screener.nasdaq import get_nasdaq_tickers
-from stockcharts.screener.screener import ScreenResult, screen_nasdaq
+from stockcharts.screener.screener import screen_nasdaq
 
 
 @pytest.fixture
@@ -32,9 +29,7 @@ def mock_fetch_and_tickers(tmp_path):
 
 
 def test_screener_min_volume_filter(mock_fetch_and_tickers):
-    results = screen_nasdaq(
-        color_filter="green", changed_only=False, min_volume=500000, limit=2
-    )
+    results = screen_nasdaq(color_filter="green", changed_only=False, min_volume=500000, limit=2)
     assert isinstance(results, list)
     # All entries should pass volume filter
     for r in results:
@@ -43,9 +38,7 @@ def test_screener_min_volume_filter(mock_fetch_and_tickers):
 
 def test_screener_min_price_filter(mock_fetch_and_tickers):
     # Synthetic close ~13 so min_price 5 should pass
-    results = screen_nasdaq(
-        color_filter="green", changed_only=False, min_price=5.0, limit=2
-    )
+    results = screen_nasdaq(color_filter="green", changed_only=False, min_price=5.0, limit=2)
     assert isinstance(results, list)
     for r in results:
         assert r.last_close >= 5.0

@@ -1,6 +1,5 @@
 """Unit tests for CLI main_rsi_divergence function."""
 
-import os
 from io import StringIO
 from unittest.mock import patch
 
@@ -60,9 +59,7 @@ def test_main_rsi_divergence_successful_run(mock_rsi_results, tmp_path):
             str(output_file),
         ],
     ):
-        with patch(
-            "stockcharts.cli.screen_rsi_divergence", return_value=mock_rsi_results
-        ):
+        with patch("stockcharts.cli.screen_rsi_divergence", return_value=mock_rsi_results):
             with patch("stockcharts.cli.save_results_to_csv") as mock_save:
                 with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                     result = main_rsi_divergence()
@@ -79,9 +76,7 @@ def test_main_rsi_divergence_no_results(tmp_path):
     """Test screening with no divergences found."""
     output_file = tmp_path / "empty_rsi.csv"
 
-    with patch(
-        "sys.argv", ["stockcharts-rsi-divergence", "--output", str(output_file)]
-    ):
+    with patch("sys.argv", ["stockcharts-rsi-divergence", "--output", str(output_file)]):
         with patch("stockcharts.cli.screen_rsi_divergence", return_value=[]):
             with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                 result = main_rsi_divergence()

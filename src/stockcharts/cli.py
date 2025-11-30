@@ -10,8 +10,10 @@ from matplotlib.patches import Rectangle
 
 from stockcharts.charts.heiken_ashi import heiken_ashi
 from stockcharts.data.fetch import fetch_ohlc
-from stockcharts.screener.rsi_divergence import (save_results_to_csv,
-                                                 screen_rsi_divergence)
+from stockcharts.screener.rsi_divergence import (
+    save_results_to_csv,
+    screen_rsi_divergence,
+)
 from stockcharts.screener.screener import screen_nasdaq
 
 
@@ -79,13 +81,9 @@ Examples:
         help="How far back to fetch data: 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max (default: 3mo)",
     )
 
-    parser.add_argument(
-        "--start", help="Start date in YYYY-MM-DD format (overrides --lookback)"
-    )
+    parser.add_argument("--start", help="Start date in YYYY-MM-DD format (overrides --lookback)")
 
-    parser.add_argument(
-        "--end", help="End date in YYYY-MM-DD format (defaults to today)"
-    )
+    parser.add_argument("--end", help="End date in YYYY-MM-DD format (defaults to today)")
 
     parser.add_argument(
         "--changed-only",
@@ -137,9 +135,7 @@ Examples:
         action="store_true",
         help="Suppress one-line non-advice disclaimer banner",
     )
-    parser.add_argument(
-        "--version", action="store_true", help="Print package version and exit"
-    )
+    parser.add_argument("--version", action="store_true", help="Print package version and exit")
     args = parser.parse_args()
 
     if args.version:
@@ -268,22 +264,16 @@ Examples:
         help="Output directory for chart images (default: charts/)",
     )
 
-    parser.add_argument(
-        "--period", default="1d", help="Data aggregation period (default: 1d)"
-    )
+    parser.add_argument("--period", default="1d", help="Data aggregation period (default: 1d)")
 
-    parser.add_argument(
-        "--lookback", default="3mo", help="Historical data lookback (default: 3mo)"
-    )
+    parser.add_argument("--lookback", default="3mo", help="Historical data lookback (default: 3mo)")
 
     parser.add_argument(
         "--no-disclaimer",
         action="store_true",
         help="Suppress one-line non-advice disclaimer banner",
     )
-    parser.add_argument(
-        "--version", action="store_true", help="Print package version and exit"
-    )
+    parser.add_argument("--version", action="store_true", help="Print package version and exit")
     args = parser.parse_args()
 
     if args.version:
@@ -636,9 +626,7 @@ Examples:
         action="store_true",
         help="Suppress one-line non-advice disclaimer banner",
     )
-    parser.add_argument(
-        "--version", action="store_true", help="Print package version and exit"
-    )
+    parser.add_argument("--version", action="store_true", help="Print package version and exit")
     args = parser.parse_args()
 
     if args.version:
@@ -651,9 +639,7 @@ Examples:
 
     print("Screening NASDAQ stocks for RSI divergences...")
     print(f"Divergence type: {args.type}")
-    print(
-        f"Period: {args.period}, Interval: {args.interval}, RSI period: {args.rsi_period}"
-    )
+    print(f"Period: {args.period}, Interval: {args.interval}, RSI period: {args.rsi_period}")
     print(f"Pivot method: {args.pivot_method}", end="")
     if args.pivot_method == "ema-deriv":
         print(f" (price span: {args.ema_price_span}, RSI span: {args.ema_rsi_span})")
@@ -675,9 +661,7 @@ Examples:
     if args.min_volume is not None:
         print(f"Minimum volume: {args.min_volume:,.0f} shares/day")
     if args.exclude_breakouts:
-        print(
-            f"Excluding completed breakouts (threshold: {args.breakout_threshold*100:.1f}%)"
-        )
+        print(f"Excluding completed breakouts (threshold: {args.breakout_threshold*100:.1f}%)")
     if args.exclude_failed_breakouts:
         print(
             f"Excluding failed breakouts (attempt: {args.failed_attempt_threshold*100:.1f}%, reversal: {args.failed_reversal_threshold*100:.1f}%)"
@@ -783,9 +767,7 @@ Examples:
         help="Output directory for chart images (default: charts/divergence/)",
     )
 
-    parser.add_argument(
-        "--interval", default="1d", help="Data aggregation interval (default: 1d)"
-    )
+    parser.add_argument("--interval", default="1d", help="Data aggregation interval (default: 1d)")
 
     parser.add_argument(
         "--lookback",
@@ -834,9 +816,7 @@ Examples:
         action="store_true",
         help="Suppress one-line non-advice disclaimer banner",
     )
-    parser.add_argument(
-        "--version", action="store_true", help="Print package version and exit"
-    )
+    parser.add_argument("--version", action="store_true", help="Print package version and exit")
     args = parser.parse_args()
 
     if args.version:
@@ -879,9 +859,7 @@ Examples:
 
     print(f"Generating Price/RSI divergence charts for {len(tickers)} stocks...")
     print(f"Output directory: {args.output_dir}")
-    print(
-        f"Interval: {args.interval}, Lookback: {args.lookback}, RSI Period: {args.rsi_period}"
-    )
+    print(f"Interval: {args.interval}, Lookback: {args.lookback}, RSI Period: {args.rsi_period}")
     print()
 
     import json
@@ -946,9 +924,7 @@ Examples:
         except Exception as e:
             print(f"❌ Error: {e}")
 
-    print(
-        f"\nCompleted! {success_count}/{len(tickers)} charts saved to {args.output_dir}"
-    )
+    print(f"\nCompleted! {success_count}/{len(tickers)} charts saved to {args.output_dir}")
     return 0
 
 

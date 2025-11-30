@@ -1,9 +1,8 @@
 """Unit tests for CLI main_screen function."""
 
 import os
-import sys
 from io import StringIO
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import patch
 
 import pandas as pd
 import pytest
@@ -314,9 +313,7 @@ def test_main_screen_debug_flag(mock_screen_results, tmp_path):
     """Test --debug flag enables detailed error messages."""
     output_file = tmp_path / "debug.csv"
 
-    with patch(
-        "sys.argv", ["stockcharts-screen", "--debug", "--output", str(output_file)]
-    ):
+    with patch("sys.argv", ["stockcharts-screen", "--debug", "--output", str(output_file)]):
         with patch(
             "stockcharts.cli.screen_nasdaq", return_value=mock_screen_results
         ) as mock_screen:

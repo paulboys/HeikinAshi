@@ -23,6 +23,7 @@ Example:
     # Filter by minimum price (e.g., stocks above $10)
     python scripts/screen_nasdaq.py --color green --changed-only --lookback 3mo --period 1d --min-volume 500000 --min-price 10
 """
+
 from __future__ import annotations
 
 import argparse
@@ -35,6 +36,7 @@ from stockcharts.screener.screener import screen_nasdaq
 
 
 def main() -> None:
+    """Entry point: screen NASDAQ stocks for Heiken Ashi patterns."""
     parser = argparse.ArgumentParser(
         description="Screen NASDAQ stocks for Heiken Ashi candle patterns"
     )
@@ -62,12 +64,8 @@ def main() -> None:
         default=0.5,
         help="Delay in seconds between API calls (default: 0.5)",
     )
-    parser.add_argument(
-        "--output", type=str, default=None, help="Output CSV file path (optional)"
-    )
-    parser.add_argument(
-        "--quiet", action="store_true", help="Suppress progress messages"
-    )
+    parser.add_argument("--output", type=str, default=None, help="Output CSV file path (optional)")
+    parser.add_argument("--quiet", action="store_true", help="Suppress progress messages")
     parser.add_argument(
         "--changed-only",
         action="store_true",

@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import pytest
 
 from stockcharts.indicators.divergence import detect_divergence
 
@@ -37,11 +36,7 @@ def test_divergence_with_nans():
     df = _df(prices, rsis)
     result = detect_divergence(df, lookback=4, window=1)
     assert result["bullish"] in (False, True)  # Should not crash
-    assert (
-        "details" in result
-        or "bullish_details" in result
-        or "bearish_details" in result
-    )
+    assert "details" in result or "bullish_details" in result or "bearish_details" in result
 
 
 def test_divergence_invalid_columns():

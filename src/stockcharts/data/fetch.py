@@ -68,9 +68,7 @@ def fetch_ohlc(
         - If nothing specified, default lookback = '1y'.
     """
     if interval not in VALID_INTERVALS:
-        raise ValueError(
-            f"Unsupported interval '{interval}'. Allowed: {sorted(VALID_INTERVALS)}"
-        )
+        raise ValueError(f"Unsupported interval '{interval}'. Allowed: {sorted(VALID_INTERVALS)}")
 
     start = _normalize_date(start)
     end = _normalize_date(end)
@@ -83,9 +81,7 @@ def fetch_ohlc(
         lookback = "1y"
 
     if lookback and lookback not in VALID_LOOKBACK:
-        raise ValueError(
-            f"Unsupported lookback '{lookback}'. Allowed: {sorted(VALID_LOOKBACK)}"
-        )
+        raise ValueError(f"Unsupported lookback '{lookback}'. Allowed: {sorted(VALID_LOOKBACK)}")
 
     download_kwargs = {
         "interval": interval,

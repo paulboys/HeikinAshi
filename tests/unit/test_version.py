@@ -1,6 +1,4 @@
-"""
-Unit tests for package metadata and version information.
-"""
+"""Unit tests for package metadata and version information."""
 
 import pytest
 
@@ -28,12 +26,10 @@ def test_version_format():
     assert patch.isdigit(), "Patch version should be numeric"
 
 
-def test_version_not_dev_default():
+def test_version_not_dev_default() -> None:
     """Verify installed package doesn't use dev fallback."""
     # Should not be the fallback version unless in development mode
     if __version__ == "0.0.0.dev0":
         pytest.skip("Package not installed (development mode)")
 
-    assert (
-        __version__ != "0.0.0.dev0"
-    ), "Should read version from installed package metadata"
+    assert __version__ != "0.0.0.dev0", "Should read version from installed package metadata"

@@ -9,6 +9,7 @@ HA_Low = min(L, HA_Open, HA_Close)
 
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 
 REQUIRED_COLUMNS = ["Open", "High", "Low", "Close"]
@@ -26,11 +27,11 @@ def heiken_ashi(df: pd.DataFrame) -> pd.DataFrame:
         raise ValueError(f"Input DataFrame missing required columns: {missing}")
 
     ha = pd.DataFrame(index=df.index.copy())
-    # Convert to numpy arrays and flatten to 1D (handles ExtensionArray)
-    o = df["Open"].to_numpy().ravel()
-    h = df["High"].to_numpy().ravel()
-    low = df["Low"].to_numpy().ravel()
-    c = df["Close"].to_numpy().ravel()
+    # Convert to numeric numpy arrays (ensure float dtype for mypy/pandas stubs)
+    o: np.ndarray = df["Open"].astype("float64").to_numpy().ravel()
+    h: np.ndarray = df["High"].astype("float64").to_numpy().ravel()
+    low: np.ndarray = df["Low"].astype("float64").to_numpy().ravel()
+    c: np.ndarray = df["Close"].astype("float64").to_numpy().ravel()
 
     ha_close = (o + h + low + c) / 4.0
     ha_open = ha_close.copy()

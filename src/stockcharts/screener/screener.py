@@ -78,9 +78,7 @@ def screen_ticker(
     """
     try:
         # Fetch recent data
-        df = fetch_ohlc(
-            ticker, interval=period, lookback=lookback, start=start, end=end
-        )
+        df = fetch_ohlc(ticker, interval=period, lookback=lookback, start=start, end=end)
 
         if df.empty or len(df) < 2:
             return None
@@ -225,9 +223,7 @@ def screen_nasdaq(
 
     if verbose:
         print("-" * 70)
-        print(
-            f"Screening complete: {len(results)} {color_filter} candles{change_msg} found"
-        )
+        print(f"Screening complete: {len(results)} {color_filter} candles{change_msg} found")
 
     return sorted(results, key=lambda x: x.ticker)
 

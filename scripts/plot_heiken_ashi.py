@@ -4,6 +4,7 @@
 Example:
     python scripts/plot_heiken_ashi.py --ticker AAPL --start 2024-01-01 --end 2024-06-01 --output aapl_ha.png
 """
+
 from __future__ import annotations
 
 import argparse
@@ -19,6 +20,7 @@ from stockcharts.data.fetch import fetch_ohlc
 def plot_heiken_ashi(
     ticker: str, start: str | None, end: str | None, interval: str, output: Path
 ) -> None:
+    """Generate and save a Heiken Ashi chart for a single ticker."""
     df = fetch_ohlc(ticker, start=start, end=end, interval=interval)
     ha = heiken_ashi(df)
 
@@ -43,7 +45,7 @@ def plot_heiken_ashi(
         for ha_open, ha_close in zip(ha["HA_Open"], ha["HA_Close"])
     ]
 
-    for i, (date_num, (idx, row)) in enumerate(zip(dates, ha.iterrows())):
+    for i, (date_num, (_idx, row)) in enumerate(zip(dates, ha.iterrows())):
         # Vertical line for high-low range
         ax.plot(
             [date_num, date_num],
@@ -84,6 +86,7 @@ def plot_heiken_ashi(
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments for Heiken Ashi chart generation."""
     p = argparse.ArgumentParser(description="Generate a Heiken Ashi chart for a ticker")
     p.add_argument("--ticker", required=True, help="Ticker symbol, e.g. AAPL")
     p.add_argument("--start", help="Start date YYYY-MM-DD", default=None)
@@ -94,6 +97,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    """Entry point: parse args and render the Heiken Ashi chart."""
     args = parse_args()
     output_path = Path(args.output)
     plot_heiken_ashi(args.ticker, args.start, args.end, args.interval, output_path)

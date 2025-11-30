@@ -134,9 +134,7 @@ def get_nasdaq_tickers(limit: int | None = None) -> list[str]:
         # Remove any tickers with special characters (like $ for warrants)
         # Also filter out NaN values and ensure all are strings
         tickers = [
-            str(t)
-            for t in tickers
-            if pd.notna(t) and "$" not in str(t) and "." not in str(t)
+            str(t) for t in tickers if pd.notna(t) and "$" not in str(t) and "." not in str(t)
         ]
 
     except Exception as e:

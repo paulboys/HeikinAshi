@@ -8,6 +8,7 @@ Example:
     # Specify custom interval
     python scripts/plot_reversals.py --input green_reversals.csv --interval 1d --output charts/daily
 """
+
 from __future__ import annotations
 
 import argparse
@@ -22,7 +23,7 @@ from stockcharts.charts.heiken_ashi import heiken_ashi
 from stockcharts.data.fetch import fetch_ohlc
 
 
-def plot_heiken_ashi_chart(ha: pd.DataFrame, ticker: str, interval: str):
+def plot_heiken_ashi_chart(ha: pd.DataFrame, ticker: str, interval: str) -> None:
     """Create a Heiken Ashi chart.
 
     Parameters
@@ -34,7 +35,7 @@ def plot_heiken_ashi_chart(ha: pd.DataFrame, ticker: str, interval: str):
     interval : str
         Data interval for chart title
 
-    Returns
+    Returns:
     -------
     tuple
         (fig, ax) matplotlib figure and axis objects
@@ -61,7 +62,7 @@ def plot_heiken_ashi_chart(ha: pd.DataFrame, ticker: str, interval: str):
     ]
 
     # Draw candlesticks
-    for i, (date_num, (idx, row)) in enumerate(zip(dates, ha.iterrows())):
+    for i, (date_num, (_idx, row)) in enumerate(zip(dates, ha.iterrows())):
         # Vertical line for high-low range
         ax.plot(
             [date_num, date_num],
@@ -74,9 +75,7 @@ def plot_heiken_ashi_chart(ha: pd.DataFrame, ticker: str, interval: str):
         upper = max(row["HA_Open"], row["HA_Close"])
         height = upper - lower if upper - lower != 0 else 0.001
         ax.add_patch(
-            plt.Rectangle(
-                (date_num - width / 2, lower), width, height, color=colors[i], alpha=0.7
-            )
+            plt.Rectangle((date_num - width / 2, lower), width, height, color=colors[i], alpha=0.7)
         )
 
     # Format x-axis as dates
@@ -111,7 +110,7 @@ def generate_chart(
     show : bool
         Whether to display the chart interactively
 
-    Returns
+    Returns:
     -------
     bool
         True if chart was generated successfully, False otherwise
@@ -155,6 +154,7 @@ def generate_chart(
 
 
 def main() -> None:
+    """Entry point: parse args and create Heiken Ashi reversal charts."""
     parser = argparse.ArgumentParser(
         description="Generate Heiken Ashi charts for all tickers in a CSV file"
     )
@@ -205,9 +205,7 @@ def main() -> None:
     else:
         interval = "1d"
 
-    print(
-        f"Generating Heiken Ashi charts for {len(tickers)} tickers ({interval} interval)..."
-    )
+    print(f"Generating Heiken Ashi charts for {len(tickers)} tickers ({interval} interval)...")
     print(f"Output directory: {args.output}")
     print("-" * 70)
 
@@ -216,9 +214,7 @@ def main() -> None:
 
     for i, ticker in enumerate(tickers, 1):
         print(f"[{i}/{len(tickers)}] Processing {ticker}...")
-        if generate_chart(
-            ticker, interval=interval, output_dir=output_dir, show=args.show
-        ):
+        if generate_chart(ticker, interval=interval, output_dir=output_dir, show=args.show):
             success_count += 1
 
     print("-" * 70)

@@ -1,13 +1,15 @@
 """Unit tests for RSI divergence screener filtering logic."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pandas as pd
 import pytest
 
-from stockcharts.screener.rsi_divergence import (RSIDivergenceResult,
-                                                 save_results_to_csv,
-                                                 screen_rsi_divergence)
+from stockcharts.screener.rsi_divergence import (
+    RSIDivergenceResult,
+    save_results_to_csv,
+    screen_rsi_divergence,
+)
 
 
 @pytest.fixture
@@ -261,9 +263,7 @@ def test_screen_rsi_divergence_exclude_failed_breakouts_filters_bearish(
     assert len(results) == 0
 
 
-def test_screen_rsi_divergence_price_filter_min(
-    mock_ohlc_with_rsi, mock_bullish_divergence_result
-):
+def test_screen_rsi_divergence_price_filter_min(mock_ohlc_with_rsi, mock_bullish_divergence_result):
     """Test min_price filter excludes low-priced stocks."""
     with patch(
         "stockcharts.screener.rsi_divergence.fetch_ohlc",
@@ -289,9 +289,7 @@ def test_screen_rsi_divergence_price_filter_min(
     assert len(results) == 0
 
 
-def test_screen_rsi_divergence_price_filter_max(
-    mock_ohlc_with_rsi, mock_bullish_divergence_result
-):
+def test_screen_rsi_divergence_price_filter_max(mock_ohlc_with_rsi, mock_bullish_divergence_result):
     """Test max_price filter excludes high-priced stocks."""
     with patch(
         "stockcharts.screener.rsi_divergence.fetch_ohlc",
@@ -317,9 +315,7 @@ def test_screen_rsi_divergence_price_filter_max(
     assert len(results) == 0
 
 
-def test_screen_rsi_divergence_volume_filter(
-    mock_ohlc_with_rsi, mock_bullish_divergence_result
-):
+def test_screen_rsi_divergence_volume_filter(mock_ohlc_with_rsi, mock_bullish_divergence_result):
     """Test min_volume filter excludes low-volume stocks."""
     with patch(
         "stockcharts.screener.rsi_divergence.fetch_ohlc",
