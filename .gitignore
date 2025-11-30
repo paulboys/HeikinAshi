@@ -52,3 +52,7 @@ test_*.py
 debug_*.py
 test_period.py
 test_nasdaq_fetch.py
+
+# Coverage and built docs
+.coverage*
+site/
