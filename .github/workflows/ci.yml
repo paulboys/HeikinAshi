@@ -28,7 +28,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          pytest --cov=src --cov-report=term-missing --cov-report=xml
+          pytest --cov=src --cov-report=term-missing --cov-report=xml --cov-report=html
         continue-on-error: false
 
       - name: Build docs (strict)
@@ -43,5 +43,6 @@ jobs:
           path: |
             .coverage
             coverage.xml
+            htmlcov
           if-no-files-found: warn
         
