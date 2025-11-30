@@ -3,7 +3,7 @@
 ## Swing Trading
 Focus on daily bullish divergences confirmed by green HA candles. Parameters:
 ```
-stockcharts-screen --color green --interval 1d --output results/ha_green.csv
+stockcharts-screen --color green --period 1d --output results/ha_green.csv
 stockcharts-rsi-divergence --type bullish --input-filter results/ha_green.csv --min-price 10 --period 6mo
 ```
 Combine with volume filter for higher quality: `--min-volume 2_000_000`.
@@ -54,7 +54,10 @@ Workflow:
 The detailed time window and style guide has been merged here for clarity.
 
 ### Aggregation Period (`--period`)
-`5d`, `1mo`, `3mo`, `6mo`, `1y`, `2y`, `5y`, `ytd`, `max` — defines candle size/time bucket.
+Defines candle size / bar interval: `1m`, `5m`, `15m`, `1h`, `1d`, `1wk`, `1mo`.
+
+### Lookback Window (`--lookback`)
+Historical data span fetched: `5d`, `1mo`, `3mo`, `6mo`, `1y`, `2y`, `5y`, `ytd`, `max`.
 
 ### Custom Date Range (`--start` / `--end`)
 Use explicit date range for historical backtests; overrides lookback when both provided.
@@ -62,20 +65,20 @@ Use explicit date range for historical backtests; overrides lookback when both p
 ### Style Examples
 Day Trading (short context):
 ```
-stockcharts-screen --color green --changed-only --period 5d --limit 100
+stockcharts-screen --color green --changed-only --period 1h --lookback 5d --limit 100
 ```
 Swing Trading (recommended):
 ```
-stockcharts-screen --color green --changed-only --period 3mo --interval 1d
+stockcharts-screen --color green --changed-only --period 1d --lookback 3mo
 ```
 Position Trading (long trend):
 ```
-stockcharts-screen --color green --changed-only --period 5y --interval 1wk
+stockcharts-screen --color green --changed-only --period 1wk --lookback 5y
 ```
 
 ### Multi-Timeframe Workflow
-1. Weekly trend scan → `--period 1y --interval 1wk`
-2. Daily timing scan → `--period 3mo --interval 1d`
+1. Weekly trend scan → `--lookback 1y --period 1wk`
+2. Daily timing scan → `--lookback 3mo --period 1d`
 3. Intersect results and plot charts.
 
 ### Common Validity Rules

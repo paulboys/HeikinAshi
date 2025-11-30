@@ -143,6 +143,8 @@ def screen_nasdaq(
     debug: bool = False,
     min_volume: float | None = None,
     min_price: float | None = None,
+    min_run_percentile: float | None = None,
+    max_run_percentile: float | None = None,
     ticker_filter: list[str] | None = None,
 ) -> list[ScreenResult]:
     """Screen NASDAQ stocks for Heiken Ashi candle colors.
@@ -174,6 +176,12 @@ def screen_nasdaq(
     min_price : float | None
         Minimum stock price (in dollars). Filters out stocks below this price.
         Useful for avoiding penny stocks (e.g., 5.0 or 10.0).
+    min_run_percentile : float | None
+        Minimum run percentile (0-100). Find rare long runs.
+        Example: 90 finds only top 10% longest runs, 95 finds top 5%.
+    max_run_percentile : float | None
+        Maximum run percentile (0-100). Find common short runs.
+        Example: 25 finds only bottom 25% shortest runs.
     end : str | None
         End date YYYY-MM-DD. Cannot be used with lookback.
     ticker_filter : List[str] | None
@@ -227,7 +235,17 @@ def screen_nasdaq(
                     if min_volume is None or result.avg_volume >= min_volume:
                         # Apply price filter if specified
                         if min_price is None or result.ha_close >= min_price:
-                            results.append(result)
+                            # Apply run percentile filters if specified
+                            passes_min = (
+                                min_run_percentile is None
+                                or result.run_percentile >= min_run_percentile
+                            )
+                            passes_max = (
+                                max_run_percentile is None
+                                or result.run_percentile <= max_run_percentile
+                            )
+                            if passes_min and passes_max:
+                                results.append(result)
 
         # Rate limiting
         if delay > 0 and i < len(tickers):

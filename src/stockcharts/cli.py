@@ -48,6 +48,15 @@ Examples:
   # Find red reversals with volume filter (swing trading)
   stockcharts-screen --color red --changed-only --min-volume 500000
 
+  # Find extreme runs (95th percentile or higher - rare long streaks)
+  stockcharts-screen --min-run-percentile 95
+
+  # Find both extreme green and red runs
+  stockcharts-screen --min-run-percentile 90 --output extreme_runs.csv
+
+  # Find short/weak runs (bottom 25%)
+  stockcharts-screen --max-run-percentile 25
+
   # Day trading setup: 1-hour charts with high volume
   stockcharts-screen --color green --period 1h --lookback 1mo --min-volume 2000000
 
@@ -103,6 +112,20 @@ Examples:
         type=float,
         default=None,
         help="Minimum stock price in dollars (e.g., 5.0 or 10.0 to filter out penny stocks)",
+    )
+
+    parser.add_argument(
+        "--min-run-percentile",
+        type=float,
+        default=None,
+        help="Minimum run percentile (0-100). Find rare long runs (e.g., 90 for top 10%%)",
+    )
+
+    parser.add_argument(
+        "--max-run-percentile",
+        type=float,
+        default=None,
+        help="Maximum run percentile (0-100). Find common short runs (e.g., 25 for bottom 25%%)",
     )
 
     parser.add_argument(
@@ -177,6 +200,10 @@ Examples:
         print(f"Minimum volume: {args.min_volume:,} shares/day")
     if args.min_price is not None:
         print(f"Minimum price: ${args.min_price:.2f}")
+    if args.min_run_percentile is not None:
+        print(f"Minimum run percentile: {args.min_run_percentile}%")
+    if args.max_run_percentile is not None:
+        print(f"Maximum run percentile: {args.max_run_percentile}%")
     if args.changed_only:
         print("Filtering for color changes only")
     if args.limit:
@@ -192,6 +219,8 @@ Examples:
         changed_only=args.changed_only,
         min_volume=args.min_volume,
         min_price=args.min_price,
+        min_run_percentile=args.min_run_percentile,
+        max_run_percentile=args.max_run_percentile,
         limit=args.limit,
         debug=args.debug,
         ticker_filter=ticker_filter,

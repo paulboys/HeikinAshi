@@ -22,6 +22,7 @@ nav:
       - RSI Indicator: api/rsi.md
       - Screener Functions: api/screener.md
       - Data Fetching: api/data.md
+      - Heiken Ashi Runs: api/heiken_runs.md
   - Contributing: contributing.md
   - Copilot Guide: copilot.md
   - Roadmap: roadmap.md

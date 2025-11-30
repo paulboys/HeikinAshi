@@ -4,11 +4,11 @@
 StockCharts is a Python library and CLI toolkit for screening and visualizing technical setups (Heiken Ashi trends, RSI price divergences) across NASDAQ equities using reproducible programmatic workflows.
 
 ## Core Capabilities
-- Heiken Ashi candle color screener (bullish/bearish trend snapshot)
+- Heiken Ashi candle color + run statistics screener (trend snapshot + maturity)
 - RSI price divergence screener (potential reversal detection)
 - Chart generation (price + RSI with divergence markers, Heiken Ashi visualization)
 - Batch data retrieval via `yfinance`
-- Filtering by price, volume, divergence type, candle color
+- Filtering by price, volume, divergence type, candle color, run percentile
 - Precomputed indices to guarantee chart-plot alignment
 
 ## High-Level Architecture
@@ -38,9 +38,10 @@ See `docs/screener.md` and `docs/rsi_divergence.md` for detailed usage.
 ## Quick Reference
 Common tasks:
 ```
-stockcharts-screen --color green --interval 1d
+stockcharts-screen --color green --period 1d
+stockcharts-screen --min-run-percentile 90 --period 1d
 stockcharts-rsi-divergence --type bullish --min-price 10 --period 6mo
-stockcharts-plot-divergence --ticker AAPL --period 6mo --interval 1d
+stockcharts-plot-divergence --ticker AAPL --period 6mo
 ```
 More shortcuts in `docs/quick_reference.md`.
 
@@ -52,7 +53,7 @@ More shortcuts in `docs/quick_reference.md`.
 
 ## Design Principles
 - Deterministic screening (consistent output for same parameters/time)
-- Readable, dataclass-based result objects
+- Readable, dataclass-based result objects (including run statistics)
 - Minimal, explicit parameters (price, volume, lookback, period)
 - Separation of concerns (fetch vs analyze vs visualize)
 

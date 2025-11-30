@@ -25,13 +25,15 @@ pip install -e .
 
 ## CLI Summary
 ```bash
-stockcharts-screen --color green --interval 1d
+stockcharts-screen --color green --period 1d
+stockcharts-screen --min-run-percentile 90 --period 1d    # Extended runs
 stockcharts-rsi-divergence --type bullish --min-price 10
 stockcharts-plot-divergence --ticker NVDA --period 6mo
 ```
 
 ## Key Concepts
 - Heiken Ashi: Smoothed candle representation for trend clarity.
+- Run Statistics: `run_length` (current contiguous same-color count) and `run_percentile` (historical maturity gauge, 0–100 inclusive).
 - RSI Divergence: Price vs RSI swing mismatch signaling potential reversals.
 - Precomputed Indices: Guarantee chart markers align with detected divergences.
 - Tolerance: RSI difference threshold (0.5) to prevent noise.

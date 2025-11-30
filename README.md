@@ -13,9 +13,10 @@ A Python library for screening NASDAQ stocks using Heiken Ashi candles and RSI d
 
 ## Features
 
-### � NASDAQ Screener
+### 🧪 NASDAQ Screener
 - **Full NASDAQ Coverage**: Automatically fetches all 5,120+ NASDAQ tickers from official FTP source
 - **Heiken Ashi Analysis**: Detects red-to-green and green-to-red candle color changes
+- **Run Statistics**: Adds `run_length` (consecutive same-color candles) and `run_percentile` (historical maturity rank 0–100) with percentile filters for extended or early trend detection
 - **Volume Filtering**: Filter by average daily volume to focus on liquid, tradeable stocks
 - **Flexible Timeframes**: Support for intraday (1m-1h), daily, weekly, and monthly charts
 - **Custom Date Ranges**: Screen historical data with specific start/end dates
@@ -70,6 +71,20 @@ After installation, you'll have four command-line tools available:
 **Find green reversals (red→green) for swing trading:**
 ```powershell
 stockcharts-screen --color green --changed-only --min-volume 500000
+```
+**Find extended (mature) runs (top decile 90%+):**
+```powershell
+stockcharts-screen --min-run-percentile 90 --period 1d
+```
+
+**Find short/early runs (bottom quartile ≤25%):**
+```powershell
+stockcharts-screen --max-run-percentile 25 --period 1d
+```
+
+**Filter mid-maturity runs (40–70% percentile range):**
+```powershell
+stockcharts-screen --min-run-percentile 40 --max-run-percentile 70 --period 1d
 ```
 
 **Day trading setup (1-hour charts with high volume):**
@@ -195,6 +210,8 @@ stockcharts-plot-divergence --max-plots 20 --rsi-period 21
 - `--changed-only`: Only show stocks where color changed in latest candle
 - `--min-volume`: Minimum average daily volume (e.g., 500000)
 - `--min-price`: Minimum stock price (e.g., 5.0 or 10.0)
+- `--min-run-percentile`: Include only tickers with run_percentile ≥ value (0–100)
+- `--max-run-percentile`: Include only tickers with run_percentile ≤ value (0–100)
 - `--output`: CSV output path (default: results/nasdaq_screen.csv)
 - `--debug`: Show detailed error messages
 
@@ -248,6 +265,10 @@ results = screen_nasdaq(
     min_volume=500000
 )
 
+# Inspect run statistics for each result
+for r in results:
+    print(r.ticker, r.run_length, r.run_percentile)
+
 # Screen for RSI bullish divergences
 rsi_results = screen_rsi_divergence(
     divergence_type='bullish',
@@ -296,10 +317,10 @@ StockCharts/
 
 ### Screener CSV Output
 ```csv
-ticker,color,ha_open,ha_close,last_date,period,color_changed,avg_volume
-AAPL,green,225.34,227.89,2024-01-15,1d,True,58234567
-MSFT,green,402.15,405.67,2024-01-15,1d,True,25678901
-NVDA,green,520.88,528.45,2024-01-15,1d,True,45123890
+ticker,color,ha_open,ha_close,last_date,period,color_changed,avg_volume,run_length,run_percentile
+AAPL,green,225.34,227.89,2024-01-15,1d,True,58_234_567,4,78.6
+MSFT,green,402.15,405.67,2024-01-15,1d,True,25_678_901,6,92.3
+NVDA,green,520.88,528.45,2024-01-15,1d,True,45_123_890,2,24.1
 ```
 
 ### Chart Output
