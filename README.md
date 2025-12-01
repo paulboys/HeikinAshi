@@ -12,7 +12,7 @@
 A Python library for screening NASDAQ stocks using Heiken Ashi candles and RSI divergence to detect trend reversals with volume and price filtering.
 
 ## Current Version
-The latest released version is **0.6.0**. You can verify in Python:
+The latest released version is **0.6.1**. You can verify in Python:
 ```python
 import stockcharts
 print(stockcharts.__version__)
