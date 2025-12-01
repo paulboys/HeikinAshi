@@ -6,6 +6,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and 
 ## [Unreleased]
 _No changes yet._
 
+## [0.6.1] - 2025-12-01
+### Added
+- `examples/visualize_ha_runs.py`: Script to visualize run percentile distributions with volume/price filters.
+
+### Changed
+- `stockcharts-plot-divergence` migrated from `--interval` to `--period` for consistency (backward-compatible `--interval` alias retained).
+- `stockcharts-screen` now accepts `--color all` to include both green and red candles in results.
+- Updated documentation to reflect `--period` standardization across all commands.
+
+### Fixed
+- Integer-only y-axis ticks in histogram visualizations (no more fractional ticker counts).
+- Improved data recency filter in visualization script with clearer messaging.
+
 ## [0.6.0] - 2025-11-30
 ### Added
 - Heiken Ashi run statistics (`run_length`, `run_percentile`) included in screener output CSV.
