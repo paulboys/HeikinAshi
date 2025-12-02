@@ -537,6 +537,12 @@ Examples:
     )
 
     parser.add_argument(
+        "--input-filter",
+        default=None,
+        help='CSV file with tickers to screen (must have "Ticker" or "ticker" column). Only screens these tickers instead of all NASDAQ.',
+    )
+
+    parser.add_argument(
         "--exclude-breakouts",
         action="store_true",
         help="Exclude divergences where breakout already occurred (price moved past threshold)",
@@ -668,7 +674,38 @@ Examples:
 
     _print_disclaimer_once(args)
 
-    print("Screening NASDAQ stocks for RSI divergences...")
+    # Load ticker filter if provided
+    ticker_filter = None
+    if args.input_filter:
+        import os
+
+        import pandas as pd
+
+        if not os.path.exists(args.input_filter):
+            print(f"Error: Input filter file not found: {args.input_filter}")
+            return 1
+
+        try:
+            filter_df = pd.read_csv(args.input_filter)
+            # Handle both 'Ticker' and 'ticker' column names
+            ticker_col = None
+            if "Ticker" in filter_df.columns:
+                ticker_col = "Ticker"
+            elif "ticker" in filter_df.columns:
+                ticker_col = "ticker"
+            else:
+                print("Error: Input filter CSV must have a 'Ticker' or 'ticker' column")
+                return 1
+
+            ticker_filter = filter_df[ticker_col].tolist()
+            print(f"Loaded {len(ticker_filter)} tickers from {args.input_filter}")
+        except Exception as e:
+            print(f"Error loading input filter: {e}")
+            return 1
+
+    print(
+        f"Screening {'filtered list' if ticker_filter else 'NASDAQ stocks'} for RSI divergences..."
+    )
     print(f"Divergence type: {args.type}")
     print(f"Period: {args.period}, Interval: {args.interval}, RSI period: {args.rsi_period}")
     print(f"Pivot method: {args.pivot_method}", end="")
@@ -700,7 +737,7 @@ Examples:
     print()
 
     results = screen_rsi_divergence(
-        tickers=None,  # Use all NASDAQ
+        tickers=ticker_filter,  # Use filtered list or None for all NASDAQ
         period=args.period,
         interval=args.interval,
         rsi_period=args.rsi_period,
