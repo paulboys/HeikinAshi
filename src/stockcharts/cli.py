@@ -1078,15 +1078,15 @@ Examples:
 
     parser.add_argument(
         "--period",
-        default="1y",
-        help="Historical data period (1mo,3mo,6mo,1y,2y,5y). Default: 1y",
+        default="10y",
+        help="Historical data period (1mo,3mo,6mo,1y,2y,5y,10y). Default: 10y",
     )
 
     parser.add_argument(
         "--interval",
-        default="1d",
+        default="1wk",
         choices=["1d", "1wk", "1mo"],
-        help="Candle interval (default: 1d). Weekly/monthly auto-adjusts MA period.",
+        help="Candle interval (default: 1wk for McGlone methodology). Weekly auto-adjusts MA to 40.",
     )
 
     parser.add_argument(

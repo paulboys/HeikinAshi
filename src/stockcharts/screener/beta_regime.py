@@ -139,6 +139,25 @@ def screen_beta_regime(
             print(f"No data for benchmark {benchmark}")
         return []
 
+    # Validate sufficient bars for MA calculation
+    bars_available = len(benchmark_df)
+    min_recommended = int(effective_ma_period * 1.5)  # 50% buffer for meaningful trend
+    if bars_available < effective_ma_period:
+        if verbose:
+            print(
+                f"⚠️  WARNING: Only {bars_available} bars available, but MA period is "
+                f"{effective_ma_period}. No regime signals possible."
+            )
+            print("    Increase --period (e.g., 5y, 10y) or reduce --ma-period")
+        return []
+    elif bars_available < min_recommended:
+        if verbose:
+            print(
+                f"⚠️  WARNING: Only {bars_available} bars for {effective_ma_period}-period MA. "
+                f"Recommend {min_recommended}+ bars for reliable regime detection."
+            )
+            print("    Consider using --period 5y or --period 10y for better accuracy.")
+
     if verbose:
         print(f"Benchmark {benchmark}: {len(benchmark_df)} bars loaded")
         mode_msg = f"batch size {batch_size}" if batch_size else "sequential"
