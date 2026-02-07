@@ -6,6 +6,8 @@ StockCharts is a Python library and CLI toolkit for screening and visualizing te
 ## Core Capabilities
 - Heiken Ashi candle color + run statistics screener (trend snapshot + maturity)
 - RSI price divergence screener (potential reversal detection)
+- Beta regime screener (risk-on/risk-off market regime detection)
+- McGlone contrarian sector analysis (90+ ETFs with 3-criteria buy signals)
 - Chart generation (price + RSI with divergence markers, Heiken Ashi visualization)
 - Batch data retrieval via `yfinance`
 - Filtering by price, volume, divergence type, candle color, run percentile
@@ -30,10 +32,11 @@ pip install -e .
 ## CLI Commands
 - `stockcharts-screen` (Heiken Ashi color screener)
 - `stockcharts-rsi-divergence` (RSI divergence screener)
+- `stockcharts-beta-regime` (risk-on/risk-off regime screener)
 - `stockcharts-plot` (generic price/indicator plot)
 - `stockcharts-plot-divergence` (price + RSI divergence visualization)
 
-See `docs/screener.md` and `docs/rsi_divergence.md` for detailed usage.
+See `docs/screener.md`, `docs/rsi_divergence.md`, and `docs/beta_regime.md` for detailed usage.
 
 ## Quick Reference
 Common tasks:

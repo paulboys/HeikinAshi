@@ -31,3 +31,5 @@
 - Precomputed divergence indices for charts
 - Volume filter parameter
 - RSI tolerance patch to remove false positives
+- Beta Regime Screener (risk-on/risk-off detection)
+- McGlone Contrarian Sector Analysis (90+ ETFs, 3-criteria buy signals)

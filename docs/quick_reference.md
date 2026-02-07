@@ -9,6 +9,10 @@ stockcharts-screen --max-run-percentile 25 --period 1d          # Early runs
 stockcharts-rsi-divergence --type bullish --min-price 10
 stockcharts-rsi-divergence --type bearish --min-volume 2_000_000
 stockcharts-plot-divergence --ticker NVDA --period 6mo
+stockcharts-beta-regime --regime risk-on --min-volume 1000000   # Risk-on stocks
+stockcharts-beta-regime --regime risk-off                       # Risk-off (contrarian)
+python scripts/sector_regime.py                                 # McGlone sector analysis
+python scripts/sector_regime.py --comprehensive                 # All 90+ ETFs
 ```
 
 ## Common Parameter Combos
@@ -20,8 +24,9 @@ stockcharts-plot-divergence --ticker NVDA --period 6mo
 | Extended HA runs (top decile) | `stockcharts-screen --min-run-percentile 90 --period 1d` |
 | Mid-maturity HA runs (40–70%) | `stockcharts-screen --min-run-percentile 40 --max-run-percentile 70 --period 1d` |
 | Divergences liquid only | `stockcharts-rsi-divergence --min-volume 5_000_000` |
-| Intersect HA + RSI | `stockcharts-rsi-divergence --input-filter results/ha_green.csv --type bullish` |
-
+| Intersect HA + RSI | `stockcharts-rsi-divergence --input-filter results/ha_green.csv --type bullish` || Risk-on momentum stocks | `stockcharts-beta-regime --regime risk-on --min-volume 1000000` |
+| Risk-off contrarian candidates | `stockcharts-beta-regime --regime risk-off --min-price 20` |
+| McGlone sector BUY signals | `python scripts/sector_regime.py --comprehensive` |
 ## Files to Know
 - `divergence.py` (RSI divergence logic)
 - `rsi.py` (RSI computation)
