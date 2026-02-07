@@ -19,7 +19,21 @@ from stockcharts.screener.nasdaq import get_nasdaq_tickers
 
 @dataclass
 class ScreenResult:
-    """Result for a single ticker screening."""
+    """Result for a single ticker Heiken Ashi screening.
+
+    Attributes:
+        ticker: Stock symbol.
+        color: Current candle color ('green' = bullish, 'red' = bearish).
+        previous_color: Previous candle color.
+        color_changed: True if color changed from previous candle.
+        ha_open: Heiken Ashi open price.
+        ha_close: Heiken Ashi close price.
+        last_date: Date of the most recent candle.
+        interval: Time interval used ('1d', '1wk', '1mo').
+        avg_volume: Average trading volume over recent period.
+        run_length: Consecutive candles of same color.
+        run_percentile: Percentile rank of run length (0-100).
+    """
 
     ticker: str
     color: Literal["green", "red"]
@@ -37,16 +51,12 @@ class ScreenResult:
 def get_candle_color(ha_df: pd.DataFrame, index: int = -1) -> Literal["green", "red"]:
     """Determine if a Heiken Ashi candle is green or red.
 
-    Parameters
-    ----------
-    ha_df : pd.DataFrame
-        Heiken Ashi DataFrame with columns HA_Open, HA_Close
-    index : int
-        Index of the candle to check (-1 for most recent, -2 for previous, etc.)
+    Args:
+        ha_df: Heiken Ashi DataFrame with columns HA_Open, HA_Close.
+        index: Index of the candle to check (-1 for most recent, -2 for previous).
 
     Returns:
-    -------
-    "green" if HA_Close >= HA_Open (bullish), "red" otherwise (bearish)
+        'green' if HA_Close >= HA_Open (bullish), 'red' otherwise (bearish).
     """
     row = ha_df.iloc[index]
     return "green" if row["HA_Close"] >= row["HA_Open"] else "red"
@@ -62,24 +72,16 @@ def screen_ticker(
 ) -> ScreenResult | None:
     """Screen a single ticker for its latest Heiken Ashi candle color.
 
-    Parameters
-    ----------
-    ticker : str
-        Stock symbol
-    period : str
-        Aggregation period: "1d" (daily), "1wk" (weekly), "1mo" (monthly)
-    lookback : str | None
-        How far back to fetch: '1mo', '3mo', '6mo', '1y', '2y', '5y', etc.
-    start : str | None
-        Start date YYYY-MM-DD
-    end : str | None
-        End date YYYY-MM-DD
-    debug : bool
-        When True, prints detailed error information during screening.
+    Args:
+        ticker: Stock symbol.
+        period: Aggregation period ('1d', '1wk', '1mo').
+        lookback: How far back to fetch ('1mo', '3mo', '6mo', '1y', '2y', '5y', etc.).
+        start: Start date YYYY-MM-DD.
+        end: End date YYYY-MM-DD.
+        debug: When True, prints detailed error information during screening.
 
     Returns:
-    -------
-    ScreenResult or None if data unavailable or error occurs
+        ScreenResult or None if data unavailable or error occurs.
     """
     try:
         # Fetch recent data
@@ -102,20 +104,14 @@ def _process_ticker_dataframe(
     This is the core processing logic extracted from screen_ticker to allow
     reuse with batch-downloaded data.
 
-    Parameters
-    ----------
-    ticker : str
-        Stock symbol
-    df : pd.DataFrame
-        OHLC DataFrame with columns Open, High, Low, Close, Volume
-    period : str
-        Aggregation period used (for result metadata)
-    debug : bool
-        When True, prints detailed error information
+    Args:
+        ticker: Stock symbol.
+        df: OHLC DataFrame with columns Open, High, Low, Close, Volume.
+        period: Aggregation period used (for result metadata).
+        debug: When True, prints detailed error information.
 
     Returns:
-    -------
-    ScreenResult or None if data unavailable or error occurs
+        ScreenResult or None if data unavailable or error occurs.
     """
     try:
         if df.empty or len(df) < 2:
@@ -173,7 +169,17 @@ def _apply_filters(
 ) -> bool:
     """Check if a ScreenResult passes all filter criteria.
 
-    Returns True if result passes all filters, False otherwise.
+    Args:
+        result: ScreenResult object to evaluate.
+        color_filter: Filter by candle color ('green', 'red', or 'all').
+        changed_only: If True, only pass results where color changed.
+        min_volume: Minimum average volume threshold.
+        min_price: Minimum price threshold.
+        min_run_percentile: Minimum run percentile threshold (0-100).
+        max_run_percentile: Maximum run percentile threshold (0-100).
+
+    Returns:
+        True if result passes all filters, False otherwise.
     """
     # Apply color filter
     if color_filter != "all" and result.color != color_filter:
@@ -220,57 +226,28 @@ def screen_nasdaq(
 ) -> list[ScreenResult]:
     """Screen NASDAQ stocks for Heiken Ashi candle colors.
 
-    Parameters
-    ----------
-    color_filter : "green" | "red" | "all"
-        Filter results by current candle color. "all" returns both.
-    period : str
-        Aggregation period: "1d" (daily), "1wk" (weekly), "1mo" (monthly)
-    limit : int | None
-        Maximum number of tickers to screen (for testing). None = all.
-    delay : float
-        Delay in seconds between API calls. Only used when batch_size=None
-        (sequential mode). Ignored when using batch downloads.
-    verbose : bool
-        Print progress messages
-    changed_only : bool
-        If True, only return tickers where the candle color just changed.
-        For example, if color_filter="green" and changed_only=True,
-        only returns stocks that turned from red to green.
-    lookback : str | None
-        How far back to fetch: '1mo', '3mo', '6mo', '1y', '2y', '5y', etc.
-        Day traders: '5d', '1mo'. Swing traders: '3mo', '6mo'. Position traders: '1y', '5y'.
-    start : str | None
-        Start date YYYY-MM-DD. Cannot be used with lookback.
-    min_volume : float | None
-        Minimum average daily volume (in shares). Filters out low-volume stocks.
-        Recommended: 500000 (500K) for swing trading, 1000000 (1M) for day trading.
-    min_price : float | None
-        Minimum stock price (in dollars). Filters out stocks below this price.
-        Useful for avoiding penny stocks (e.g., 5.0 or 10.0).
-    min_run_percentile : float | None
-        Minimum run percentile (0-100). Find rare long runs.
-        Example: 90 finds only top 10% longest runs, 95 finds top 5%.
-    max_run_percentile : float | None
-        Maximum run percentile (0-100). Find common short runs.
-        Example: 25 finds only bottom 25% shortest runs.
-    end : str | None
-        End date YYYY-MM-DD. Cannot be used with lookback.
-    ticker_filter : List[str] | None
-        Optional list of ticker symbols to screen. If provided, only these tickers
-        will be screened instead of all NASDAQ stocks. Useful for filtering by
-        a pre-screened list (e.g., from RSI divergence results).
-    batch_size : int | None
-        Number of tickers to download per batch. Uses yfinance's built-in
-        threading for parallel downloads within each batch. Default is 50.
-        Set to None to use legacy sequential download mode with delay.
-    debug : bool
-        When True, enables debug output in underlying ticker screening.
+    Args:
+        color_filter: Filter results by current candle color ('green', 'red', 'all').
+        period: Aggregation period ('1d', '1wk', '1mo').
+        limit: Maximum number of tickers to screen (for testing). None = all.
+        delay: Delay in seconds between API calls. Only used when batch_size=None
+            (sequential mode). Ignored when using batch downloads.
+        verbose: Print progress messages.
+        changed_only: If True, only return tickers where the candle color just changed.
+        lookback: How far back to fetch ('1mo', '3mo', '6mo', '1y', '2y', '5y', etc.).
+        start: Start date YYYY-MM-DD. Cannot be used with lookback.
+        end: End date YYYY-MM-DD. Cannot be used with lookback.
+        debug: When True, enables debug output in underlying ticker screening.
+        min_volume: Minimum average daily volume (in shares).
+        min_price: Minimum stock price (in dollars).
+        min_run_percentile: Minimum run percentile (0-100). Find rare long runs.
+        max_run_percentile: Maximum run percentile (0-100). Find common short runs.
+        ticker_filter: Optional list of ticker symbols to screen instead of all NASDAQ.
+        batch_size: Tickers per batch for parallel download (default: 50).
+            Set to None for legacy sequential mode with delay.
 
     Returns:
-    -------
-    List[ScreenResult]
-        List of results matching the color filter, sorted by ticker
+        List of ScreenResult objects matching filters, sorted by ticker.
     """
     # Use provided ticker filter or fetch all NASDAQ tickers
     if ticker_filter is not None:
@@ -353,7 +330,27 @@ def _screen_batch_mode(
     verbose: bool,
     debug: bool,
 ) -> list[ScreenResult]:
-    """Screen tickers using batch download mode for faster processing."""
+    """Screen tickers using batch download mode for faster processing.
+
+    Args:
+        tickers: List of ticker symbols to screen.
+        period: Aggregation period ('1d', '1wk', '1mo').
+        lookback: Relative period for history.
+        start: Start date YYYY-MM-DD.
+        end: End date YYYY-MM-DD.
+        batch_size: Number of tickers to download per batch.
+        color_filter: Filter by candle color.
+        changed_only: Only return tickers where color changed.
+        min_volume: Minimum average volume threshold.
+        min_price: Minimum price threshold.
+        min_run_percentile: Minimum run percentile threshold.
+        max_run_percentile: Maximum run percentile threshold.
+        verbose: Print progress messages.
+        debug: Enable debug output.
+
+    Returns:
+        List of ScreenResult objects passing all filters.
+    """
     results: list[ScreenResult] = []
     total_tickers = len(tickers)
 
@@ -447,7 +444,27 @@ def _screen_sequential_mode(
     verbose: bool,
     debug: bool,
 ) -> list[ScreenResult]:
-    """Screen tickers using legacy sequential download mode."""
+    """Screen tickers using legacy sequential download mode.
+
+    Args:
+        tickers: List of ticker symbols to screen.
+        period: Aggregation period ('1d', '1wk', '1mo').
+        lookback: Relative period for history.
+        start: Start date YYYY-MM-DD.
+        end: End date YYYY-MM-DD.
+        delay: Delay in seconds between API calls for rate limiting.
+        color_filter: Filter by candle color.
+        changed_only: Only return tickers where color changed.
+        min_volume: Minimum average volume threshold.
+        min_price: Minimum price threshold.
+        min_run_percentile: Minimum run percentile threshold.
+        max_run_percentile: Maximum run percentile threshold.
+        verbose: Print progress messages.
+        debug: Enable debug output.
+
+    Returns:
+        List of ScreenResult objects passing all filters.
+    """
     results: list[ScreenResult] = []
 
     for i, ticker in enumerate(tickers, 1):

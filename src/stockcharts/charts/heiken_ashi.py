@@ -18,9 +18,15 @@ REQUIRED_COLUMNS = ["Open", "High", "Low", "Close"]
 def heiken_ashi(df: pd.DataFrame) -> pd.DataFrame:
     """Return a new DataFrame with Heiken Ashi candles.
 
-    Input DataFrame must contain columns Open, High, Low, Close.
-    Index is preserved.
-    Output columns: HA_Open, HA_High, HA_Low, HA_Close
+    Args:
+        df: DataFrame with columns Open, High, Low, Close.
+
+    Returns:
+        DataFrame with columns HA_Open, HA_High, HA_Low, HA_Close.
+        Index is preserved from input.
+
+    Raises:
+        ValueError: If required columns are missing.
     """
     missing = [c for c in REQUIRED_COLUMNS if c not in df.columns]
     if missing:

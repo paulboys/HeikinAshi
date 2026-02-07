@@ -20,7 +20,22 @@ from stockcharts.screener.nasdaq import get_nasdaq_tickers
 
 @dataclass
 class BetaRegimeResult:
-    """Result from beta regime screening."""
+    """Result from beta regime screening.
+
+    Attributes:
+        ticker: Stock symbol.
+        company_name: Full company name or ticker if unavailable.
+        benchmark: Benchmark ticker used for comparison.
+        regime: Current regime status ("risk-on", "risk-off", or "insufficient-data").
+        relative_strength: Asset price / benchmark price ratio.
+        ma_value: Moving average of relative strength ratio.
+        pct_from_ma: Percentage distance from moving average.
+        beta: Rolling beta coefficient vs benchmark.
+        close_price: Current asset closing price.
+        benchmark_price: Current benchmark closing price.
+        interval: Candle interval used ("1d", "1wk", "1mo").
+        ma_period: Moving average period used for regime detection.
+    """
 
     ticker: str
     company_name: str
@@ -188,7 +203,28 @@ def _process_ticker_beta(
     min_volume: float | None,
     company_name: str = "",
 ) -> BetaRegimeResult | None:
-    """Process a single ticker for beta regime analysis."""
+    """Process a single ticker for beta regime analysis.
+
+    Applies price/volume filters and computes beta regime metrics.
+
+    Args:
+        ticker: Stock symbol.
+        df: OHLC DataFrame for the asset.
+        benchmark: Benchmark ticker symbol.
+        benchmark_df: OHLC DataFrame for the benchmark.
+        interval: Candle interval used.
+        effective_ma_period: Moving average period (adjusted for interval).
+        beta_window: Rolling window for beta calculation.
+        regime_filter: Filter by regime ("risk-on", "risk-off", or "all").
+        min_price: Minimum stock price filter (None to skip).
+        max_price: Maximum stock price filter (None to skip).
+        min_volume: Minimum average volume filter (None to skip).
+        company_name: Company name for result display.
+
+    Returns:
+        BetaRegimeResult if ticker passes filters and has valid data,
+        None otherwise.
+    """
     if df is None or df.empty:
         return None
 
@@ -259,7 +295,31 @@ def _screen_batch_mode(
     batch_size: int,
     verbose: bool,
 ) -> list[BetaRegimeResult]:
-    """Screen tickers using batch download mode."""
+    """Screen tickers using batch download mode for faster processing.
+
+    Downloads tickers in parallel batches using yfinance threading,
+    then processes each for beta regime analysis.
+
+    Args:
+        tickers: List of ticker symbols to screen.
+        benchmark: Benchmark ticker symbol.
+        benchmark_df: Pre-fetched benchmark OHLC data.
+        interval: Candle interval ("1d", "1wk", "1mo").
+        lookback: Historical period for data fetch.
+        start: Start date (overrides lookback if end also provided).
+        end: End date.
+        effective_ma_period: Moving average period (adjusted for interval).
+        beta_window: Rolling window for beta calculation.
+        regime_filter: Filter by regime status.
+        min_price: Minimum price filter.
+        max_price: Maximum price filter.
+        min_volume: Minimum volume filter.
+        batch_size: Number of tickers per batch.
+        verbose: Print progress messages.
+
+    Returns:
+        List of BetaRegimeResult objects matching filters.
+    """
     results: list[BetaRegimeResult] = []
     total_tickers = len(tickers)
 
@@ -368,7 +428,30 @@ def _screen_sequential_mode(
     min_volume: float | None,
     verbose: bool,
 ) -> list[BetaRegimeResult]:
-    """Screen tickers using sequential download mode."""
+    """Screen tickers using legacy sequential download mode.
+
+    Downloads and processes tickers one at a time. Slower than batch mode
+    but useful for debugging or when batch downloads fail.
+
+    Args:
+        tickers: List of ticker symbols to screen.
+        benchmark: Benchmark ticker symbol.
+        benchmark_df: Pre-fetched benchmark OHLC data.
+        interval: Candle interval ("1d", "1wk", "1mo").
+        lookback: Historical period for data fetch.
+        start: Start date (overrides lookback if end also provided).
+        end: End date.
+        effective_ma_period: Moving average period (adjusted for interval).
+        beta_window: Rolling window for beta calculation.
+        regime_filter: Filter by regime status.
+        min_price: Minimum price filter.
+        max_price: Maximum price filter.
+        min_volume: Minimum volume filter.
+        verbose: Print progress messages.
+
+    Returns:
+        List of BetaRegimeResult objects matching filters.
+    """
     results: list[BetaRegimeResult] = []
     total = len(tickers)
 
@@ -412,7 +495,15 @@ def save_results_to_csv(
     results: list[BetaRegimeResult],
     filename: str = "beta_regime_results.csv",
 ) -> None:
-    """Save screening results to CSV file."""
+    """Save screening results to CSV file.
+
+    Args:
+        results: List of BetaRegimeResult objects to save.
+        filename: Output CSV file path.
+
+    Returns:
+        None. Prints status message and writes file to disk.
+    """
     if not results:
         print("No results to save.")
         return

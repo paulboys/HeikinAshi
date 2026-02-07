@@ -61,8 +61,18 @@ def _validate_and_build_download_kwargs(
 ) -> dict:
     """Validate parameters and build kwargs for yf.download.
 
+    Args:
+        interval: Aggregation interval ('1d', '1wk', '1mo').
+        lookback: Relative period for history.
+        start: Start date YYYY-MM-DD.
+        end: End date YYYY-MM-DD.
+        auto_adjust: Whether to adjust OHLC for splits/dividends.
+
     Returns:
-        dict with validated download kwargs
+        Dictionary with validated download kwargs for yfinance.
+
+    Raises:
+        ValueError: If interval or lookback is not in valid set.
     """
     if interval not in VALID_INTERVALS:
         raise ValueError(f"Unsupported interval '{interval}'. Allowed: {sorted(VALID_INTERVALS)}")
@@ -97,11 +107,15 @@ def _validate_and_build_download_kwargs(
 def _normalize_single_ticker_df(df: pd.DataFrame, ticker: str) -> pd.DataFrame:
     """Normalize a single-ticker DataFrame from yfinance.
 
+    Args:
+        df: Raw DataFrame from yfinance download.
+        ticker: Stock symbol (used for error messages).
+
     Returns:
-        DataFrame with standardized columns [Open, High, Low, Close, Volume]
+        DataFrame with standardized columns [Open, High, Low, Close, Volume].
 
     Raises:
-        ValueError if data is empty or missing required columns
+        ValueError: If data is empty or missing required columns.
     """
     if df.empty:
         raise ValueError(f"No data returned for ticker '{ticker}'.")
@@ -130,7 +144,21 @@ def fetch_ohlc(
 ) -> pd.DataFrame:
     """Fetch OHLC data for a single ticker.
 
-    Guard rails:
+    Args:
+        ticker: Stock symbol to download.
+        interval: Aggregation interval ('1d', '1wk', '1mo').
+        lookback: Relative period for history ('1y', '5y', 'max', etc.).
+        start: Start date YYYY-MM-DD (overrides lookback if end also provided).
+        end: End date YYYY-MM-DD.
+        auto_adjust: Whether to adjust OHLC for splits/dividends.
+
+    Returns:
+        DataFrame with columns [Open, High, Low, Close, Volume].
+
+    Raises:
+        ValueError: If data is empty or missing required columns.
+
+    Note:
         - If both start and end are valid dates they override lookback.
         - If either start/end is invalid (e.g. '3mo'), it is ignored.
         - If nothing specified, default lookback = '1y'.
@@ -158,28 +186,17 @@ def fetch_ohlc_batch(
     Uses yfinance's built-in threading for parallel downloads, which is
     significantly faster than sequential single-ticker downloads.
 
-    Parameters
-    ----------
-    tickers : list[str]
-        List of stock symbols to download
-    interval : str
-        Aggregation interval ('1d', '1wk', '1mo')
-    lookback : str | None
-        Relative period for history ('1y', '5y', 'max', etc.)
-    start : str | None
-        Start date YYYY-MM-DD (overrides lookback if end also provided)
-    end : str | None
-        End date YYYY-MM-DD
-    auto_adjust : bool
-        Whether to adjust OHLC for splits/dividends
-    threads : bool
-        Use multi-threading for faster downloads (default: True)
-    progress : bool
-        Show download progress bar (default: False)
+    Args:
+        tickers: List of stock symbols to download.
+        interval: Aggregation interval ('1d', '1wk', '1mo').
+        lookback: Relative period for history ('1y', '5y', 'max', etc.).
+        start: Start date YYYY-MM-DD (overrides lookback if end also provided).
+        end: End date YYYY-MM-DD.
+        auto_adjust: Whether to adjust OHLC for splits/dividends.
+        threads: Use multi-threading for faster downloads (default: True).
+        progress: Show download progress bar (default: False).
 
     Returns:
-    -------
-    dict[str, pd.DataFrame]
         Dictionary mapping ticker symbols to their OHLC DataFrames.
         Failed downloads are silently omitted from results.
     """
