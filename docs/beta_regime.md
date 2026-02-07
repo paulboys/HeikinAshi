@@ -211,3 +211,112 @@ divergences = screen_rsi_divergence(
 | `benchmark_price` | float | Current benchmark price |
 | `interval` | str | Time interval used |
 | `ma_period` | int | MA period used |
+## McGlone Contrarian Sector Analysis
+
+The `scripts/sector_regime.py` script implements Mike McGlone's contrarian framework for timing equity sector entry.
+
+### McGlone's 3-Criteria Buy System
+
+Mike McGlone (Bloomberg Intelligence) advocates a **contrarian** approach:
+
+1. **Beta below 200-day MA** (Risk-Off regime) - Sector underperforming SPY
+2. **VIX spike to 30-40** - Fear at extreme levels
+3. **Market correction ≥ 10%** - Prices discounted from 52-week highs
+
+**BUY signal = All 3 conditions met** (capitulation complete)
+
+### Signal Types
+
+| Signal | Meaning | Action |
+|--------|---------|--------|
+| `BUY` | All 3 conditions met | Enter positions - capitulation complete |
+| `WATCH_BUY` | 2/3 conditions met | Prepare to buy, wait for final trigger |
+| `ACCUMULATE` | Risk-off + pullback (5-10%) | Scale in slowly |
+| `WATCH` | Deep risk-off (>10% below MA) | Approaching buy zone |
+| `WAIT` | Risk-off but no capitulation | Patient - no action yet |
+| `HOLD` | Risk-on uptrend | Hold existing positions |
+| `EXTENDED` | Far above MA (>15%) | Risky to chase |
+| `NEUTRAL` | No clear signal | No action |
+
+### Usage
+
+```bash
+# Analyze 11 S&P 500 GICS sectors
+python scripts/sector_regime.py
+
+# Industry sub-sectors (XBI, KRE, XHB, etc.)
+python scripts/sector_regime.py --industries
+
+# SmallCap sector ETFs (PSC* series)
+python scripts/sector_regime.py --smallcap
+
+# Leveraged Bull/Bear ETFs (2x/3x)
+python scripts/sector_regime.py --leveraged
+
+# Sectors + Industries combined
+python scripts/sector_regime.py --all
+
+# All 90+ ETFs comprehensive
+python scripts/sector_regime.py --comprehensive
+```
+
+### Available ETF Categories
+
+| Category | Count | Examples |
+|----------|-------|----------|
+| S&P 500 GICS Sectors | 11 | XLK, XLF, XLE, XLV, XLI, etc. |
+| S&P 500 Industries | 18 | XBI, KRE, XHB, XRT, XOP, etc. |
+| SmallCap Sectors | 9 | PSCT, PSCF, PSCE, PSCH, etc. |
+| iShares Sectors | 4 | IGM, IGV, IGE, IYT |
+| Leveraged Bull (2x/3x) | 24 | TECL, FAS, ERX, LABU, etc. |
+| Leveraged Bear (2x/3x) | 18 | TECS, FAZ, ERY, LABD, etc. |
+| Thematic | 6 | PILL, TEXU, etc. |
+
+### Example Output
+
+```
+===============================================================================
+MARKET CONDITIONS (McGlone's 3 Criteria)
+-------------------------------------------------------------------------------
+  [ ] VIX Spike (>=30):     VIX = 20.4 (ELEVATED) -> NO
+  [ ] Correction (>=-10%): SPY = $595.23, Drawdown = -1.0% (NEAR_HIGHS) -> NO
+  [ ] Risk-Off Regime:   (See sector analysis below)
+
+  MARKET-LEVEL: 0/2 macro conditions met
+     WAIT - No capitulation signals yet
+
+===============================================================================
+S&P 500 GICS SECTORS - McGlone Contrarian Analysis
+===============================================================================
+
+Sector/Industry      ETF   Beta  Regime   %FromMA  Signal       Action
+-------------------------------------------------------------------------------
+Utilities            XLU    0.45 - risk-off   -4.2% WAIT
+Materials            XLB    1.12 - risk-off   -2.8% WAIT
+Energy               XLE    1.25 + risk-on    +3.5% NEUTRAL
+Technology           XLK    1.35 + risk-on   +12.1% HOLD          
+Financials           XLF    1.10 + risk-on   +18.5% EXTENDED      !
+```
+
+### Integration with Beta Regime Screener
+
+The sector regime script uses the same underlying `screen_beta_regime()` function with optimized defaults for McGlone's methodology:
+
+- **Period**: 10 years (stable relative strength history)
+- **Interval**: Weekly (`1wk`) with 40-bar MA (≈200 daily bars)
+- **Benchmark**: SPY
+
+```python
+from stockcharts.screener.beta_regime import screen_beta_regime
+
+# Run the same analysis programmatically
+results = screen_beta_regime(
+    tickers=["XLK", "XLF", "XLE", "XLV", "XLI"],
+    interval="1wk",
+    lookback="10y",
+    regime_filter="all",
+)
+
+for r in results:
+    print(f"{r.ticker}: {r.regime} ({r.pct_from_ma:+.1f}%)")
+```
