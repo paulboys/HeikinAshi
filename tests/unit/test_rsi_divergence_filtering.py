@@ -96,7 +96,10 @@ def test_screen_rsi_divergence_bullish_filter_includes_bullish(
                 return_value=mock_bullish_divergence_result,
             ):
                 results = screen_rsi_divergence(
-                    tickers=["TEST"], divergence_type="bullish", lookback=60
+                    tickers=["TEST"],
+                    divergence_type="bullish",
+                    lookback=60,
+                    batch_size=None,  # Force sequential mode for mocking
                 )
 
     assert len(results) == 1
@@ -121,7 +124,10 @@ def test_screen_rsi_divergence_bearish_filter_includes_bearish(
                 return_value=mock_bearish_divergence_result,
             ):
                 results = screen_rsi_divergence(
-                    tickers=["TEST"], divergence_type="bearish", lookback=60
+                    tickers=["TEST"],
+                    divergence_type="bearish",
+                    lookback=60,
+                    batch_size=None,  # Force sequential mode for mocking
                 )
 
     assert len(results) == 1
@@ -163,7 +169,10 @@ def test_screen_rsi_divergence_all_filter_includes_both(mock_ohlc_with_rsi):
                 return_value=both_result,
             ):
                 results = screen_rsi_divergence(
-                    tickers=["TEST"], divergence_type="all", lookback=60
+                    tickers=["TEST"],
+                    divergence_type="all",
+                    lookback=60,
+                    batch_size=None,  # Force sequential mode for mocking
                 )
 
     assert len(results) == 1
@@ -195,6 +204,7 @@ def test_screen_rsi_divergence_exclude_breakouts_filters_bullish(
                         divergence_type="bullish",
                         exclude_breakouts=True,
                         lookback=60,
+                        batch_size=None,  # Force sequential mode for mocking
                     )
 
     # Should be filtered out
@@ -226,6 +236,7 @@ def test_screen_rsi_divergence_exclude_breakouts_includes_non_breakout(
                         divergence_type="bullish",
                         exclude_breakouts=True,
                         lookback=60,
+                        batch_size=None,  # Force sequential mode for mocking
                     )
 
     # Should be included
@@ -257,6 +268,7 @@ def test_screen_rsi_divergence_exclude_failed_breakouts_filters_bearish(
                         divergence_type="bearish",
                         exclude_failed_breakouts=True,
                         lookback=60,
+                        batch_size=None,  # Force sequential mode for mocking
                     )
 
     # Should be filtered out
@@ -283,6 +295,7 @@ def test_screen_rsi_divergence_price_filter_min(mock_ohlc_with_rsi, mock_bullish
                     divergence_type="bullish",
                     min_price=200.0,
                     lookback=60,
+                    batch_size=None,  # Force sequential mode for mocking
                 )
 
     # Should be filtered out
@@ -309,6 +322,7 @@ def test_screen_rsi_divergence_price_filter_max(mock_ohlc_with_rsi, mock_bullish
                     divergence_type="bullish",
                     max_price=50.0,
                     lookback=60,
+                    batch_size=None,  # Force sequential mode for mocking
                 )
 
     # Should be filtered out
@@ -335,6 +349,7 @@ def test_screen_rsi_divergence_volume_filter(mock_ohlc_with_rsi, mock_bullish_di
                     divergence_type="bullish",
                     min_volume=10000000.0,
                     lookback=60,
+                    batch_size=None,  # Force sequential mode for mocking
                 )
 
     # Should be filtered out
@@ -358,7 +373,10 @@ def test_screen_rsi_divergence_no_divergence_excludes(
                 return_value=mock_no_divergence_result,
             ):
                 results = screen_rsi_divergence(
-                    tickers=["TEST"], divergence_type="all", lookback=60
+                    tickers=["TEST"],
+                    divergence_type="all",
+                    lookback=60,
+                    batch_size=None,  # Force sequential mode for mocking
                 )
 
     assert len(results) == 0
@@ -401,6 +419,7 @@ def test_screen_rsi_divergence_3point_with_scoring(mock_ohlc_with_rsi):
                     use_sequence_scoring=True,
                     min_sequence_score=1.0,
                     lookback=60,
+                    batch_size=None,  # Force sequential mode for mocking
                 )
 
     assert len(results) == 1
@@ -431,6 +450,7 @@ def test_screen_rsi_divergence_ema_deriv_pivot_method(
                     ema_price_span=5,
                     ema_rsi_span=5,
                     lookback=60,
+                    batch_size=None,  # Force sequential mode for mocking
                 )
 
     # Verify pivot_method was passed to detect_divergence
