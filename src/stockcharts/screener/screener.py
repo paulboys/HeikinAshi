@@ -12,7 +12,7 @@ from typing import Literal
 import pandas as pd
 
 from stockcharts.charts.heiken_ashi import heiken_ashi
-from stockcharts.data.fetch import fetch_ohlc
+from stockcharts.data.fetch import fetch_ohlc, fetch_ohlc_batch
 from stockcharts.indicators.heiken_runs import compute_ha_run_stats
 from stockcharts.screener.nasdaq import get_nasdaq_tickers
 
@@ -84,7 +84,40 @@ def screen_ticker(
     try:
         # Fetch recent data
         df = fetch_ohlc(ticker, interval=period, lookback=lookback, start=start, end=end)
+        return _process_ticker_dataframe(ticker, df, period, debug=debug)
+    except Exception as e:
+        if debug:
+            print(f"  DEBUG: Error screening {ticker}: {type(e).__name__}: {e}")
+        return None
 
+
+def _process_ticker_dataframe(
+    ticker: str,
+    df: pd.DataFrame,
+    period: str,
+    debug: bool = False,
+) -> ScreenResult | None:
+    """Process a pre-downloaded DataFrame to compute Heiken Ashi screening result.
+
+    This is the core processing logic extracted from screen_ticker to allow
+    reuse with batch-downloaded data.
+
+    Parameters
+    ----------
+    ticker : str
+        Stock symbol
+    df : pd.DataFrame
+        OHLC DataFrame with columns Open, High, Low, Close, Volume
+    period : str
+        Aggregation period used (for result metadata)
+    debug : bool
+        When True, prints detailed error information
+
+    Returns:
+    -------
+    ScreenResult or None if data unavailable or error occurs
+    """
+    try:
         if df.empty or len(df) < 2:
             return None
 
@@ -117,17 +150,54 @@ def screen_ticker(
             ha_open=float(last_row["HA_Open"]),
             ha_close=float(last_row["HA_Close"]),
             last_date=str(ha.index[-1].date()),
-            interval=period,  # Store the aggregation period
+            interval=period,
             avg_volume=avg_volume,
             run_length=int(run_stats["run_length"]),
             run_percentile=float(run_stats["run_percentile"]),
         )
 
     except Exception as e:
-        # Silently skip tickers with errors (delisted, no data, etc.)
         if debug:
-            print(f"  DEBUG: Error screening {ticker}: {type(e).__name__}: {e}")
+            print(f"  DEBUG: Error processing {ticker}: {type(e).__name__}: {e}")
         return None
+
+
+def _apply_filters(
+    result: ScreenResult,
+    color_filter: Literal["green", "red", "all"],
+    changed_only: bool,
+    min_volume: float | None,
+    min_price: float | None,
+    min_run_percentile: float | None,
+    max_run_percentile: float | None,
+) -> bool:
+    """Check if a ScreenResult passes all filter criteria.
+
+    Returns True if result passes all filters, False otherwise.
+    """
+    # Apply color filter
+    if color_filter != "all" and result.color != color_filter:
+        return False
+
+    # Apply color change filter
+    if changed_only and not result.color_changed:
+        return False
+
+    # Apply volume filter
+    if min_volume is not None and result.avg_volume < min_volume:
+        return False
+
+    # Apply price filter
+    if min_price is not None and result.ha_close < min_price:
+        return False
+
+    # Apply run percentile filters
+    if min_run_percentile is not None and result.run_percentile < min_run_percentile:
+        return False
+    if max_run_percentile is not None and result.run_percentile > max_run_percentile:
+        return False
+
+    return True
 
 
 def screen_nasdaq(
@@ -146,6 +216,7 @@ def screen_nasdaq(
     min_run_percentile: float | None = None,
     max_run_percentile: float | None = None,
     ticker_filter: list[str] | None = None,
+    batch_size: int | None = 50,
 ) -> list[ScreenResult]:
     """Screen NASDAQ stocks for Heiken Ashi candle colors.
 
@@ -158,7 +229,8 @@ def screen_nasdaq(
     limit : int | None
         Maximum number of tickers to screen (for testing). None = all.
     delay : float
-        Delay in seconds between API calls to avoid rate limits
+        Delay in seconds between API calls. Only used when batch_size=None
+        (sequential mode). Ignored when using batch downloads.
     verbose : bool
         Print progress messages
     changed_only : bool
@@ -188,6 +260,10 @@ def screen_nasdaq(
         Optional list of ticker symbols to screen. If provided, only these tickers
         will be screened instead of all NASDAQ stocks. Useful for filtering by
         a pre-screened list (e.g., from RSI divergence results).
+    batch_size : int | None
+        Number of tickers to download per batch. Uses yfinance's built-in
+        threading for parallel downloads within each batch. Default is 50.
+        Set to None to use legacy sequential download mode with delay.
     debug : bool
         When True, enables debug output in underlying ticker screening.
 
@@ -208,12 +284,171 @@ def screen_nasdaq(
 
     change_msg = " that just changed color" if changed_only else ""
     filter_msg = " (filtered list)" if ticker_filter is not None else ""
+    mode_msg = f"batch size {batch_size}" if batch_size else "sequential"
+
     if verbose:
         print(
             f"Screening {len(tickers)} tickers{filter_msg} for {color_filter} "
-            f"Heiken Ashi candles{change_msg} ({period} period)..."
+            f"Heiken Ashi candles{change_msg} ({period} period, {mode_msg})..."
         )
         print("-" * 70)
+
+    # Use batch download mode if batch_size is specified
+    if batch_size is not None and batch_size > 0:
+        results = _screen_batch_mode(
+            tickers=tickers,
+            period=period,
+            lookback=lookback,
+            start=start,
+            end=end,
+            batch_size=batch_size,
+            color_filter=color_filter,
+            changed_only=changed_only,
+            min_volume=min_volume,
+            min_price=min_price,
+            min_run_percentile=min_run_percentile,
+            max_run_percentile=max_run_percentile,
+            verbose=verbose,
+            debug=debug,
+        )
+    else:
+        # Legacy sequential mode
+        results = _screen_sequential_mode(
+            tickers=tickers,
+            period=period,
+            lookback=lookback,
+            start=start,
+            end=end,
+            delay=delay,
+            color_filter=color_filter,
+            changed_only=changed_only,
+            min_volume=min_volume,
+            min_price=min_price,
+            min_run_percentile=min_run_percentile,
+            max_run_percentile=max_run_percentile,
+            verbose=verbose,
+            debug=debug,
+        )
+
+    if verbose:
+        print("-" * 70)
+        print(f"Screening complete: {len(results)} {color_filter} candles{change_msg} found")
+
+    return sorted(results, key=lambda x: x.ticker)
+
+
+def _screen_batch_mode(
+    tickers: list[str],
+    period: str,
+    lookback: str | None,
+    start: str | None,
+    end: str | None,
+    batch_size: int,
+    color_filter: Literal["green", "red", "all"],
+    changed_only: bool,
+    min_volume: float | None,
+    min_price: float | None,
+    min_run_percentile: float | None,
+    max_run_percentile: float | None,
+    verbose: bool,
+    debug: bool,
+) -> list[ScreenResult]:
+    """Screen tickers using batch download mode for faster processing."""
+    results: list[ScreenResult] = []
+    total_tickers = len(tickers)
+
+    # Process in batches
+    for batch_start in range(0, total_tickers, batch_size):
+        batch_end = min(batch_start + batch_size, total_tickers)
+        batch_tickers = tickers[batch_start:batch_end]
+        batch_num = (batch_start // batch_size) + 1
+        total_batches = (total_tickers + batch_size - 1) // batch_size
+
+        if verbose:
+            print(
+                f"Batch {batch_num}/{total_batches}: Downloading {len(batch_tickers)} tickers "
+                f"({batch_start + 1}-{batch_end} of {total_tickers})..."
+            )
+
+        # Batch download all tickers in this chunk
+        try:
+            batch_data = fetch_ohlc_batch(
+                batch_tickers,
+                interval=period,
+                lookback=lookback,
+                start=start,
+                end=end,
+                threads=True,
+                progress=False,
+            )
+        except Exception as e:
+            if debug:
+                print(f"  DEBUG: Batch download error: {type(e).__name__}: {e}")
+            # Fall back to sequential for this batch
+            for ticker in batch_tickers:
+                result = screen_ticker(
+                    ticker, period=period, lookback=lookback, start=start, end=end, debug=debug
+                )
+                if result is not None and _apply_filters(
+                    result,
+                    color_filter,
+                    changed_only,
+                    min_volume,
+                    min_price,
+                    min_run_percentile,
+                    max_run_percentile,
+                ):
+                    results.append(result)
+            continue
+
+        # Process each downloaded DataFrame
+        batch_matches = 0
+        for ticker in batch_tickers:
+            if ticker not in batch_data:
+                continue
+
+            df = batch_data[ticker]
+            result = _process_ticker_dataframe(ticker, df, period, debug=debug)
+
+            if result is not None and _apply_filters(
+                result,
+                color_filter,
+                changed_only,
+                min_volume,
+                min_price,
+                min_run_percentile,
+                max_run_percentile,
+            ):
+                results.append(result)
+                batch_matches += 1
+
+        if verbose:
+            print(
+                f"  Batch {batch_num} complete: {len(batch_data)} downloaded, "
+                f"{batch_matches} matches, {len(results)} total matches"
+            )
+
+    return results
+
+
+def _screen_sequential_mode(
+    tickers: list[str],
+    period: str,
+    lookback: str | None,
+    start: str | None,
+    end: str | None,
+    delay: float,
+    color_filter: Literal["green", "red", "all"],
+    changed_only: bool,
+    min_volume: float | None,
+    min_price: float | None,
+    min_run_percentile: float | None,
+    max_run_percentile: float | None,
+    verbose: bool,
+    debug: bool,
+) -> list[ScreenResult]:
+    """Screen tickers using legacy sequential download mode."""
+    results: list[ScreenResult] = []
 
     for i, ticker in enumerate(tickers, 1):
         if verbose and i % 10 == 0:
@@ -226,36 +461,22 @@ def screen_nasdaq(
             ticker, period=period, lookback=lookback, start=start, end=end, debug=debug
         )
 
-        if result is not None:
-            # Apply color filter
-            if color_filter == "all" or result.color == color_filter:
-                # Apply color change filter if requested
-                if not changed_only or result.color_changed:
-                    # Apply volume filter if specified
-                    if min_volume is None or result.avg_volume >= min_volume:
-                        # Apply price filter if specified
-                        if min_price is None or result.ha_close >= min_price:
-                            # Apply run percentile filters if specified
-                            passes_min = (
-                                min_run_percentile is None
-                                or result.run_percentile >= min_run_percentile
-                            )
-                            passes_max = (
-                                max_run_percentile is None
-                                or result.run_percentile <= max_run_percentile
-                            )
-                            if passes_min and passes_max:
-                                results.append(result)
+        if result is not None and _apply_filters(
+            result,
+            color_filter,
+            changed_only,
+            min_volume,
+            min_price,
+            min_run_percentile,
+            max_run_percentile,
+        ):
+            results.append(result)
 
         # Rate limiting
         if delay > 0 and i < len(tickers):
             time.sleep(delay)
 
-    if verbose:
-        print("-" * 70)
-        print(f"Screening complete: {len(results)} {color_filter} candles{change_msg} found")
-
-    return sorted(results, key=lambda x: x.ticker)
+    return results
 
 
 __all__ = ["screen_nasdaq", "screen_ticker", "get_candle_color", "ScreenResult"]

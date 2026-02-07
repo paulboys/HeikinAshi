@@ -52,20 +52,17 @@ def _normalize_date(s: str | None) -> str | None:
     return s
 
 
-def fetch_ohlc(
-    ticker: str,
-    interval: str = "1d",
-    lookback: str | None = None,
-    start: str | None = None,
-    end: str | None = None,
-    auto_adjust: bool = False,
-) -> pd.DataFrame:
-    """Fetch OHLC data for a single ticker.
+def _validate_and_build_download_kwargs(
+    interval: str,
+    lookback: str | None,
+    start: str | None,
+    end: str | None,
+    auto_adjust: bool,
+) -> dict:
+    """Validate parameters and build kwargs for yf.download.
 
-    Guard rails:
-        - If both start and end are valid dates they override lookback.
-        - If either start/end is invalid (e.g. '3mo'), it is ignored.
-        - If nothing specified, default lookback = '1y'.
+    Returns:
+        dict with validated download kwargs
     """
     if interval not in VALID_INTERVALS:
         raise ValueError(f"Unsupported interval '{interval}'. Allowed: {sorted(VALID_INTERVALS)}")
@@ -94,17 +91,28 @@ def fetch_ohlc(
     else:
         download_kwargs["period"] = lookback
 
-    df = yf.download(ticker, **download_kwargs)
+    return download_kwargs
+
+
+def _normalize_single_ticker_df(df: pd.DataFrame, ticker: str) -> pd.DataFrame:
+    """Normalize a single-ticker DataFrame from yfinance.
+
+    Returns:
+        DataFrame with standardized columns [Open, High, Low, Close, Volume]
+
+    Raises:
+        ValueError if data is empty or missing required columns
+    """
     if df.empty:
         raise ValueError(f"No data returned for ticker '{ticker}'.")
 
-    # Flatten multi-level columns if present (yfinance returns (column, ticker) tuples for single ticker)
+    # Flatten multi-level columns if present
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = df.columns.get_level_values(0)
 
-    # Standardize columns (yfinance sometimes returns lowercase or multi-level)
-    df = df.reset_index().set_index(df.index.names[0])  # ensure first index is datetime
-    # Keep only needed columns
+    # Standardize columns
+    df = df.reset_index().set_index(df.index.names[0])
+
     needed = ["Open", "High", "Low", "Close", "Volume"]
     missing = [c for c in needed if c not in df.columns]
     if missing:
@@ -112,4 +120,125 @@ def fetch_ohlc(
     return df[needed].copy()
 
 
-__all__ = ["fetch_ohlc"]
+def fetch_ohlc(
+    ticker: str,
+    interval: str = "1d",
+    lookback: str | None = None,
+    start: str | None = None,
+    end: str | None = None,
+    auto_adjust: bool = False,
+) -> pd.DataFrame:
+    """Fetch OHLC data for a single ticker.
+
+    Guard rails:
+        - If both start and end are valid dates they override lookback.
+        - If either start/end is invalid (e.g. '3mo'), it is ignored.
+        - If nothing specified, default lookback = '1y'.
+    """
+    download_kwargs = _validate_and_build_download_kwargs(
+        interval, lookback, start, end, auto_adjust
+    )
+
+    df = yf.download(ticker, **download_kwargs)
+    return _normalize_single_ticker_df(df, ticker)
+
+
+def fetch_ohlc_batch(
+    tickers: list[str],
+    interval: str = "1d",
+    lookback: str | None = None,
+    start: str | None = None,
+    end: str | None = None,
+    auto_adjust: bool = False,
+    threads: bool = True,
+    progress: bool = False,
+) -> dict[str, pd.DataFrame]:
+    """Fetch OHLC data for multiple tickers in a single batch request.
+
+    Uses yfinance's built-in threading for parallel downloads, which is
+    significantly faster than sequential single-ticker downloads.
+
+    Parameters
+    ----------
+    tickers : list[str]
+        List of stock symbols to download
+    interval : str
+        Aggregation interval ('1d', '1wk', '1mo')
+    lookback : str | None
+        Relative period for history ('1y', '5y', 'max', etc.)
+    start : str | None
+        Start date YYYY-MM-DD (overrides lookback if end also provided)
+    end : str | None
+        End date YYYY-MM-DD
+    auto_adjust : bool
+        Whether to adjust OHLC for splits/dividends
+    threads : bool
+        Use multi-threading for faster downloads (default: True)
+    progress : bool
+        Show download progress bar (default: False)
+
+    Returns:
+    -------
+    dict[str, pd.DataFrame]
+        Dictionary mapping ticker symbols to their OHLC DataFrames.
+        Failed downloads are silently omitted from results.
+    """
+    if not tickers:
+        return {}
+
+    download_kwargs = _validate_and_build_download_kwargs(
+        interval, lookback, start, end, auto_adjust
+    )
+    download_kwargs["progress"] = progress
+    download_kwargs["threads"] = threads
+    download_kwargs["group_by"] = "ticker"
+
+    # yfinance accepts list or space-separated string
+    batch_df = yf.download(tickers, **download_kwargs)
+
+    results: dict[str, pd.DataFrame] = {}
+
+    if batch_df.empty:
+        return results
+
+    # Handle single vs multiple ticker return format
+    if len(tickers) == 1:
+        # Single ticker: columns are just OHLCV
+        ticker = tickers[0]
+        try:
+            df = _normalize_single_ticker_df(batch_df.copy(), ticker)
+            results[ticker] = df
+        except ValueError:
+            pass  # Skip failed ticker
+    else:
+        # Multiple tickers: MultiIndex columns (ticker, OHLCV)
+        for ticker in tickers:
+            try:
+                if ticker not in batch_df.columns.get_level_values(0):
+                    continue
+
+                ticker_df = batch_df[ticker].copy()
+
+                # Drop rows where all values are NaN (no data for this date)
+                ticker_df = ticker_df.dropna(how="all")
+
+                if ticker_df.empty:
+                    continue
+
+                # Standardize columns
+                ticker_df = ticker_df.reset_index().set_index(ticker_df.index.names[0])
+
+                needed = ["Open", "High", "Low", "Close", "Volume"]
+                missing = [c for c in needed if c not in ticker_df.columns]
+                if missing:
+                    continue
+
+                results[ticker] = ticker_df[needed].copy()
+            except Exception:
+                # Skip any ticker that fails processing
+                continue
+
+    return results
+
+
+__all__ = ["fetch_ohlc", "fetch_ohlc_batch"]

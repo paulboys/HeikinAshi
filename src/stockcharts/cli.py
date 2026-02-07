@@ -10,6 +10,12 @@ from matplotlib.patches import Rectangle
 
 from stockcharts.charts.heiken_ashi import heiken_ashi
 from stockcharts.data.fetch import fetch_ohlc
+from stockcharts.screener.beta_regime import (
+    save_results_to_csv as save_beta_results_to_csv,
+)
+from stockcharts.screener.beta_regime import (
+    screen_beta_regime,
+)
 from stockcharts.screener.rsi_divergence import (
     save_results_to_csv,
     screen_rsi_divergence,
@@ -148,6 +154,13 @@ Examples:
     )
 
     parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=50,
+        help="Number of tickers to download per batch (default: 50). Uses parallel downloads for speed. Set to 0 for legacy sequential mode.",
+    )
+
+    parser.add_argument(
         "--debug",
         action="store_true",
         help="Show detailed error messages for each ticker",
@@ -208,6 +221,11 @@ Examples:
         print("Filtering for color changes only")
     if args.limit:
         print(f"Limiting to first {args.limit} tickers")
+    batch_mode = args.batch_size > 0 if args.batch_size else False
+    if batch_mode:
+        print(f"Batch download mode: {args.batch_size} tickers per batch")
+    else:
+        print("Sequential download mode (legacy)")
     print()
 
     results = screen_nasdaq(
@@ -224,6 +242,7 @@ Examples:
         limit=args.limit,
         debug=args.debug,
         ticker_filter=ticker_filter,
+        batch_size=args.batch_size if args.batch_size > 0 else None,
     )
 
     # Save results to CSV
@@ -543,6 +562,13 @@ Examples:
     )
 
     parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=50,
+        help="Number of tickers to download per batch (default: 50). Uses parallel downloads for speed. Set to 0 for legacy sequential mode.",
+    )
+
+    parser.add_argument(
         "--exclude-breakouts",
         action="store_true",
         help="Exclude divergences where breakout already occurred (price moved past threshold)",
@@ -734,6 +760,11 @@ Examples:
         print(
             f"Excluding failed breakouts (attempt: {args.failed_attempt_threshold*100:.1f}%, reversal: {args.failed_reversal_threshold*100:.1f}%)"
         )
+    batch_mode = args.batch_size > 0 if args.batch_size else False
+    if batch_mode:
+        print(f"Batch download mode: {args.batch_size} tickers per batch")
+    else:
+        print("Sequential download mode (legacy)")
     print()
 
     results = screen_rsi_divergence(
@@ -770,6 +801,7 @@ Examples:
         max_bar_gap=args.max_bar_gap,
         min_magnitude_atr_mult=args.min_magnitude_atr_mult,
         atr_period=args.atr_period,
+        batch_size=args.batch_size if args.batch_size > 0 else None,
     )
 
     # Save results
@@ -996,6 +1028,477 @@ Examples:
             plt.close(fig)
 
             print(f"✓ Saved to {output_path}")
+            success_count += 1
+
+        except Exception as e:
+            print(f"❌ Error: {e}")
+
+    print(f"\nCompleted! {success_count}/{len(tickers)} charts saved to {args.output_dir}")
+    return 0
+
+
+def main_beta_regime() -> int:
+    """Screen NASDAQ tickers for beta regime status.
+
+    Implements Mike McGlone's beta regime methodology:
+    - Relative strength (asset/benchmark ratio)
+    - Rolling beta calculation
+    - Regime detection based on moving average
+    """
+    parser = argparse.ArgumentParser(
+        description="Screen NASDAQ stocks for beta regime status",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Screen for risk-on regime (above MA)
+  stockcharts-beta-regime --regime risk-on
+
+  # Screen for risk-off regime (below MA)
+  stockcharts-beta-regime --regime risk-off
+
+  # Use weekly interval with auto-adjusted MA period
+  stockcharts-beta-regime --interval 1wk
+
+  # Custom benchmark and beta window
+  stockcharts-beta-regime --benchmark QQQ --beta-window 60
+
+  # Filter by price and volume
+  stockcharts-beta-regime --min-price 10 --min-volume 500000
+
+  # Use S&P 500 as benchmark
+  stockcharts-beta-regime --benchmark ^GSPC
+        """,
+    )
+
+    parser.add_argument(
+        "--benchmark",
+        default="SPY",
+        help="Benchmark ticker for relative strength and beta (default: SPY)",
+    )
+
+    parser.add_argument(
+        "--period",
+        default="1y",
+        help="Historical data period (1mo,3mo,6mo,1y,2y,5y). Default: 1y",
+    )
+
+    parser.add_argument(
+        "--interval",
+        default="1d",
+        choices=["1d", "1wk", "1mo"],
+        help="Candle interval (default: 1d). Weekly/monthly auto-adjusts MA period.",
+    )
+
+    parser.add_argument(
+        "--ma-period",
+        type=int,
+        default=200,
+        help="Moving average period for regime detection (default: 200 for daily, auto-adjusted for weekly)",
+    )
+
+    parser.add_argument(
+        "--beta-window",
+        type=int,
+        default=60,
+        help="Rolling window for beta calculation (default: 60 periods)",
+    )
+
+    parser.add_argument(
+        "--regime",
+        choices=["risk-on", "risk-off", "all"],
+        default="all",
+        help="Filter by regime status (default: all)",
+    )
+
+    parser.add_argument(
+        "--min-price",
+        type=float,
+        default=None,
+        help="Minimum stock price in dollars",
+    )
+
+    parser.add_argument(
+        "--max-price",
+        type=float,
+        default=None,
+        help="Maximum stock price in dollars",
+    )
+
+    parser.add_argument(
+        "--min-volume",
+        type=float,
+        default=None,
+        help="Minimum average daily volume",
+    )
+
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=50,
+        help="Number of tickers to download per batch (default: 50). Set to 0 for sequential.",
+    )
+
+    parser.add_argument(
+        "--output",
+        default="results/beta_regime.csv",
+        help="Output CSV file path (default: results/beta_regime.csv)",
+    )
+
+    parser.add_argument(
+        "--input-filter",
+        default=None,
+        help='CSV file with tickers to screen (must have "Ticker" or "ticker" column)',
+    )
+
+    parser.add_argument(
+        "--no-disclaimer",
+        action="store_true",
+        help="Suppress one-line non-advice disclaimer banner",
+    )
+    parser.add_argument("--version", action="store_true", help="Print package version and exit")
+    args = parser.parse_args()
+
+    if args.version:
+        from stockcharts import __version__
+
+        print(f"stockcharts {__version__}")
+        return 0
+
+    _print_disclaimer_once(args)
+
+    # Load ticker filter if provided
+    ticker_filter = None
+    if args.input_filter:
+        import os
+
+        import pandas as pd
+
+        if not os.path.exists(args.input_filter):
+            print(f"Error: Input filter file not found: {args.input_filter}")
+            return 1
+
+        try:
+            filter_df = pd.read_csv(args.input_filter)
+            ticker_col = None
+            if "Ticker" in filter_df.columns:
+                ticker_col = "Ticker"
+            elif "ticker" in filter_df.columns:
+                ticker_col = "ticker"
+            else:
+                print("Error: Input filter CSV must have a 'Ticker' or 'ticker' column")
+                return 1
+
+            ticker_filter = filter_df[ticker_col].tolist()
+            print(f"Loaded {len(ticker_filter)} tickers from {args.input_filter}")
+        except Exception as e:
+            print(f"Error loading input filter: {e}")
+            return 1
+
+    # Auto-adjust MA period for weekly interval
+    effective_ma = args.ma_period
+    if args.interval == "1wk" and args.ma_period == 200:
+        effective_ma = 40
+        print("Auto-adjusted MA period: 200 daily → 40 weekly")
+
+    print(f"Screening {'filtered list' if ticker_filter else 'NASDAQ stocks'} for beta regime...")
+    print(f"Benchmark: {args.benchmark}")
+    print(f"Period: {args.period}, Interval: {args.interval}")
+    print(f"MA period: {effective_ma}, Beta window: {args.beta_window}")
+    print(f"Regime filter: {args.regime}")
+    if args.min_price is not None:
+        print(f"Minimum price: ${args.min_price:.2f}")
+    if args.max_price is not None:
+        print(f"Maximum price: ${args.max_price:.2f}")
+    if args.min_volume is not None:
+        print(f"Minimum volume: {args.min_volume:,.0f} shares/day")
+    batch_mode = args.batch_size > 0 if args.batch_size else False
+    if batch_mode:
+        print(f"Batch download mode: {args.batch_size} tickers per batch")
+    else:
+        print("Sequential download mode (legacy)")
+    print()
+
+    results = screen_beta_regime(
+        benchmark=args.benchmark,
+        tickers=ticker_filter,
+        lookback=args.period,
+        interval=args.interval,
+        ma_period=effective_ma,
+        beta_window=args.beta_window,
+        regime_filter=args.regime,
+        min_price=args.min_price,
+        max_price=args.max_price,
+        min_volume=args.min_volume,
+        batch_size=args.batch_size if args.batch_size > 0 else None,
+    )
+
+    # Save results
+    if results:
+        import os
+
+        os.makedirs(os.path.dirname(args.output), exist_ok=True)
+        save_beta_results_to_csv(results, args.output)
+
+        # Print summary
+        print("\n" + "=" * 80)
+        print(f"Found {len(results)} stocks with beta regime data:")
+        print("=" * 80)
+
+        risk_on = [r for r in results if r.regime == "risk-on"]
+        risk_off = [r for r in results if r.regime == "risk-off"]
+        print(f"  Risk-On: {len(risk_on)} | Risk-Off: {len(risk_off)}")
+
+        print("\nTop 10 results:")
+        for r in results[:10]:
+            regime_emoji = "🟢" if r.regime == "risk-on" else "🔴"
+            print(f"  {regime_emoji} {r.ticker} ({r.company_name[:20]})")
+            print(
+                f"      Price: ${r.close_price:.2f} | Beta: {r.beta:.2f} | Rel Strength: {r.relative_strength:.4f}"
+            )
+            print(f"      MA({effective_ma}): {r.ma_value:.4f} | Regime: {r.regime.upper()}")
+
+        if len(results) > 10:
+            print(f"\n... and {len(results) - 10} more (see {args.output})")
+    else:
+        print("\nNo results found.")
+
+    return 0
+
+
+def main_plot_beta() -> int:
+    """Plot relative strength and beta regime charts.
+
+    Generates a chart showing:
+    - Asset price
+    - Relative strength (asset/benchmark ratio)
+    - Moving average for regime detection
+    - Rolling beta
+    """
+    parser = argparse.ArgumentParser(
+        description="Plot beta regime and relative strength charts",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Plot beta regime for a single ticker
+  stockcharts-plot-beta AAPL
+
+  # Compare against QQQ instead of SPY
+  stockcharts-plot-beta AAPL --benchmark QQQ
+
+  # Use weekly data
+  stockcharts-plot-beta MSFT --interval 1wk
+
+  # Plot from screener results
+  stockcharts-plot-beta --input results/beta_regime.csv --max-plots 10
+        """,
+    )
+
+    parser.add_argument(
+        "ticker",
+        nargs="?",
+        default=None,
+        help="Ticker symbol to plot (or use --input for batch mode)",
+    )
+
+    parser.add_argument(
+        "--benchmark",
+        default="SPY",
+        help="Benchmark ticker for relative strength (default: SPY)",
+    )
+
+    parser.add_argument(
+        "--period",
+        default="1y",
+        help="Historical data period (default: 1y)",
+    )
+
+    parser.add_argument(
+        "--interval",
+        default="1d",
+        choices=["1d", "1wk", "1mo"],
+        help="Candle interval (default: 1d)",
+    )
+
+    parser.add_argument(
+        "--ma-period",
+        type=int,
+        default=200,
+        help="Moving average period for regime detection (default: 200)",
+    )
+
+    parser.add_argument(
+        "--beta-window",
+        type=int,
+        default=60,
+        help="Rolling window for beta calculation (default: 60)",
+    )
+
+    parser.add_argument(
+        "--input",
+        default=None,
+        help="Input CSV from beta screener for batch plotting",
+    )
+
+    parser.add_argument(
+        "--output-dir",
+        default="charts/beta/",
+        help="Output directory for charts (default: charts/beta/)",
+    )
+
+    parser.add_argument(
+        "--max-plots",
+        type=int,
+        default=None,
+        help="Maximum number of charts to generate (default: all)",
+    )
+
+    parser.add_argument(
+        "--no-disclaimer",
+        action="store_true",
+        help="Suppress one-line non-advice disclaimer banner",
+    )
+    parser.add_argument("--version", action="store_true", help="Print package version and exit")
+    args = parser.parse_args()
+
+    if args.version:
+        from stockcharts import __version__
+
+        print(f"stockcharts {__version__}")
+        return 0
+
+    _print_disclaimer_once(args)
+
+    import os
+
+    import pandas as pd
+
+    from stockcharts.indicators.beta import analyze_beta_regime
+
+    # Auto-adjust MA period for weekly interval
+    effective_ma = args.ma_period
+    if args.interval == "1wk" and args.ma_period == 200:
+        effective_ma = 40
+        print("Auto-adjusted MA period: 200 daily → 40 weekly")
+
+    # Get tickers to plot
+    tickers = []
+    if args.ticker:
+        tickers = [args.ticker]
+    elif args.input:
+        if not os.path.exists(args.input):
+            print(f"Error: Input file not found: {args.input}")
+            return 1
+        df = pd.read_csv(args.input)
+        ticker_col = "Ticker" if "Ticker" in df.columns else "ticker"
+        if ticker_col not in df.columns:
+            print("Error: CSV must have a 'Ticker' or 'ticker' column")
+            return 1
+        tickers = df[ticker_col].tolist()
+    else:
+        print("Error: Either provide a ticker or use --input for batch plotting")
+        parser.print_help()
+        return 1
+
+    if args.max_plots:
+        tickers = tickers[: args.max_plots]
+
+    os.makedirs(args.output_dir, exist_ok=True)
+
+    print(f"Generating beta regime charts for {len(tickers)} ticker(s)...")
+    print(f"Benchmark: {args.benchmark}")
+    print(f"Period: {args.period}, Interval: {args.interval}, MA: {effective_ma}")
+    print(f"Output directory: {args.output_dir}")
+    print()
+
+    success_count = 0
+    for i, ticker in enumerate(tickers, 1):
+        print(f"[{i}/{len(tickers)}] Plotting {ticker}...", end=" ")
+
+        try:
+            # Fetch asset and benchmark data
+            asset_data = fetch_ohlc(ticker, lookback=args.period, interval=args.interval)
+            benchmark_data = fetch_ohlc(
+                args.benchmark, lookback=args.period, interval=args.interval
+            )
+
+            if asset_data is None or asset_data.empty:
+                print(f"❌ No data for {ticker}")
+                continue
+            if benchmark_data is None or benchmark_data.empty:
+                print(f"❌ No data for benchmark {args.benchmark}")
+                continue
+
+            # Analyze beta regime
+            result = analyze_beta_regime(
+                asset_data,
+                benchmark_data,
+                ma_period=effective_ma,
+                beta_window=args.beta_window,
+            )
+
+            # Extract series from result
+            rs_series = result["rs_series"]
+            rs_ma_series = result["rs_ma_series"]
+            beta_series = result["beta_series"]
+
+            # Create figure with subplots
+            fig, axes = plt.subplots(3, 1, figsize=(14, 10), sharex=True)
+
+            # Plot 1: Asset price
+            ax1 = axes[0]
+            ax1.plot(asset_data.index, asset_data["Close"], label=ticker, color="blue")
+            ax1.set_ylabel("Price ($)")
+            ax1.set_title(f"{ticker} - Beta Regime Analysis (vs {args.benchmark})")
+            ax1.legend(loc="upper left")
+            ax1.grid(True, alpha=0.3)
+
+            # Plot 2: Relative strength with MA
+            ax2 = axes[1]
+            ax2.plot(rs_series.index, rs_series, label="Relative Strength", color="purple")
+            ax2.plot(
+                rs_ma_series.index,
+                rs_ma_series,
+                label=f"MA({effective_ma})",
+                color="orange",
+                linestyle="--",
+            )
+
+            # Color background based on regime (RS above/below MA)
+            valid_idx = rs_series.dropna().index.intersection(rs_ma_series.dropna().index)
+            for j in range(len(valid_idx) - 1):
+                idx_now = valid_idx[j]
+                idx_next = valid_idx[j + 1]
+                is_risk_on = rs_series.loc[idx_now] > rs_ma_series.loc[idx_now]
+                color = "lightgreen" if is_risk_on else "lightcoral"
+                ax2.axvspan(idx_now, idx_next, alpha=0.3, color=color, linewidth=0)
+
+            ax2.set_ylabel("Relative Strength")
+            ax2.legend(loc="upper left")
+            ax2.grid(True, alpha=0.3)
+
+            # Plot 3: Rolling beta
+            ax3 = axes[2]
+            ax3.plot(
+                beta_series.index,
+                beta_series,
+                label=f"Rolling Beta ({args.beta_window})",
+                color="green",
+            )
+            ax3.axhline(y=1.0, color="gray", linestyle="--", alpha=0.5, label="β=1")
+            ax3.set_ylabel("Beta")
+            ax3.set_xlabel("Date")
+            ax3.legend(loc="upper left")
+            ax3.grid(True, alpha=0.3)
+
+            plt.tight_layout()
+
+            output_path = os.path.join(args.output_dir, f"{ticker}_beta_{args.interval}.png")
+            fig.savefig(output_path, dpi=150, bbox_inches="tight")
+            plt.close(fig)
+
+            regime = result["regime"]
+            regime_display = "Risk-On" if regime == "risk-on" else "Risk-Off"
+            print(f"✓ Saved ({regime_display})")
             success_count += 1
 
         except Exception as e:
