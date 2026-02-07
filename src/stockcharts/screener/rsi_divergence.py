@@ -1,4 +1,8 @@
-"""RSI Divergence screener for NASDAQ stocks."""
+"""RSI Divergence screener for NASDAQ stocks.
+
+Screens stocks for RSI divergences (bullish and bearish) with configurable
+detection parameters, breakout filtering, and flexible pivot detection methods.
+"""
 
 from dataclasses import dataclass
 from typing import Optional
@@ -17,7 +21,20 @@ from stockcharts.screener.nasdaq import get_nasdaq_tickers
 
 @dataclass
 class RSIDivergenceResult:
-    """Result from RSI divergence screening."""
+    """Result from RSI divergence screening.
+
+    Attributes:
+        ticker: Stock symbol.
+        company_name: Company name from NASDAQ listing.
+        close_price: Most recent close price.
+        rsi: Current RSI value.
+        divergence_type: Type detected ('bullish', 'bearish', or 'both').
+        bullish_divergence: True if bullish divergence detected.
+        bearish_divergence: True if bearish divergence detected.
+        details: Human-readable description of divergence.
+        bullish_indices: Tuple of (p1_idx, p2_idx, r1_idx, r2_idx) for bullish.
+        bearish_indices: Tuple of (p1_idx, p2_idx, r1_idx, r2_idx) for bearish.
+    """
 
     ticker: str
     company_name: str
@@ -359,7 +376,33 @@ def _screen_batch_mode(
     batch_size: int,
     verbose: bool,
 ) -> list[RSIDivergenceResult]:
-    """Screen tickers using batch download mode for faster processing."""
+    """Screen tickers using batch download mode for faster processing.
+
+    Args:
+        ticker_list: List of ticker symbols to screen.
+        ticker_names: Mapping of ticker to company name.
+        interval: Candle aggregation interval ('1d', '1wk', '1mo').
+        period: Historical lookback period.
+        start: Start date YYYY-MM-DD.
+        end: End date YYYY-MM-DD.
+        rsi_period: RSI calculation period.
+        divergence_type: Type to screen for ('bullish', 'bearish', 'all').
+        min_price: Minimum price filter.
+        max_price: Maximum price filter.
+        min_volume: Minimum volume filter.
+        exclude_breakouts: Filter out completed breakouts.
+        breakout_threshold: Percentage move for breakout detection.
+        exclude_failed_breakouts: Filter out failed breakout attempts.
+        failed_lookback_window: Bars to check for failed breakout.
+        failed_attempt_threshold: Percentage for attempted breakout.
+        failed_reversal_threshold: Percentage for failed reversal.
+        divergence_kwargs: Additional kwargs for detect_divergence.
+        batch_size: Tickers per batch download.
+        verbose: Print progress messages.
+
+    Returns:
+        List of RSIDivergenceResult objects passing all filters.
+    """
     results: list[RSIDivergenceResult] = []
     total_tickers = len(ticker_list)
 
@@ -483,7 +526,32 @@ def _screen_sequential_mode(
     divergence_kwargs: dict,
     verbose: bool,
 ) -> list[RSIDivergenceResult]:
-    """Screen tickers using legacy sequential download mode."""
+    """Screen tickers using legacy sequential download mode.
+
+    Args:
+        ticker_list: List of ticker symbols to screen.
+        ticker_names: Mapping of ticker to company name.
+        interval: Candle aggregation interval ('1d', '1wk', '1mo').
+        period: Historical lookback period.
+        start: Start date YYYY-MM-DD.
+        end: End date YYYY-MM-DD.
+        rsi_period: RSI calculation period.
+        divergence_type: Type to screen for ('bullish', 'bearish', 'all').
+        min_price: Minimum price filter.
+        max_price: Maximum price filter.
+        min_volume: Minimum volume filter.
+        exclude_breakouts: Filter out completed breakouts.
+        breakout_threshold: Percentage move for breakout detection.
+        exclude_failed_breakouts: Filter out failed breakout attempts.
+        failed_lookback_window: Bars to check for failed breakout.
+        failed_attempt_threshold: Percentage for attempted breakout.
+        failed_reversal_threshold: Percentage for failed reversal.
+        divergence_kwargs: Additional kwargs for detect_divergence.
+        verbose: Print progress messages.
+
+    Returns:
+        List of RSIDivergenceResult objects passing all filters.
+    """
     results: list[RSIDivergenceResult] = []
     total = len(ticker_list)
 
@@ -531,7 +599,15 @@ def _screen_sequential_mode(
 def save_results_to_csv(
     results: list[RSIDivergenceResult], filename: str = "rsi_divergence_results.csv"
 ) -> None:
-    """Save screening results to CSV file."""
+    """Save screening results to CSV file.
+
+    Args:
+        results: List of RSIDivergenceResult objects to save.
+        filename: Output CSV file path.
+
+    Returns:
+        None. Prints status message and writes file to disk.
+    """
     if not results:
         print("No results to save.")
         return
@@ -539,7 +615,14 @@ def save_results_to_csv(
     import json
 
     def serialize_indices(indices: list | tuple | None) -> list[str] | None:
-        """Convert timestamp indices to ISO format strings for JSON serialization."""
+        """Convert timestamp indices to ISO format strings for JSON serialization.
+
+        Args:
+            indices: Tuple of timestamp indices or None.
+
+        Returns:
+            List of ISO format date strings or None.
+        """
         if indices is None:
             return None
         return [idx.isoformat() for idx in indices]

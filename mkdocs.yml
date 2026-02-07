@@ -12,6 +12,7 @@ nav:
   - Screeners:
       - Heiken Ashi Screener: screener.md
       - RSI Divergence Screener: rsi_divergence.md
+      - Beta Regime Screener: beta_regime.md
   - Parameters: parameters.md
   - Volume Filtering: volume.md
   - Trading Styles: trading_styles.md
@@ -20,7 +21,9 @@ nav:
       - Divergence Detection: api/divergence.md
       - Pivot Detection: api/pivots.md
       - RSI Indicator: api/rsi.md
+      - Beta Indicators: api/beta.md
       - Screener Functions: api/screener.md
+      - Beta Regime Screener: api/beta_regime.md
       - Data Fetching: api/data.md
       - Heiken Ashi Runs: api/heiken_runs.md
   - Contributing: contributing.md

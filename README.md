@@ -30,9 +30,17 @@ PyPI badge above always reflects the newest published version.
 - **Custom Date Ranges**: Screen historical data with specific start/end dates
 - **CSV Export**: Save screening results for further analysis
 
+### � Beta Regime Analysis
+- **Relative Strength Detection**: Identify stocks outperforming or underperforming a benchmark (SPY, QQQ, etc.)
+- **Risk-On/Risk-Off Classification**: Filter stocks by market regime using relative strength vs. moving average
+- **Rolling Beta Calculation**: Measure stock volatility relative to benchmark
+- **Auto-Adjusting Parameters**: Weekly charts automatically adjust MA period (200d → 40w)
+- **Flexible Benchmarks**: Compare against any yfinance ticker
+
 ### 📊 Chart Generation
 - **Heiken Ashi Charts**: Generate candlestick charts from screening results
 - **Price/RSI Divergence Charts**: Visualize price action with RSI indicator and marked divergences
+- **Beta Regime Charts**: Plot relative strength with regime zones
 - Support for multiple timeframes: 1m, 5m, 15m, 1h, 1d, 1wk, 1mo
 - High-quality PNG output for technical analysis
 - Automatic divergence detection and highlighting on charts
@@ -65,12 +73,14 @@ pip install -e .
 
 ## Quick Start
 
-After installation, you'll have four command-line tools available:
+After installation, you'll have six command-line tools available:
 
 ### 1. `stockcharts-screen` - Heiken Ashi Color Screening
 ### 2. `stockcharts-plot` - Heiken Ashi Chart Generation
 ### 3. `stockcharts-rsi-divergence` - RSI Divergence Screening
 ### 4. `stockcharts-plot-divergence` - Price/RSI Divergence Charts
+### 5. `stockcharts-beta-regime` - Beta Regime Screening
+### 6. `stockcharts-plot-beta` - Beta Regime Chart Generation
 
 ## Usage
 
@@ -144,6 +154,35 @@ stockcharts-rsi-divergence --rsi-period 21 --period 6mo
 **Plot divergences from screener results:**
 ```powershell
 stockcharts-plot-divergence
+```
+
+### 5. Screen for Beta Regime
+
+**Find stocks outperforming SPY (risk-on):**
+```powershell
+stockcharts-beta-regime --regime risk-on --min-volume 500000
+```
+
+**Screen against QQQ benchmark with weekly charts:**
+```powershell
+stockcharts-beta-regime --benchmark QQQ --interval 1wk
+```
+
+**Filter by price range:**
+```powershell
+stockcharts-beta-regime --min-price 10 --max-price 100 --regime risk-on
+```
+
+### 6. Generate Beta Regime Charts
+
+**Plot beta regime chart for a ticker:**
+```powershell
+stockcharts-plot-beta AAPL
+```
+
+**Compare against QQQ:**
+```powershell
+stockcharts-plot-beta AAPL --benchmark QQQ
 ```
 
 ## Documentation
