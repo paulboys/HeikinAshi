@@ -86,7 +86,8 @@ def test_screen_nasdaq_ticker_filter(mock_screen_ticker, mock_get_tickers):
     )
     mock_screen_ticker.return_value = result
 
-    results = screen_nasdaq(ticker_filter=["AAPL"], delay=0, verbose=False)
+    # Use batch_size=None to use sequential mode (which calls screen_ticker)
+    results = screen_nasdaq(ticker_filter=["AAPL"], delay=0, verbose=False, batch_size=None)
 
     # Should not have called get_nasdaq_tickers
     mock_get_tickers.assert_not_called()
@@ -187,7 +188,10 @@ def test_screen_nasdaq_min_run_percentile_filter(mock_screen_ticker, mock_get_ti
     mock_screen_ticker.side_effect = [result1, result2, result3]
 
     # Filter for only high percentile runs (>= 90)
-    results = screen_nasdaq(delay=0, limit=3, verbose=False, min_run_percentile=90.0)
+    # Use batch_size=None to use sequential mode (which calls screen_ticker)
+    results = screen_nasdaq(
+        delay=0, limit=3, verbose=False, min_run_percentile=90.0, batch_size=None
+    )
 
     assert len(results) == 2
     assert results[0].ticker == "TICK1"
@@ -231,7 +235,10 @@ def test_screen_nasdaq_max_run_percentile_filter(mock_screen_ticker, mock_get_ti
     mock_screen_ticker.side_effect = [result1, result2]
 
     # Filter for only low percentile runs (<= 25)
-    results = screen_nasdaq(delay=0, limit=2, verbose=False, max_run_percentile=25.0)
+    # Use batch_size=None to use sequential mode (which calls screen_ticker)
+    results = screen_nasdaq(
+        delay=0, limit=2, verbose=False, max_run_percentile=25.0, batch_size=None
+    )
 
     assert len(results) == 1
     assert results[0].ticker == "TICK1"
@@ -289,8 +296,14 @@ def test_screen_nasdaq_run_percentile_range(mock_screen_ticker, mock_get_tickers
     mock_screen_ticker.side_effect = [result1, result2, result3]
 
     # Filter for runs in 50-75 percentile range
+    # Use batch_size=None to use sequential mode (which calls screen_ticker)
     results = screen_nasdaq(
-        delay=0, limit=3, verbose=False, min_run_percentile=50.0, max_run_percentile=75.0
+        delay=0,
+        limit=3,
+        verbose=False,
+        min_run_percentile=50.0,
+        max_run_percentile=75.0,
+        batch_size=None,
     )
 
     assert len(results) == 2

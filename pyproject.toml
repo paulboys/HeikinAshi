@@ -42,6 +42,8 @@ stockcharts-screen = "stockcharts.cli:main_screen"
 stockcharts-plot = "stockcharts.cli:main_plot"
 stockcharts-rsi-divergence = "stockcharts.cli:main_rsi_divergence"
 stockcharts-plot-divergence = "stockcharts.cli:main_plot_divergence"
+stockcharts-beta-regime = "stockcharts.cli:main_beta_regime"
+stockcharts-plot-beta = "stockcharts.cli:main_plot_beta"
 
 [project.optional-dependencies]
 dev = [

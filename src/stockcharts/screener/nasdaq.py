@@ -127,9 +127,10 @@ def get_nasdaq_tickers(limit: int | None = None) -> list[str]:
         # Parse the pipe-delimited file
         df = pd.read_csv(io.StringIO(content), sep="|")
 
-        # Filter out test symbols and get ticker column
-        # Handle potential NaN values in 'Test Issue' column
-        tickers = df[df["Test Issue"].fillna("Y") == "N"]["Symbol"].tolist()
+        # Filter out test symbols and ETFs, then get ticker column
+        # Handle potential NaN values in 'Test Issue' and 'ETF' columns
+        mask = (df["Test Issue"].fillna("Y") == "N") & (df["ETF"].fillna("N") == "N")
+        tickers = df[mask]["Symbol"].tolist()
 
         # Remove any tickers with special characters (like $ for warrants)
         # Also filter out NaN values and ensure all are strings
