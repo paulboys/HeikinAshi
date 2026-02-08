@@ -88,6 +88,7 @@ print(f"Relative Strength: {result['rs_current']:.4f}")
 print(f"200 MA: {result['rs_ma_current']:.4f}")
 print(f"% from MA: {result['pct_from_ma']:.2%}")
 print(f"Beta: {result['beta']:.2f}")
+print(f"Beta Percentile: {result['beta_percentile']:.0f}%")
 ```
 
 ### Screen Multiple Tickers
@@ -207,10 +208,40 @@ divergences = screen_rsi_divergence(
 | `ma_value` | float | RS moving average value |
 | `pct_from_ma` | float | Percentage distance from MA |
 | `beta` | float | Rolling beta value |
+| `beta_percentile` | float | Percentile rank (0-100) of current beta within historical distribution |
 | `close_price` | float | Current close price |
 | `benchmark_price` | float | Current benchmark price |
 | `interval` | str | Time interval used |
 | `ma_period` | int | MA period used |
+
+### Beta Percentile
+
+The `beta_percentile` field shows where the current beta ranks within its historical distribution:
+
+$$\text{Percentile} = \frac{\text{Values} \leq \text{Current Beta}}{\text{Total Values}} \times 100$$
+
+**Interpretation:**
+
+- **β-percentile > 90%**: Beta is at historically elevated levels (high volatility environment)
+- **β-percentile < 25%**: Beta is at historically low levels (unusual calm)
+- **β-percentile ~ 50%**: Beta is near its historical median
+
+**Trading Applications:**
+
+1. **Mean Reversion**: High beta percentile with risk-off may signal capitulation
+2. **Low Volatility Alert**: Low beta percentile can precede volatility expansion
+3. **Regime Context**: Combine with regime for richer analysis
+
+```python
+# Find risk-off stocks with historically elevated beta (potential capitulation)
+from stockcharts.screener.beta_regime import screen_beta_regime
+
+results = screen_beta_regime(regime_filter="risk-off", verbose=True)
+capitulation = [r for r in results if r.beta_percentile > 90]
+
+for r in capitulation:
+    print(f"{r.ticker}: β={r.beta:.2f} ({r.beta_percentile:.0f}th percentile)")
+```
 ## McGlone Contrarian Sector Analysis
 
 The `scripts/sector_regime.py` script implements Mike McGlone's contrarian framework for timing equity sector entry.
