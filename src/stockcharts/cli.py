@@ -1079,7 +1079,7 @@ Examples:
     parser.add_argument(
         "--period",
         default="10y",
-        help="Historical data period (1mo,3mo,6mo,1y,2y,5y,10y). Default: 10y",
+        help="Historical data period (1mo,3mo,6mo,1y,2y,5y,10y,20y,30y,40y,50y,max). Default: 10y",
     )
 
     parser.add_argument(
@@ -1309,7 +1309,7 @@ Examples:
     parser.add_argument(
         "--period",
         default="1y",
-        help="Historical data period (default: 1y)",
+        help="Historical data period (1mo,3mo,6mo,1y,2y,5y,10y,20y,30y,40y,50y,max). Default: 1y",
     )
 
     parser.add_argument(
