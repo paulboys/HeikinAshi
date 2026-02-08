@@ -37,6 +37,8 @@ except ImportError as e:  # pragma: no cover - guidance only
 
 VALID_INTERVALS = {"1d", "1wk", "1mo"}  # Aggregation intervals: daily, weekly, monthly
 VALID_LOOKBACK = {"5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"}
+# Extended lookback periods that map to 'max' (yfinance doesn't support >10y directly)
+EXTENDED_LOOKBACK_TO_MAX = {"20y", "30y", "40y", "50y", "100y"}
 
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -86,6 +88,10 @@ def _validate_and_build_download_kwargs(
 
     if not lookback and not start and not end:
         lookback = "1y"
+
+    # Convert extended lookback periods to 'max' (yfinance only supports up to 10y)
+    if lookback and lookback in EXTENDED_LOOKBACK_TO_MAX:
+        lookback = "max"
 
     if lookback and lookback not in VALID_LOOKBACK:
         raise ValueError(f"Unsupported lookback '{lookback}'. Allowed: {sorted(VALID_LOOKBACK)}")
