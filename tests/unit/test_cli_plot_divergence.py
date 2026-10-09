@@ -329,7 +329,7 @@ def test_main_plot_divergence_handles_exceptions(sample_rsi_csv, tmp_path):
     assert result == 0  # Returns success but errors are reported
 
     output_text = mock_stdout.getvalue()
-    assert "❌ Error" in output_text
+    assert "[ERROR]" in output_text
 
 
 def test_main_plot_divergence_creates_output_directory(sample_rsi_csv, mock_ohlc_data, tmp_path):

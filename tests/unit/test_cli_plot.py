@@ -177,7 +177,7 @@ def test_main_plot_empty_data_skipped(sample_input_csv, tmp_path):
 
     assert result == 0
     output_text = mock_stdout.getvalue()
-    assert "❌ No data" in output_text
+    assert "[ERROR] No data" in output_text
 
 
 def test_main_plot_fetch_exception_handled(sample_input_csv, tmp_path):
@@ -200,7 +200,7 @@ def test_main_plot_fetch_exception_handled(sample_input_csv, tmp_path):
 
     assert result == 0  # Still returns success, but errors are reported per ticker
     output_text = mock_stdout.getvalue()
-    assert "❌ Error" in output_text
+    assert "[ERROR]" in output_text
 
 
 def test_main_plot_custom_period_and_lookback(

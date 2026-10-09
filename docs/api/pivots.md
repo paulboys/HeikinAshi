@@ -25,9 +25,9 @@ Replaces earlier ZigZag approach for cleaner, parameter-light pivot extraction.
 ### Span Selection
 | Span | Sensitivity | Use Case |
 |------|-------------|----------|
-| 3-4  | High        | Intraday/fast scans |
-| 5-6  | Balanced    | Swing trading (default) |
-| 7-9  | Smooth      | Position trading |
+| 3-4  | High        | Intraday and fast scans |
+| 5-6  | Balanced    | Multi-week structure (default) |
+| 7-9  | Smooth      | Multi-month structure |
 | 10+  | Very Smooth | Major turns only |
 
 ### CLI Flags

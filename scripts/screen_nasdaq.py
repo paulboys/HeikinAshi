@@ -2,13 +2,13 @@
 """CLI to screen NASDAQ stocks for Heiken Ashi candle patterns.
 
 Example:
-    # SWING TRADER: Find reversals with minimum volume filter (recommended)
+    # Multi-week scale, liquid names only
     python scripts/screen_nasdaq.py --color green --changed-only --lookback 3mo --period 1d --min-volume 500000
 
-    # DAY TRADER: High volume stocks only, last 5 days
+    # Intraday scale, most liquid names, last five sessions
     python scripts/screen_nasdaq.py --color green --changed-only --lookback 5d --period 1d --min-volume 1000000 --limit 100
 
-    # POSITION TRADER: Weekly candles with volume filter
+    # Multi-month scale, weekly bars
     python scripts/screen_nasdaq.py --color green --changed-only --lookback 1y --period 1wk --min-volume 500000
 
     # Custom date range with volume filter
@@ -76,7 +76,7 @@ def main() -> None:
         type=str,
         default=None,
         help="How far back to fetch data: '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', etc. "
-        "Day traders: 5d/1mo. Swing traders: 3mo/6mo. Position traders: 1y/5y. "
+        "Intraday scale: 5d/1mo. Multi-week: 3mo/6mo. Multi-month: 1y/5y. "
         "Cannot be used with --start/--end.",
     )
     parser.add_argument(
@@ -101,7 +101,7 @@ def main() -> None:
         type=float,
         default=None,
         help="Minimum average daily volume (in shares). Filters out low-volume stocks. "
-        "Recommended: 500000 (500K) for swing trading, 1000000 (1M) for day trading.",
+        "500000 keeps the cross-section liquid; 1000000 restricts it further.",
     )
     parser.add_argument(
         "--min-price",

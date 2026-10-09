@@ -30,7 +30,7 @@ See `docs/legacy.md` for the authoritative mapping from each legacy file to the 
 - RSI Divergence → `docs/rsi_divergence.md`
 - Parameters → `docs/parameters.md`
 - Volume Filtering → `docs/volume.md`
-- Trading Styles → `docs/trading_styles.md`
+- Trading Styles → `docs/timeframes.md` (rewritten as timeframe and sensitivity guidance)
 - Quick Commands → `docs/quick_reference.md`
 - Roadmap / Next Steps → `docs/roadmap.md`
 

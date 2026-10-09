@@ -7,7 +7,7 @@ Consolidated documentation is now located in the `docs/` directory:
 - RSI Divergence Screener: docs/rsi_divergence.md
 - Parameters & Configuration: docs/parameters.md
 - Volume Filtering: docs/volume.md
-- Trading Style Guidance: docs/trading_styles.md
+- Timeframes and Detector Sensitivity: docs/timeframes.md
 - Quick Commands: docs/quick_reference.md
 - Roadmap: docs/roadmap.md
 - Legacy Mapping: docs/legacy.md

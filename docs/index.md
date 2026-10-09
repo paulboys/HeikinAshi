@@ -8,8 +8,8 @@ Welcome to the official documentation site for the StockCharts technical screeni
 - **RSI Divergence Screener**: Momentum disagreement detection
 - **Beta Regime Screener**: Risk-on/risk-off market regime detection
 - **Parameters**: All configurable flags
-- **Volume Filtering**: Improve signal quality
-- **Trading Styles**: Applying outputs to strategies
+- **Volume Filtering**: Restricting the cross-section to liquid names
+- **Timeframes and Sensitivity**: Choosing periods, lookbacks and detector settings
 - **Quick Reference**: Command cheat sheet
 - **Roadmap**: Planned enhancements
 
