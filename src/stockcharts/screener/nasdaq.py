@@ -11,7 +11,10 @@ import urllib.request
 import pandas as pd
 
 
-def get_nasdaq_tickers(limit: int | None = None) -> list[str]:
+def get_nasdaq_tickers(
+    limit: int | None = None,
+    asset_type: str = "equity",
+) -> list[str]:
     """Fetch list of NASDAQ ticker symbols.
 
     Parameters
@@ -19,6 +22,9 @@ def get_nasdaq_tickers(limit: int | None = None) -> list[str]:
     limit : int | None
         Maximum number of tickers to return. None returns all available.
         Useful for testing with smaller subsets.
+    asset_type : str
+        Which asset class to return.  ``'equity'`` (default) returns
+        only common stocks.  ``'etf'`` returns only ETFs.
 
     Returns:
     -------
@@ -127,10 +133,13 @@ def get_nasdaq_tickers(limit: int | None = None) -> list[str]:
         # Parse the pipe-delimited file
         df = pd.read_csv(io.StringIO(content), sep="|")
 
-        # Filter out test symbols and ETFs, then get ticker column
-        # Handle potential NaN values in 'Test Issue' and 'ETF' columns
-        mask = (df["Test Issue"].fillna("Y") == "N") & (df["ETF"].fillna("N") == "N")
-        tickers = df[mask]["Symbol"].tolist()
+        # Filter by test-issue flag and asset type (equity vs ETF)
+        test_mask = df["Test Issue"].fillna("Y") == "N"
+        if asset_type == "etf":
+            type_mask = df["ETF"].fillna("N") == "Y"
+        else:
+            type_mask = df["ETF"].fillna("N") == "N"
+        tickers = df[test_mask & type_mask]["Symbol"].tolist()
 
         # Remove any tickers with special characters (like $ for warrants)
         # Also filter out NaN values and ensure all are strings
@@ -138,10 +147,42 @@ def get_nasdaq_tickers(limit: int | None = None) -> list[str]:
             str(t) for t in tickers if pd.notna(t) and "$" not in str(t) and "." not in str(t)
         ]
 
+        # Filter out warrants (ending W), rights (ending R), and units (ending U)
+        # These have very limited trading history and yfinance often rejects
+        # standard lookback periods for them (e.g. 'max' → only '1d','5d' valid).
+        tickers = [
+            t for t in tickers if not (len(t) > 3 and t[-1] in ("W", "R", "U") and t[-2].isalpha())
+        ]
+
     except Exception as e:
         print(f"Warning: Could not fetch NASDAQ tickers from FTP: {e}")
-        print("Using fallback list of major NASDAQ tickers")
-        tickers = major_tickers
+        if asset_type == "etf":
+            print("Using fallback list of major NASDAQ ETFs")
+            tickers = [
+                "QQQ",
+                "TQQQ",
+                "SQQQ",
+                "ARKK",
+                "ARKG",
+                "ARKW",
+                "ARKF",
+                "IBIT",
+                "SOXX",
+                "SOXL",
+                "SOXS",
+                "ONEQ",
+                "QYLD",
+                "JEPQ",
+                "SCHD",
+                "VUG",
+                "VTWO",
+                "FTEC",
+                "FNCL",
+                "FHLC",
+            ]
+        else:
+            print("Using fallback list of major NASDAQ tickers")
+            tickers = major_tickers
 
     # Apply limit if specified
     if limit is not None:
