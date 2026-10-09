@@ -11,7 +11,9 @@ from stockcharts.data.fetch import (
 def test_fetch_ohlc_handles_network_error():
     with patch("yfinance.download", side_effect=Exception("Network error")):
         with pytest.raises(Exception):
-            fetch_ohlc("AAPL", lookback="1mo", interval="1d")
+            # use_cache=False: a warm parquet cache would short-circuit the
+            # download and swallow the error this test is about.
+            fetch_ohlc("AAPL", lookback="1mo", interval="1d", use_cache=False)
 
 
 def test_extended_lookback_converts_to_max():

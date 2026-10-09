@@ -5,7 +5,6 @@ detection parameters, breakout filtering, and flexible pivot detection methods.
 """
 
 from dataclasses import dataclass
-from typing import Optional
 
 import pandas as pd
 
@@ -44,8 +43,8 @@ class RSIDivergenceResult:
     bullish_divergence: bool
     bearish_divergence: bool
     details: str
-    bullish_indices: Optional[tuple] = None  # (p1_idx, p2_idx, r1_idx, r2_idx)
-    bearish_indices: Optional[tuple] = None  # (p1_idx, p2_idx, r1_idx, r2_idx)
+    bullish_indices: tuple | None = None  # (p1_idx, p2_idx, r1_idx, r2_idx)
+    bearish_indices: tuple | None = None  # (p1_idx, p2_idx, r1_idx, r2_idx)
 
 
 def screen_rsi_divergence(
@@ -54,13 +53,13 @@ def screen_rsi_divergence(
     interval: str = "1d",  # Candle interval '1d','1wk','1mo'
     rsi_period: int = 14,
     divergence_type: str = "all",  # 'bullish', 'bearish', or 'all'
-    min_price: Optional[float] = None,
-    max_price: Optional[float] = None,
-    min_volume: Optional[float] = None,
+    min_price: float | None = None,
+    max_price: float | None = None,
+    min_volume: float | None = None,
     swing_window: int = 5,
     lookback: int = 60,
-    start: Optional[str] = None,
-    end: Optional[str] = None,
+    start: str | None = None,
+    end: str | None = None,
     exclude_breakouts: bool = False,
     breakout_threshold: float = 0.05,
     exclude_failed_breakouts: bool = False,
@@ -230,9 +229,9 @@ def _process_ticker_divergence(
     df: pd.DataFrame,
     rsi_period: int,
     divergence_type: str,
-    min_price: Optional[float],
-    max_price: Optional[float],
-    min_volume: Optional[float],
+    min_price: float | None,
+    max_price: float | None,
+    min_volume: float | None,
     exclude_breakouts: bool,
     breakout_threshold: float,
     exclude_failed_breakouts: bool,
@@ -240,7 +239,7 @@ def _process_ticker_divergence(
     failed_attempt_threshold: float,
     failed_reversal_threshold: float,
     divergence_kwargs: dict,
-) -> Optional[RSIDivergenceResult]:
+) -> RSIDivergenceResult | None:
     """Process a single ticker's DataFrame for RSI divergence.
 
     Returns RSIDivergenceResult if divergence found, None otherwise.
@@ -359,13 +358,13 @@ def _screen_batch_mode(
     ticker_names: dict[str, str],
     interval: str,
     period: str,
-    start: Optional[str],
-    end: Optional[str],
+    start: str | None,
+    end: str | None,
     rsi_period: int,
     divergence_type: str,
-    min_price: Optional[float],
-    max_price: Optional[float],
-    min_volume: Optional[float],
+    min_price: float | None,
+    max_price: float | None,
+    min_volume: float | None,
     exclude_breakouts: bool,
     breakout_threshold: float,
     exclude_failed_breakouts: bool,
@@ -510,13 +509,13 @@ def _screen_sequential_mode(
     ticker_names: dict[str, str],
     interval: str,
     period: str,
-    start: Optional[str],
-    end: Optional[str],
+    start: str | None,
+    end: str | None,
     rsi_period: int,
     divergence_type: str,
-    min_price: Optional[float],
-    max_price: Optional[float],
-    min_volume: Optional[float],
+    min_price: float | None,
+    max_price: float | None,
+    min_volume: float | None,
     exclude_breakouts: bool,
     breakout_threshold: float,
     exclude_failed_breakouts: bool,

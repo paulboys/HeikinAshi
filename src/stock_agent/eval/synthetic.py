@@ -284,7 +284,7 @@ def plant_divergence(
             f"need at least {_DIVERGENCE_SPAN} bars to plant a divergence, " f"got {len(df)}"
         )
     out = df.copy()
-    close = out["Close"].to_numpy(dtype=float)
+    close = out["Close"].to_numpy(dtype=float, copy=True)
     cut = len(close) - _DIVERGENCE_SPAN
     close[cut:] = _divergence_path(float(close[cut]), sharp_drop, second_lower)
 
@@ -341,7 +341,7 @@ def plant_volume_surge(
         A new frame with the surge.
     """
     out = df.copy()
-    volume = out["Volume"].to_numpy(dtype=float)
+    volume = out["Volume"].to_numpy(dtype=float, copy=True)
     volume[-bars:] = volume[-bars:] * multiple
     out["Volume"] = volume
     return out
@@ -449,7 +449,7 @@ def plant_momentum_push(
         A new frame with the push.
     """
     out = df.copy()
-    close = out["Close"].to_numpy(dtype=float)
+    close = out["Close"].to_numpy(dtype=float, copy=True)
     anchor = float(close[len(close) - bars - 1])
     for i in range(bars):
         close[len(close) - bars + i] = anchor * (1.0 + pct) ** (i + 1)
