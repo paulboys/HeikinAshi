@@ -76,7 +76,7 @@ def test_fetch_ohlc_with_invalid_start_falls_back(monkeypatch):
     monkeypatch.setattr("yfinance.download", _mock_yf_download)
 
     # Pass invalid date format in start - should fall back to default lookback
-    df = fetch_ohlc("AAPL", start="3mo")
+    df = fetch_ohlc("AAPL", start="3mo", use_cache=False)
     assert not df.empty
 
 
@@ -90,7 +90,7 @@ def test_fetch_ohlc_default_lookback(monkeypatch):
 
     monkeypatch.setattr("yfinance.download", capture_download)
 
-    fetch_ohlc("AAPL")
+    fetch_ohlc("AAPL", use_cache=False)
     assert len(download_calls) == 1
     assert download_calls[0]["period"] == "1y"
 
@@ -131,7 +131,7 @@ def test_fetch_ohlc_start_and_end_override_lookback(monkeypatch):
 
     monkeypatch.setattr("yfinance.download", capture_download)
 
-    fetch_ohlc("AAPL", start="2024-01-01", end="2024-01-31", lookback="1y")
+    fetch_ohlc("AAPL", start="2024-01-01", end="2024-01-31", lookback="1y", use_cache=False)
     assert len(download_calls) == 1
     assert "start" in download_calls[0]
     assert "end" in download_calls[0]

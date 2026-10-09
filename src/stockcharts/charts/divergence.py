@@ -310,14 +310,17 @@ def _plot_candlesticks(ax: Axes, df: pd.DataFrame) -> None:
     x = np.arange(len(df))
 
     # Determine candle colors
-    colors = ["green" if close >= open_ else "red" for open_, close in zip(df["Open"], df["Close"])]
+    colors = [
+        "green" if close >= open_ else "red"
+        for open_, close in zip(df["Open"], df["Close"], strict=False)
+    ]
 
     # Plot wicks (high-low lines)
-    for i, (high, low) in enumerate(zip(df["High"], df["Low"])):
+    for i, (high, low) in enumerate(zip(df["High"], df["Low"], strict=False)):
         ax.plot([i, i], [low, high], color="black", linewidth=0.5, zorder=1)
 
     # Plot candle bodies
-    for i, (open_, close, color) in enumerate(zip(df["Open"], df["Close"], colors)):
+    for i, (open_, close, color) in enumerate(zip(df["Open"], df["Close"], colors, strict=False)):
         height = abs(close - open_)
         bottom = min(open_, close)
         ax.bar(
