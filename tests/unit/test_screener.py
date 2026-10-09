@@ -130,7 +130,7 @@ def test_screen_nasdaq_handles_errors(mock_screen_ticker, mock_get_tickers):
 
     mock_screen_ticker.side_effect = [result1, None, result2]
 
-    results = screen_nasdaq(delay=0, limit=3, verbose=False)
+    results = screen_nasdaq(delay=0, limit=3, verbose=False, batch_size=None)
 
     # Should have 2 successful results, skipping the None
     assert len(results) == 2
