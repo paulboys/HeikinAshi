@@ -559,7 +559,7 @@ def detect_regimes(
     ids = _segment_ggs(features.to_numpy(dtype=float), resolved_k, lamb, max_shuffles, random_state)
 
     # Features start vol_window bars in; map ids back onto the price positions.
-    offset = usable.index.get_indexer([features.index[0]])[0]
+    offset = usable.index.get_indexer(features.index[:1])[0]
     full_ids = np.zeros(len(usable), dtype=int)
     full_ids[offset : offset + len(ids)] = ids
     full_ids[:offset] = ids[0] if len(ids) else 0
