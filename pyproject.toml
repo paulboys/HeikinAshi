@@ -10,7 +10,7 @@ authors = [
 ]
 description = "NASDAQ stock screener using Heiken Ashi candles and RSI divergence for trend reversal detection with volume and price filtering"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 license = "MIT"
 keywords = ["stocks", "nasdaq", "heiken ashi", "rsi", "divergence", "screener", "trading", "finance", "technical-analysis", "swing-trading"]
 classifiers = [
@@ -18,8 +18,6 @@ classifiers = [
     "Intended Audience :: Financial and Insurance Industry",
     "Topic :: Office/Business :: Financial :: Investment",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Operating System :: OS Independent",
@@ -29,7 +27,14 @@ dependencies = [
   "yfinance>=0.2.38",
   "pandas>=2.0.0",
   "matplotlib>=3.7.0",
-  "numpy>=1.24.0"
+  "numpy>=1.24.0",
+  "plotly>=5.18.0",
+  "dash>=2.14.0",
+  "pyarrow>=14.0.0",
+  "diskcache>=5.6.0",
+  "psutil>=5.9.0",
+  "multiprocess>=0.70.0",
+  "aeon>=1.6.0,<2.0"
 ]
 
 [project.urls]
@@ -44,6 +49,12 @@ stockcharts-rsi-divergence = "stockcharts.cli:main_rsi_divergence"
 stockcharts-plot-divergence = "stockcharts.cli:main_plot_divergence"
 stockcharts-beta-regime = "stockcharts.cli:main_beta_regime"
 stockcharts-plot-beta = "stockcharts.cli:main_plot_beta"
+stockcharts-app = "stockcharts.app:main_app"
+stockcharts-cache = "stockcharts.cli:main_cache"
+stockcharts-yields = "stockcharts.cli:main_yields"
+stockcharts-yields-app = "stockcharts.macro_app:main_macro_app"
+stockcharts-regime = "stockcharts.cli:main_regime"
+stock-agent = "stock_agent.cli:main"
 
 [project.optional-dependencies]
 dev = [
@@ -65,7 +76,10 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E","F","I","D","ANN","B","UP"]
-ignore = ["D203","D212","D107","E501"]
+# ANN101 (annotate self) and UP038 (isinstance with a union) were both removed
+# from ruff upstream and are absent from the installed 0.14.x. They are listed
+# here so the pinned 0.6.4 in .pre-commit-config.yaml agrees with it.
+ignore = ["D203","D212","D107","E501","ANN101","UP038"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["ANN201", "ANN202", "ANN001", "ANN003", "ANN204", "D100", "D103", "D200", "D205", "F841", "B017"]
@@ -87,7 +101,11 @@ exclude = ["tests/"]
 module = [
     "yfinance.*",
     "matplotlib.*",
-    "pandas.*"
+    "pandas.*",
+    "plotly.*",
+    "dash.*",
+    "diskcache.*",
+    "aeon.*"
 ]
 ignore_missing_imports = true
 

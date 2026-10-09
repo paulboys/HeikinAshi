@@ -24,6 +24,7 @@ def test_beta_regime_result_creation():
         ma_value=1.20,
         pct_from_ma=0.0417,
         beta=1.15,
+        beta_percentile=75.5,
         close_price=175.50,
         benchmark_price=450.25,
         interval="1d",
@@ -33,6 +34,7 @@ def test_beta_regime_result_creation():
     assert result.ticker == "AAPL"
     assert result.regime == "risk-on"
     assert result.beta == 1.15
+    assert result.beta_percentile == 75.5
     assert result.ma_period == 200
 
 
@@ -47,6 +49,7 @@ def test_beta_regime_result_risk_off():
         ma_value=0.92,
         pct_from_ma=-0.0761,
         beta=0.75,
+        beta_percentile=92.3,
         close_price=25.50,
         benchmark_price=450.25,
         interval="1wk",
@@ -55,6 +58,7 @@ def test_beta_regime_result_risk_off():
 
     assert result.regime == "risk-off"
     assert result.pct_from_ma < 0
+    assert result.beta_percentile == 92.3
     assert result.interval == "1wk"
 
 
@@ -273,6 +277,7 @@ def test_save_results_to_csv_writes_file(tmp_path):
             ma_value=1.20,
             pct_from_ma=0.0417,
             beta=1.15,
+            beta_percentile=65.0,
             close_price=175.50,
             benchmark_price=450.25,
             interval="1d",
@@ -287,6 +292,7 @@ def test_save_results_to_csv_writes_file(tmp_path):
             ma_value=1.00,
             pct_from_ma=-0.05,
             beta=0.90,
+            beta_percentile=45.0,
             close_price=350.00,
             benchmark_price=450.25,
             interval="1d",
@@ -305,6 +311,7 @@ def test_save_results_to_csv_writes_file(tmp_path):
     assert "Ticker" in df.columns
     assert "Regime" in df.columns
     assert "Beta" in df.columns
+    assert "Beta_Percentile" in df.columns
     assert df.iloc[0]["Ticker"] == "AAPL"
     assert df.iloc[1]["Ticker"] == "MSFT"
 
@@ -321,6 +328,7 @@ def test_save_results_to_csv_all_fields_present(tmp_path):
             ma_value=1.05,
             pct_from_ma=0.0476,
             beta=1.25,
+            beta_percentile=82.5,
             close_price=50.00,
             benchmark_price=400.00,
             interval="1wk",
@@ -342,6 +350,7 @@ def test_save_results_to_csv_all_fields_present(tmp_path):
         "MA_Value",
         "Pct_From_MA",
         "Beta",
+        "Beta_Percentile",
         "Close_Price",
         "Benchmark_Price",
         "Interval",

@@ -31,6 +31,9 @@ class BetaRegimeResult:
         ma_value: Moving average of relative strength ratio.
         pct_from_ma: Percentage distance from moving average.
         beta: Rolling beta coefficient vs benchmark.
+        beta_percentile: Percentile rank (0-100) of current beta in history.
+            High percentile (90+) = beta historically elevated.
+            Low percentile (<25) = beta historically low.
         close_price: Current asset closing price.
         benchmark_price: Current benchmark closing price.
         interval: Candle interval used ("1d", "1wk", "1mo").
@@ -45,6 +48,7 @@ class BetaRegimeResult:
     ma_value: float
     pct_from_ma: float
     beta: float
+    beta_percentile: float
     close_price: float
     benchmark_price: float
     interval: str
@@ -288,6 +292,7 @@ def _process_ticker_beta(
             ma_value=float(analysis["rs_ma"]),
             pct_from_ma=float(analysis["pct_from_ma"]),
             beta=float(analysis["rolling_beta"]),
+            beta_percentile=float(analysis["beta_percentile"]),
             close_price=float(analysis["asset_price"]),
             benchmark_price=float(analysis["benchmark_price"]),
             interval=interval,
@@ -538,6 +543,7 @@ def save_results_to_csv(
                 "MA_Value": r.ma_value,
                 "Pct_From_MA": r.pct_from_ma,
                 "Beta": r.beta,
+                "Beta_Percentile": r.beta_percentile,
                 "Close_Price": r.close_price,
                 "Benchmark_Price": r.benchmark_price,
                 "Interval": r.interval,

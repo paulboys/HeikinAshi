@@ -4,11 +4,13 @@ Implements Mike McGlone's approach to regime detection:
 - Relative strength ratio (asset/benchmark) vs its moving average
 - Rolling beta calculation using covariance/variance
 - Regime signal: "risk-on" when ratio above MA, "risk-off" when below
+- Beta percentile: where current beta ranks in historical distribution
 
 Public API:
     compute_rolling_beta(asset_returns, benchmark_returns, window=60) -> pd.Series
     compute_relative_strength(asset_close, benchmark_close) -> pd.Series
     compute_regime_signal(ratio, ma_period=200) -> dict
+    compute_beta_percentile(beta_series) -> float
     analyze_beta_regime(asset_df, benchmark_df, ma_period=200, beta_window=60) -> dict
 """
 
@@ -20,6 +22,7 @@ __all__ = [
     "compute_rolling_beta",
     "compute_relative_strength",
     "compute_regime_signal",
+    "compute_beta_percentile",
     "analyze_beta_regime",
 ]
 
@@ -153,6 +156,51 @@ def compute_regime_signal(
     }
 
 
+def compute_beta_percentile(beta_series: pd.Series) -> float:
+    """Compute percentile rank of current beta within its historical distribution.
+
+    Calculates where the current (latest) beta value falls relative to all
+    historical beta values. A high percentile (e.g., 90+) indicates beta
+    is currently elevated compared to history. A low percentile (e.g., <25)
+    indicates beta is historically low.
+
+    This is useful for identifying:
+    - When a normally low-beta stock is behaving high-beta (elevated risk)
+    - When a high-beta stock's volatility has compressed (unusual calm)
+    - Mean-reversion opportunities when beta is at extremes
+
+    Args:
+        beta_series: Series of rolling beta values (from compute_rolling_beta).
+            Should have sufficient history for meaningful percentile.
+
+    Returns:
+        Percentile rank (0.0 to 100.0) of current beta within history.
+        Returns NaN if insufficient data or if current beta is NaN.
+
+    Example:
+        >>> beta = compute_rolling_beta(asset_returns, benchmark_returns)
+        >>> percentile = compute_beta_percentile(beta)
+        >>> if percentile > 90:
+        ...     print("Beta historically elevated - high risk environment")
+    """
+    # Remove NaN values for comparison
+    valid_betas = beta_series.dropna()
+
+    if len(valid_betas) < 2:
+        return float("nan")
+
+    current_beta = valid_betas.iloc[-1]
+    if pd.isna(current_beta):
+        return float("nan")
+
+    # Count how many historical values are less than or equal to current
+    # Using inclusive percentile (same as Heiken Ashi run_percentile)
+    count_below_or_equal = (valid_betas <= current_beta).sum()
+    percentile = (count_below_or_equal / len(valid_betas)) * 100
+
+    return float(percentile)
+
+
 def analyze_beta_regime(
     asset_df: pd.DataFrame,
     benchmark_df: pd.DataFrame,
@@ -161,7 +209,8 @@ def analyze_beta_regime(
 ) -> dict:
     """Complete beta regime analysis for an asset vs benchmark.
 
-    Combines relative strength ratio, regime signal, and rolling beta.
+    Combines relative strength ratio, regime signal, rolling beta, and
+    historical beta percentile ranking.
 
     Args:
         asset_df: DataFrame with 'Close' column for the asset.
@@ -176,6 +225,7 @@ def analyze_beta_regime(
             - 'regime': "risk-on" or "risk-off"
             - 'pct_from_ma': percentage distance from MA
             - 'rolling_beta': current rolling beta value
+            - 'beta_percentile': percentile rank (0-100) of current beta in history
             - 'asset_price': current asset price
             - 'benchmark_price': current benchmark price
             - 'rs_series': full RS ratio series
@@ -200,12 +250,16 @@ def analyze_beta_regime(
     beta_series = compute_rolling_beta(asset_returns, benchmark_returns, window=beta_window)
     current_beta = beta_series.iloc[-1] if len(beta_series) > 0 else float("nan")
 
+    # Compute beta percentile (where current beta ranks historically)
+    beta_pct = compute_beta_percentile(beta_series)
+
     return {
         "relative_strength": regime_result["ratio"],
         "rs_ma": regime_result["ma"],
         "regime": regime_result["regime"],
         "pct_from_ma": regime_result["pct_from_ma"],
         "rolling_beta": current_beta,
+        "beta_percentile": beta_pct,
         "asset_price": asset_close.iloc[-1] if len(asset_close) > 0 else float("nan"),
         "benchmark_price": benchmark_close.iloc[-1] if len(benchmark_close) > 0 else float("nan"),
         "rs_series": regime_result["ratio_series"],

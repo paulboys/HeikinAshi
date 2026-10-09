@@ -5,6 +5,7 @@ import pandas as pd
 
 from stockcharts.indicators.beta import (
     analyze_beta_regime,
+    compute_beta_percentile,
     compute_regime_signal,
     compute_relative_strength,
     compute_rolling_beta,
@@ -309,3 +310,119 @@ def test_analyze_beta_regime_custom_parameters():
 
     # Should produce valid result
     assert result["regime"] in ["risk-on", "risk-off", "insufficient-data"]
+
+
+# ============================================================================
+# compute_beta_percentile tests
+# ============================================================================
+
+
+def test_compute_beta_percentile_basic() -> None:
+    """Test basic beta percentile calculation."""
+    # Create a series where current value is in the middle
+    beta_series = pd.Series([0.5, 0.8, 1.0, 1.2, 1.5])
+    # Current (last) = 1.5, should be at 100th percentile
+    percentile = compute_beta_percentile(beta_series)
+    assert percentile == 100.0
+
+
+def test_compute_beta_percentile_lowest() -> None:
+    """Test when current beta is the lowest historically."""
+    beta_series = pd.Series([1.5, 1.2, 1.0, 0.8, 0.5])
+    # Current (last) = 0.5, should be at low percentile
+    percentile = compute_beta_percentile(beta_series)
+    # 1 value <= 0.5 out of 5 = 20%
+    assert percentile == 20.0
+
+
+def test_compute_beta_percentile_middle() -> None:
+    """Test when current beta is in the middle."""
+    beta_series = pd.Series([0.5, 0.8, 1.0, 1.2, 1.5, 1.0])
+    # Current (last) = 1.0, 4 values <= 1.0 out of 6 = 66.67%
+    percentile = compute_beta_percentile(beta_series)
+    assert 60.0 <= percentile <= 70.0
+
+
+def test_compute_beta_percentile_with_nans() -> None:
+    """Test that NaN values are handled correctly."""
+    beta_series = pd.Series([float("nan"), float("nan"), 0.5, 0.8, 1.0, 1.2])
+    # Only 4 valid values, current = 1.2 (highest)
+    percentile = compute_beta_percentile(beta_series)
+    assert percentile == 100.0
+
+
+def test_compute_beta_percentile_all_nan() -> None:
+    """Test handling when all values are NaN."""
+    beta_series = pd.Series([float("nan"), float("nan"), float("nan")])
+    percentile = compute_beta_percentile(beta_series)
+    assert np.isnan(percentile)
+
+
+def test_compute_beta_percentile_empty() -> None:
+    """Test handling of empty series."""
+    beta_series = pd.Series([], dtype=float)
+    percentile = compute_beta_percentile(beta_series)
+    assert np.isnan(percentile)
+
+
+def test_compute_beta_percentile_single_value() -> None:
+    """Test handling of single value series."""
+    beta_series = pd.Series([1.0])
+    # Single value is insufficient for meaningful percentile
+    percentile = compute_beta_percentile(beta_series)
+    assert np.isnan(percentile)
+
+
+def test_compute_beta_percentile_with_ties() -> None:
+    """Test percentile calculation with duplicate values."""
+    beta_series = pd.Series([1.0, 1.0, 1.0, 1.0, 1.0])
+    # All values are equal, all <= current
+    percentile = compute_beta_percentile(beta_series)
+    assert percentile == 100.0
+
+
+def test_compute_beta_percentile_realistic_range() -> None:
+    """Test with realistic beta values over long history."""
+    np.random.seed(42)
+    # Simulate 500 days of beta with mean 1.2, std 0.3
+    beta_series = pd.Series(np.random.normal(1.2, 0.3, 500))
+    # Set last value to 2.0 (unusually high)
+    beta_series.iloc[-1] = 2.0
+
+    percentile = compute_beta_percentile(beta_series)
+    # 2.0 should be very high percentile (>95%)
+    assert percentile > 95.0
+
+
+def test_analyze_beta_regime_includes_percentile() -> None:
+    """Test that analyze_beta_regime returns beta_percentile."""
+    np.random.seed(42)
+    dates = pd.date_range("2023-01-01", periods=100, freq="D")
+    asset_df = pd.DataFrame(
+        {
+            "Open": np.random.randn(100).cumsum() + 100,
+            "High": np.random.randn(100).cumsum() + 102,
+            "Low": np.random.randn(100).cumsum() + 98,
+            "Close": np.random.randn(100).cumsum() + 100,
+            "Volume": np.random.randint(1000000, 5000000, 100),
+        },
+        index=dates,
+    )
+    benchmark_df = pd.DataFrame(
+        {
+            "Open": np.random.randn(100).cumsum() + 400,
+            "High": np.random.randn(100).cumsum() + 402,
+            "Low": np.random.randn(100).cumsum() + 398,
+            "Close": np.random.randn(100).cumsum() + 400,
+            "Volume": np.random.randint(10000000, 50000000, 100),
+        },
+        index=dates,
+    )
+
+    result = analyze_beta_regime(asset_df, benchmark_df, ma_period=20, beta_window=10)
+
+    # Should have beta_percentile key
+    assert "beta_percentile" in result
+    # Should be a valid percentile (0-100) or NaN
+    if not np.isnan(result["beta_percentile"]):
+        assert 0.0 <= result["beta_percentile"] <= 100.0
