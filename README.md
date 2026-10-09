@@ -1,298 +1,219 @@
-# StockCharts
+# Macroscope
 
-[![CI](https://github.com/paulboys/HeikinAshi/actions/workflows/ci.yml/badge.svg)](https://github.com/paulboys/HeikinAshi/actions/workflows/ci.yml)
-[![Coverage](https://codecov.io/gh/paulboys/HeikinAshi/branch/main/graph/badge.svg)](https://codecov.io/gh/paulboys/HeikinAshi)
-[![Docs](https://img.shields.io/website?url=https%3A%2F%2Fpaulboys.github.io%2FHeikinAshi%2F&label=docs)](https://paulboys.github.io/HeikinAshi/)
+[![CI](https://github.com/paulboys/Macroscope/actions/workflows/ci.yml/badge.svg)](https://github.com/paulboys/Macroscope/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/paulboys/Macroscope/branch/main/graph/badge.svg)](https://codecov.io/gh/paulboys/Macroscope)
+[![Docs](https://img.shields.io/website?url=https%3A%2F%2Fpaulboys.github.io%2FMacroscope%2F&label=docs)](https://paulboys.github.io/Macroscope/)
 
 [![PyPI version](https://img.shields.io/pypi/v/stockcharts.svg)](https://pypi.org/project/stockcharts/)
 [![Python versions](https://img.shields.io/pypi/pyversions/stockcharts.svg)](https://pypi.org/project/stockcharts/)
 [![Downloads](https://static.pepy.tech/badge/stockcharts)](https://pepy.tech/project/stockcharts)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/paulboys/HeikinAshi/blob/main/LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/paulboys/Macroscope/blob/main/LICENSE)
 
-A Python library for screening NASDAQ stocks using Heiken Ashi candles and RSI divergence to detect trend reversals with volume and price filtering.
+Quantitative analysis of broad market data. Macroscope measures a whole
+cross-section rather than a single name: breadth statistics across every
+NASDAQ listing, Treasury yields and macro stress indicators, relative
+strength and beta against a benchmark, sector rotation, and statistical
+labelling of market regimes. Every measurement is a deterministic function of
+price or rates history, so a result can be recomputed from its inputs and
+audited.
+
+The published Python package is named `stockcharts`, which predates the
+project's broader scope; the import path is unchanged.
 
 ## Current Version
+
 The latest released version is **0.6.1**. You can verify in Python:
+
 ```python
 import stockcharts
 print(stockcharts.__version__)
 ```
-PyPI badge above always reflects the newest published version.
 
-## Features
+The PyPI badge above always reflects the newest published version.
 
-### 🧪 NASDAQ Screener
-- **Full NASDAQ Coverage**: Automatically fetches all 5,120+ NASDAQ tickers from official FTP source
-- **Heiken Ashi Analysis**: Detects red-to-green and green-to-red candle color changes
-- **Run Statistics**: Adds `run_length` (consecutive same-color candles) and `run_percentile` (historical maturity rank 0–100) with percentile filters for extended or early trend detection
-- **Volume Filtering**: Filter by average daily volume to focus on liquid, tradeable stocks
-- **Flexible Timeframes**: Support for intraday (1m-1h), daily, weekly, and monthly charts
-- **Custom Date Ranges**: Screen historical data with specific start/end dates
-- **CSV Export**: Save screening results for further analysis
+## What's here
 
-### � Beta Regime Analysis
-- **Relative Strength Detection**: Identify stocks outperforming or underperforming a benchmark (SPY, QQQ, etc.)
-- **Risk-On/Risk-Off Classification**: Filter stocks by market regime using relative strength vs. moving average
-- **Rolling Beta Calculation**: Measure stock volatility relative to benchmark
-- **Auto-Adjusting Parameters**: Weekly charts automatically adjust MA period (200d → 40w)
-- **Flexible Benchmarks**: Compare against any yfinance ticker
+### Cross-sectional screening
 
-### 📊 Chart Generation
-- **Heiken Ashi Charts**: Generate candlestick charts from screening results
-- **Price/RSI Divergence Charts**: Visualize price action with RSI indicator and marked divergences
-- **Beta Regime Charts**: Plot relative strength with regime zones
-- Support for multiple timeframes: 1m, 5m, 15m, 1h, 1d, 1wk, 1mo
-- High-quality PNG output for technical analysis
-- Automatic divergence detection and highlighting on charts
+- **Full NASDAQ coverage** — fetches all 5,120+ listings from the official FTP source
+- **Heiken Ashi state and run statistics** — colour transitions, plus `run_length` (consecutive same-colour bars) and `run_percentile` (where the current run sits in its own history, 0–100), so a run can be described as early or extended relative to the series rather than by eye
+- **RSI divergence detection** — price and RSI disagreeing across swing points, in either direction
+- **RSI percentile ranking** — current RSI against its own historical distribution instead of fixed 30/70 thresholds
+- **Liquidity and price filters** — restrict the cross-section to names whose series are less dominated by microstructure noise
+- **Insider transaction screening** — SEC Form 4 flows by ticker or across a universe
+- **Cross-asset correlation** — pairwise correlation of daily returns across a watchlist (script, see `scripts/`)
+- **CSV export** for every screen, so results feed downstream analysis
 
-### 🎯 Trading Styles Supported
-- **Day Trading**: 1m-1h periods, high volume (2M+ shares/day)
-- **Swing Trading**: Daily charts, moderate volume (500K-1M shares/day)
-- **Position Trading**: Weekly/monthly charts, lower volume acceptable
+### Macro and rates context
+
+- **Treasury yield curve** — nominal and real series, breakevens, term premium and expected short rate
+- **Macro stress watchlist** — a snapshot of indicators with thresholds, tracking which are becoming concerning
+- **Historical backfill** with a local cache, so series are reproducible offline
+
+### Regimes and relative strength
+
+- **Beta regime** — relative strength against any benchmark, classified risk-on or risk-off by its position against a moving average, with rolling beta and a beta percentile rank
+- **Sector regime** — a contrarian sector-rotation reading
+- **Regime labelling** — bull, bear and sideways segments fitted to a price series by greedy Gaussian segmentation, rather than assigned by a fixed rule. Labels are fitted retrospectively over the whole series, so the most recent segment is the least stable: adding bars can move or remove the final change point. Descriptive, not predictive
+- **Auto-adjusting windows** — weekly aggregation rescales the moving-average period (200d → 40w) so the lookback stays comparable
+
+### Charts and dashboards
+
+- Static Heiken Ashi, divergence and beta-regime charts (Matplotlib, PNG)
+- Interactive TradingView-style charts with drawing tools, volume profile and stochastic subplot (Plotly)
+- Two Dash applications: one for the screener, one for the macro and rates view
+- Aggregation from 1m to 1mo
+
+### Data layer
+
+- A local Parquet cache with incremental extension, freshness checks and a background warmer, so repeated analysis does not re-fetch
+- Point-in-time fetches, so a measurement can be reconstructed as of a past date
+
+### Research agent (experimental)
+
+`src/stock_agent/` is a research agent that routes between these analyses
+using a specialised decision model, with every number still computed in
+Python. It ships with a pre-registered benchmark: see
+[`src/stock_agent/eval/PREREGISTERED.md`](src/stock_agent/eval/PREREGISTERED.md)
+for the methodology and the `BENCHMARK_*.md` files for results. It is a
+study of routing quality, not a trading system.
 
 ## Installation
 
 ### From PyPI
+
 ```bash
 pip install stockcharts
 ```
 
-### From Source
-```powershell
-# Clone the repository
-git clone https://github.com/paulboys/HeikinAshi.git
-cd HeikinAshi
+### From source
 
-# Create conda environment
+```powershell
+git clone https://github.com/paulboys/Macroscope.git
+cd Macroscope
+
 conda create -n stockcharts python=3.12 -y
 conda activate stockcharts
 
-# Install in editable mode
 pip install -e .
 ```
 
-## Quick Start
+## Command-line tools
 
-After installation, you'll have six command-line tools available:
+| Command | Purpose |
+|---------|---------|
+| `stockcharts-screen` | Heiken Ashi state and run-percentile screening |
+| `stockcharts-plot` | Heiken Ashi charts from screen results |
+| `stockcharts-rsi-divergence` | RSI divergence screening |
+| `stockcharts-plot-divergence` | Price and RSI divergence charts |
+| `stockcharts-beta-regime` | Relative strength and beta regime screening |
+| `stockcharts-plot-beta` | Relative strength charts with regime zones |
+| `stockcharts-regime` | Label bull, bear and sideways regimes on a series |
+| `stockcharts-yields` | Treasury yields and the macro stress watchlist |
+| `stockcharts-yields-app` | Dash dashboard for rates and macro |
+| `stockcharts-app` | Dash dashboard for the screener |
+| `stockcharts-cache` | Manage the local OHLC Parquet cache |
+| `stock-agent` | The experimental research agent |
 
-### 1. `stockcharts-screen` - Heiken Ashi Color Screening
-### 2. `stockcharts-plot` - Heiken Ashi Chart Generation
-### 3. `stockcharts-rsi-divergence` - RSI Divergence Screening
-### 4. `stockcharts-plot-divergence` - Price/RSI Divergence Charts
-### 5. `stockcharts-beta-regime` - Beta Regime Screening
-### 6. `stockcharts-plot-beta` - Beta Regime Chart Generation
+Each command accepts `--help`, which is the authoritative list of its options.
 
 ## Usage
 
-### 1. Screen for Trend Reversals
+### Cross-sectional screening
 
-**Find green reversals (red→green) for swing trading:**
+**Names whose Heiken Ashi state changed on the latest bar:**
 ```powershell
 stockcharts-screen --color green --changed-only --min-volume 500000
 ```
-**Find extended (mature) runs (top decile 90%+):**
+
+**Extended runs — the top decile of each series' own run-length history:**
 ```powershell
 stockcharts-screen --min-run-percentile 90 --period 1d
 ```
 
-**Find short/early runs (bottom quartile ≤25%):**
+**Early runs — the bottom quartile:**
 ```powershell
 stockcharts-screen --max-run-percentile 25 --period 1d
 ```
 
-**Filter mid-maturity runs (40–70% percentile range):**
+**A mid-maturity band, for comparing against the tails:**
 ```powershell
 stockcharts-screen --min-run-percentile 40 --max-run-percentile 70 --period 1d
 ```
 
-**Day trading setup (1-hour charts with high volume):**
+**Hourly aggregation, restricted to the most liquid names:**
 ```powershell
 stockcharts-screen --color green --period 1h --lookback 1mo --min-volume 2000000 --changed-only
 ```
 
-**Weekly analysis over 6 months:**
+**Weekly aggregation over six months:**
 ```powershell
 stockcharts-screen --color green --period 1wk --lookback 6mo --changed-only
 ```
 
-**Screen specific date range:**
+**A fixed historical window, for reproducing a past measurement:**
 ```powershell
 stockcharts-screen --color red --start 2024-01-01 --end 2024-12-31
 ```
 
-### 2. Generate Charts from Results
+### RSI divergence
 
-**Plot all screened stocks:**
-```powershell
-stockcharts-plot
-```
-
-**Plot from specific CSV:**
-```powershell
-stockcharts-plot --input results/green_reversals.csv --output-dir my_charts/
-```
-
-### 3. Screen for RSI Divergences
-
-**Find bullish divergences (potential buy signals):**
 ```powershell
 stockcharts-rsi-divergence --type bullish --min-price 10
-```
-
-**Find bearish divergences (potential sell signals):**
-```powershell
 stockcharts-rsi-divergence --type bearish --min-price 10 --max-price 100
-```
-
-**Custom RSI parameters:**
-```powershell
 stockcharts-rsi-divergence --rsi-period 21 --period 6mo
 ```
 
-### 4. Generate Divergence Charts
+### Relative strength and regimes
 
-**Plot divergences from screener results:**
-```powershell
-stockcharts-plot-divergence
-```
-
-### 5. Screen for Beta Regime
-
-**Find stocks outperforming SPY (risk-on):**
+**Names outperforming SPY, classified risk-on:**
 ```powershell
 stockcharts-beta-regime --regime risk-on --min-volume 500000
 ```
 
-**Screen against QQQ benchmark with weekly charts:**
+**Against a different benchmark, on weekly bars:**
 ```powershell
 stockcharts-beta-regime --benchmark QQQ --interval 1wk
 ```
 
-**Filter by price range:**
+**Label bull, bear and sideways segments on one series:**
 ```powershell
-stockcharts-beta-regime --min-price 10 --max-price 100 --regime risk-on
+stockcharts-regime AAPL --lookback 5y
 ```
 
-### 6. Generate Beta Regime Charts
+### Rates and macro
 
-**Plot beta regime chart for a ticker:**
 ```powershell
-stockcharts-plot-beta AAPL
+stockcharts-yields
+stockcharts-yields-app
 ```
 
-**Compare against QQQ:**
+### Charts
+
 ```powershell
+stockcharts-plot
+stockcharts-plot --input results/green_changes.csv --output-dir my_charts/
+stockcharts-plot-divergence --max-plots 20 --rsi-period 21
 stockcharts-plot-beta AAPL --benchmark QQQ
 ```
 
-## Documentation
+### Choosing an aggregation period
 
-Comprehensive, consolidated documentation lives in the `docs/` directory:
+The period is a modelling choice, not a style. Shorter bars resolve faster
+structure at the cost of more noise and a shorter usable history; longer bars
+do the reverse.
 
-| Topic | File |
-|-------|------|
-| Project Overview & Architecture | `docs/overview.md` |
-| Heiken Ashi Screener Guide | `docs/screener.md` |
-| RSI Divergence Screener | `docs/rsi_divergence.md` |
-| Parameters & Configuration | `docs/parameters.md` |
-| Volume Filtering | `docs/volume.md` |
-| Trading Style Guidance | `docs/trading_styles.md` |
-| Quick Reference Commands | `docs/quick_reference.md` |
-| Roadmap & Next Steps | `docs/roadmap.md` |
-| Legacy Mapping | `docs/legacy.md` |
+| Period | Resolves | Costs |
+|--------|----------|-------|
+| `1m`–`1h` | Intraday structure | Noise dominates; history is limited and liquidity-sensitive |
+| `1d` | Multi-week structure | The default compromise |
+| `1wk`, `1mo` | Multi-month and multi-year structure | Few observations; slow to register change |
 
-All documentation is consolidated under `docs/`. Legacy root markdown files have been removed.
-
-See also: [CHANGELOG.md](CHANGELOG.md) for release history.
-
-## Hosted Documentation
-
-An interactive, searchable documentation site is published via MkDocs + GitHub Pages.
-
-### Local Preview
-```powershell
-pip install -r requirements-docs.txt
-mkdocs serve
-# Visit http://127.0.0.1:8000
-```
-
-### Manual Build
-```powershell
-mkdocs build --strict
-# Output generated in ./site/
-```
-
-### Deployment (CI Automated)
-Docs are automatically built and deployed when you push changes to `docs/`, `mkdocs.yml`, or `requirements-docs.txt` on `main`.
-
-Workflow file: `.github/workflows/docs.yml` using `peaceiris/actions-gh-pages`.
-
-To trigger manually:
-```powershell
-gh workflow run Deploy Documentation
-```
-
-### Site URL
-https://paulboys.github.io/HeikinAshi/
-
-If the page is not yet enabled, activate GitHub Pages in repository settings pointing to the `gh-pages` branch.
-
-**Custom analysis with longer lookback:**
-```powershell
-stockcharts-plot-divergence --input results/rsi_all.csv --lookback 6mo --output-dir charts/analysis/
-```
-
-**Limit number of charts and customize RSI:**
-```powershell
-stockcharts-plot-divergence --max-plots 20 --rsi-period 21
-```
-
-### Command-Line Options
-
-#### `stockcharts-screen` (Heiken Ashi Screening)
-- `--color`: Filter by `red` or `green` candles (default: green)
-- `--period`: Aggregation period: `1m`, `5m`, `15m`, `1h`, `1d`, `1wk`, `1mo` (default: 1d)
-- `--lookback`: Historical window: `1d`, `5d`, `1mo`, `3mo`, `6mo`, `1y`, `2y`, `max` (default: 3mo)
-- `--start`, `--end`: Custom date range in YYYY-MM-DD format
-- `--changed-only`: Only show stocks where color changed in latest candle
-- `--min-volume`: Minimum average daily volume (e.g., 500000)
-- `--min-price`: Minimum stock price (e.g., 5.0 or 10.0)
-- `--min-run-percentile`: Include only tickers with run_percentile ≥ value (0–100)
-- `--max-run-percentile`: Include only tickers with run_percentile ≤ value (0–100)
-- `--output`: CSV output path (default: results/nasdaq_screen.csv)
-- `--debug`: Show detailed error messages
-
-#### `stockcharts-plot` (Chart Generation)
-- `--input`: Input CSV file from screener
-- `--output-dir`: Directory for chart images (default: charts/)
-- `--period`: Chart timeframe (default: 1d)
-- `--lookback`: Historical data window (default: 3mo)
-
-#### `stockcharts-rsi-divergence` (RSI Divergence Screening)
-- `--type`: Divergence type: `bullish`, `bearish`, or `all` (default: all)
-- `--period`: Data lookback: `1mo`, `3mo`, `6mo`, `1y`, etc. (default: 3mo)
-- `--rsi-period`: RSI calculation period (default: 14)
-- `--min-price`: Minimum stock price filter
-- `--max-price`: Maximum stock price filter
-- `--swing-window`: Window for swing point detection (default: 5)
-- `--lookback`: Bars to analyze for divergence (default: 60)
-- `--output`: CSV output path (default: results/rsi_divergence.csv)
-
-#### `stockcharts-plot-divergence` (Divergence Chart Generation)
-- `--input`: Input CSV file from RSI divergence screener
-- `--output-dir`: Directory for chart images (default: charts/divergence/)
-- `--period`: Data aggregation period: `1d`, `1wk`, `1mo` (default: 1d)
-- `--lookback`: Historical data window (default: 3mo)
-- `--rsi-period`: RSI calculation period (default: 14)
-- `--swing-window`: Window for swing point detection (default: 5)
-- `--divergence-lookback`: Bars to look back for divergence (default: 60)
-- `--max-plots`: Maximum number of charts to generate (default: all)
-
-See [QUICK_REFERENCE.md](QUICK_REFERENCE.md) for parameter details.
+Indicator windows should be rescaled with the period rather than carried
+across unchanged — `stockcharts-beta-regime` does this automatically for
+weekly bars.
 
 ## Library API
-
-You can also use StockCharts programmatically in your Python code:
 
 ```python
 from stockcharts.screener.screener import screen_nasdaq
@@ -303,66 +224,109 @@ from stockcharts.charts.heiken_ashi import heiken_ashi
 from stockcharts.indicators.rsi import compute_rsi
 from stockcharts.indicators.divergence import detect_divergence
 
-# Screen for green reversals with volume filter
+# Cross-section of fresh Heiken Ashi colour changes, liquidity-filtered
 results = screen_nasdaq(
-    color='green',
-    period='1d',
-    lookback='3mo',
+    color="green",
+    period="1d",
+    lookback="3mo",
     changed_only=True,
-    min_volume=500000
+    min_volume=500000,
 )
 
-# Inspect run statistics for each result
+# Run statistics put each result in the context of its own history
 for r in results:
     print(r.ticker, r.run_length, r.run_percentile)
 
-# Screen for RSI bullish divergences
 rsi_results = screen_rsi_divergence(
-    divergence_type='bullish',
+    divergence_type="bullish",
     min_price=10.0,
-    period='6mo'
+    period="6mo",
 )
 
-# Get all NASDAQ tickers
 tickers = get_nasdaq_tickers()
-print(f"Found {len(tickers)} NASDAQ tickers")
+print(f"{len(tickers)} NASDAQ listings")
 
-# Fetch data and compute Heiken Ashi
-data = fetch_ohlc('AAPL', period='1d', lookback='3mo')
+data = fetch_ohlc("AAPL", period="1d", lookback="3mo")
 ha_data = heiken_ashi(data)
 
-# Calculate RSI and detect divergences
-data['RSI'] = compute_rsi(data['Close'], period=14)
+data["RSI"] = compute_rsi(data["Close"], period=14)
 divergence = detect_divergence(data)
 ```
 
-## Project Structure
+The macro and regime modules follow the same shape:
+
+```python
+from stockcharts.macro.snapshot import build_snapshot, evaluate_watchlist
+from stockcharts.indicators.segmentation import detect_regimes
+from stockcharts.indicators.beta import analyze_beta_regime, compute_rolling_beta
+```
+
+## Documentation
+
+Documentation lives in `docs/` and is published as a searchable site.
+
+| Topic | File |
+|-------|------|
+| Project overview and architecture | [`docs/overview.md`](docs/overview.md) |
+| Heiken Ashi screener | [`docs/screener.md`](docs/screener.md) |
+| RSI divergence screener | [`docs/rsi_divergence.md`](docs/rsi_divergence.md) |
+| Beta regime | [`docs/beta_regime.md`](docs/beta_regime.md) |
+| Treasury yields and macro | [`docs/treasury_yields.md`](docs/treasury_yields.md) |
+| Parameters and configuration | [`docs/parameters.md`](docs/parameters.md) |
+| Liquidity filtering | [`docs/volume.md`](docs/volume.md) |
+| Quick reference | [`docs/quick_reference.md`](docs/quick_reference.md) |
+| API reference | [`docs/api/index.md`](docs/api/index.md) |
+| Roadmap | [`docs/roadmap.md`](docs/roadmap.md) |
+| Contributing | [`docs/contributing.md`](docs/contributing.md) |
+
+See [CHANGELOG.md](CHANGELOG.md) for release history.
+
+### Hosted documentation
+
+Published via MkDocs and GitHub Pages: https://paulboys.github.io/Macroscope/
+
+```powershell
+pip install -r requirements-docs.txt
+mkdocs serve          # http://127.0.0.1:8000
+mkdocs build --strict # output in ./site/
+```
+
+Docs are rebuilt and deployed automatically when `docs/`, `mkdocs.yml` or
+`requirements-docs.txt` change on `main`
+(`.github/workflows/docs.yml`).
+
+## Project structure
 
 ```
-StockCharts/
-├── src/stockcharts/          # Main package
+Macroscope/
+├── src/stockcharts/          # Analysis library
 │   ├── cli.py                # Command-line entry points
-│   ├── charts/               # Heiken Ashi computation
-│   ├── data/                 # Data fetching (yfinance)
-│   ├── indicators/           # Technical indicators (RSI, divergence)
-│   └── screener/             # NASDAQ screening logic
-├── scripts/                  # Legacy CLI scripts
-├── tests/                    # Unit tests
-├── requirements.txt          # Dependencies
+│   ├── app.py                # Dash screener dashboard
+│   ├── macro_app.py          # Dash rates and macro dashboard
+│   ├── charts/               # Heiken Ashi, interactive, yields, spans
+│   ├── data/                 # Fetching, Parquet cache, background warmer
+│   ├── indicators/           # RSI, divergence, pivots, beta, segmentation
+│   ├── macro/                # Rates series, snapshot, thresholds, backfill
+│   └── screener/             # Cross-sectional screens
+├── src/stock_agent/          # Experimental research agent and its benchmark
+├── scripts/                  # Analysis and plotting scripts
+├── tests/                    # Unit and integration tests
 └── pyproject.toml            # Package configuration
 ```
 
 ## Requirements
 
-- Python 3.9+
-- yfinance >= 0.2.38
-- pandas >= 2.0.0
-- matplotlib >= 3.7.0
-- numpy >= 1.24.0
+- Python 3.11+
+- yfinance >= 0.2.38, pandas >= 2.0.0, numpy >= 1.24.0
+- matplotlib >= 3.7.0, plotly >= 5.18.0, dash >= 2.14.0
+- pyarrow >= 14.0.0, diskcache >= 5.6.0 (caching)
+- psutil >= 5.9.0, multiprocess >= 0.70.0 (parallel screening)
+- aeon >= 1.6.0, < 2.0 (regime segmentation)
 
-## Output Examples
+## Output examples
 
-### Screener CSV Output
+### Screen results
+
 ```csv
 ticker,color,ha_open,ha_close,last_date,period,color_changed,avg_volume,run_length,run_percentile
 AAPL,green,225.34,227.89,2024-01-15,1d,True,58_234_567,4,78.6
@@ -370,67 +334,67 @@ MSFT,green,402.15,405.67,2024-01-15,1d,True,25_678_901,6,92.3
 NVDA,green,520.88,528.45,2024-01-15,1d,True,45_123_890,2,24.1
 ```
 
-### Chart Output
-Charts include:
-- Green candles for bullish moves (HA_Close >= HA_Open)
-- Red candles for bearish moves (HA_Close < HA_Open)
-- Full wicks showing HA_High and HA_Low
-- Date labels on x-axis
-- Automatic scaling based on price range
+### Charts
 
-## Documentation
-
-- **[LIBRARY_GUIDE.md](LIBRARY_GUIDE.md)**: Comprehensive usage guide with examples
-- **[RSI_DIVERGENCE_GUIDE.md](RSI_DIVERGENCE_GUIDE.md)**: RSI divergence screening guide
-- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)**: Parameter quick reference
-- **[VOLUME_FILTERING_GUIDE.md](VOLUME_FILTERING_GUIDE.md)**: Volume filtering strategies
-- **[TRADING_STYLE_GUIDE.md](TRADING_STYLE_GUIDE.md)**: Recommendations by trading style
-- **[DISTRIBUTION.md](DISTRIBUTION.md)**: Build and distribution guide (for maintainers)
+- Green bars where `HA_Close >= HA_Open`, red where below
+- Full wicks from `HA_High` and `HA_Low`
+- Detected divergences marked on both price and RSI panels
+- Regime zones shaded behind the series
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome.
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+2. Create a feature branch (`git checkout -b feature/your-change`)
+3. Commit your changes
+4. Push the branch
+5. Open a pull request
+
+CI runs `ruff`, `mypy`, `pydocstyle`, the test suite with coverage, and a
+strict docs build. See [`docs/contributing.md`](docs/contributing.md).
 
 ## Roadmap
 
 - [x] Publish to PyPI
-- [x] Add unit tests and CI/CD
-- [x] RSI divergence detection (bullish/bearish price vs RSI divergences)
-- [ ] Additional technical indicators (MACD, Bollinger Bands, Stochastic)
-- [ ] Multi-ticker comparison charts
-- [ ] Backtesting framework
-- [ ] Real-time data integration (requires API like Alpaca/Polygon - yfinance is EOD only)
-- [ ] Alert/notification system
+- [x] Unit tests and CI
+- [x] RSI divergence detection
+- [x] Treasury yields and macro stress watchlist
+- [x] Regime segmentation and beta percentile ranking
+- [x] Local Parquet cache with incremental extension
+- [ ] Additional indicators (MACD, Bollinger Bands)
+- [ ] Multi-series comparison charts
+- [ ] Wider macro series coverage
+- [ ] Intraday data source (yfinance is end-of-day for most history)
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+MIT — see [LICENSE](LICENSE).
 
 ## Disclaimer
 
-This project is provided for educational and informational purposes only and does not constitute financial, investment, trading, legal, tax, or other professional advice. Outputs (including screens, indicators, charts, divergences) may contain errors, omissions, delays, or false signals. Trading and investing involve risk of loss, including principal. Past performance or detected patterns do not guarantee future results. Validate all insights independently before acting.
+This project is provided for educational and informational purposes only and
+does not constitute financial, investment, legal, tax or other professional
+advice. Outputs — screens, indicators, charts, divergences, regime labels and
+macro readings — may contain errors, omissions, delays or false signals.
+Investing involves risk of loss, including principal. Past performance and
+detected patterns do not guarantee future results. Validate all findings
+independently before acting on them.
 
-By using this software you accept full responsibility for any decisions and agree to indemnify the author against claims arising from its use. For personalized advice consult a licensed financial professional. See `DISCLAIMER.md` for full details.
+By using this software you accept full responsibility for any decisions and
+agree to indemnify the author against claims arising from its use. For
+personalised advice, consult a licensed financial professional. See
+[`DISCLAIMER.md`](DISCLAIMER.md) for full details.
 
 ## Acknowledgments
 
-- **yfinance**: Yahoo Finance data API
-- **pandas**: Data manipulation and analysis
-- **matplotlib**: Chart generation
-- **NASDAQ**: Official ticker data via FTP
+- **yfinance** — Yahoo Finance data access
+- **pandas**, **numpy** — data manipulation and numerics
+- **matplotlib**, **plotly**, **dash** — charting and dashboards
+- **aeon** — time-series segmentation
+- **NASDAQ** — official listing data via FTP
 
 ## Support
 
-If you encounter any issues or have questions:
-- Open an issue: https://github.com/paulboys/HeikinAshi/issues
-- Check the documentation in this repository
-
----
-
-**Happy Trading! 📈**
+- Open an issue: https://github.com/paulboys/Macroscope/issues
+- Browse the documentation: https://paulboys.github.io/Macroscope/

@@ -6,9 +6,15 @@ import sys
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
+import pandas as pd
 from matplotlib.patches import Rectangle
 
 from stockcharts.charts.heiken_ashi import heiken_ashi
+from stockcharts.charts.interactive import (
+    build_interactive_figure,
+    get_interactive_config,
+    get_post_script,
+)
 from stockcharts.data.fetch import fetch_ohlc
 from stockcharts.screener.beta_regime import (
     save_results_to_csv as save_beta_results_to_csv,
@@ -51,7 +57,7 @@ Examples:
   # Screen for green reversals (red→green) on daily charts
   stockcharts-screen --color green --changed-only
 
-  # Find red reversals with volume filter (swing trading)
+  # Red colour changes, restricted to liquid names
   stockcharts-screen --color red --changed-only --min-volume 500000
 
   # Find extreme runs (95th percentile or higher - rare long streaks)
@@ -63,7 +69,7 @@ Examples:
   # Find short/weak runs (bottom 25%)
   stockcharts-screen --max-run-percentile 25
 
-  # Day trading setup: 1-hour charts with high volume
+  # Hourly aggregation, most liquid names only
   stockcharts-screen --color green --period 1h --lookback 1mo --min-volume 2000000
 
   # Weekly analysis over 6 months
@@ -110,7 +116,7 @@ Examples:
         "--min-volume",
         type=int,
         default=0,
-        help="Minimum average daily volume (e.g., 500000 for swing trading)",
+        help="Minimum average daily volume, to keep the cross-section liquid",
     )
 
     parser.add_argument(
@@ -319,6 +325,12 @@ Examples:
     parser.add_argument("--lookback", default="3mo", help="Historical data lookback (default: 3mo)")
 
     parser.add_argument(
+        "--interactive",
+        action="store_true",
+        help="Generate interactive HTML charts with hover info (date, O/H/L/C) instead of static PNGs",
+    )
+
+    parser.add_argument(
         "--no-disclaimer",
         action="store_true",
         help="Suppress one-line non-advice disclaimer banner",
@@ -359,7 +371,8 @@ Examples:
 
     tickers = df[ticker_col].tolist()
 
-    print(f"Generating Heiken Ashi charts for {len(tickers)} stocks...")
+    chart_type = "interactive HTML" if args.interactive else "Heiken Ashi"
+    print(f"Generating {chart_type} charts for {len(tickers)} stocks...")
     print(f"Output directory: {args.output_dir}")
     print()
 
@@ -369,69 +382,77 @@ Examples:
         try:
             data = fetch_ohlc(ticker, interval=args.period, lookback=args.lookback)
             if data is None or data.empty:
-                print("❌ No data")
+                print("[ERROR] No data")
                 continue
 
             ha_data = heiken_ashi(data)
 
-            # Create chart
-            fig, ax = plt.subplots(figsize=(14, 7))
+            if args.interactive:
+                fig = build_interactive_figure(ticker, ha_data, data, args.period)
+                post_script = get_post_script(ticker, args.period)
+                config = get_interactive_config()
 
-            # Convert index to datetime explicitly for matplotlib
-            dates = mdates.date2num(pd.to_datetime(ha_data.index).to_pydatetime())
+                output_path = os.path.join(args.output_dir, f"{ticker}_{args.period}.html")
+                fig.write_html(output_path, config=config, post_script=post_script)
+            else:
+                # Create static matplotlib chart
+                fig, ax = plt.subplots(figsize=(14, 7))
 
-            for idx in range(len(ha_data)):
-                date = dates[idx]
-                row = ha_data.iloc[idx]
-                color = "green" if row["HA_Close"] >= row["HA_Open"] else "red"
+                # Convert index to datetime explicitly for matplotlib
+                dates = mdates.date2num(pd.to_datetime(ha_data.index).to_pydatetime())
 
-                # Candle body
-                body_height = abs(row["HA_Close"] - row["HA_Open"])
-                body_bottom = min(row["HA_Open"], row["HA_Close"])
-                rect = Rectangle(
-                    (date - 0.4, body_bottom),
-                    0.8,
-                    body_height,
-                    facecolor=color,
-                    edgecolor="black",
-                    linewidth=0.5,
-                )
-                ax.add_patch(rect)
+                for idx in range(len(ha_data)):
+                    date = dates[idx]
+                    row = ha_data.iloc[idx]
+                    color = "green" if row["HA_Close"] >= row["HA_Open"] else "red"
 
-                # Wicks
-                ax.plot(
-                    [date, date],
-                    [row["HA_Low"], body_bottom],
-                    color="black",
-                    linewidth=0.5,
-                )
-                ax.plot(
-                    [date, date],
-                    [body_bottom + body_height, row["HA_High"]],
-                    color="black",
-                    linewidth=0.5,
-                )
+                    # Candle body
+                    body_height = abs(row["HA_Close"] - row["HA_Open"])
+                    body_bottom = min(row["HA_Open"], row["HA_Close"])
+                    rect = Rectangle(
+                        (date - 0.4, body_bottom),
+                        0.8,
+                        body_height,
+                        facecolor=color,
+                        edgecolor="black",
+                        linewidth=0.5,
+                    )
+                    ax.add_patch(rect)
 
-            # Format x-axis with dates
-            ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
-            ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-            plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha="right")
+                    # Wicks
+                    ax.plot(
+                        [date, date],
+                        [row["HA_Low"], body_bottom],
+                        color="black",
+                        linewidth=0.5,
+                    )
+                    ax.plot(
+                        [date, date],
+                        [body_bottom + body_height, row["HA_High"]],
+                        color="black",
+                        linewidth=0.5,
+                    )
 
-            ax.set_xlim(dates[0] - 1, dates[-1] + 1)
-            ax.set_ylim(ha_data["HA_Low"].min() * 0.95, ha_data["HA_High"].max() * 1.05)
-            ax.set_xlabel("Date")
-            ax.set_ylabel("Price ($)")
-            ax.set_title(f"{ticker} - Heiken Ashi ({args.period})")
-            ax.grid(True, alpha=0.3)
+                # Format x-axis with dates
+                ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
+                ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+                plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha="right")
 
-            output_path = os.path.join(args.output_dir, f"{ticker}_{args.period}.png")
-            plt.savefig(output_path, dpi=150, bbox_inches="tight")
-            plt.close()
+                ax.set_xlim(dates[0] - 1, dates[-1] + 1)
+                ax.set_ylim(ha_data["HA_Low"].min() * 0.95, ha_data["HA_High"].max() * 1.05)
+                ax.set_xlabel("Date")
+                ax.set_ylabel("Price ($)")
+                ax.set_title(f"{ticker} - Heiken Ashi ({args.period})")
+                ax.grid(True, alpha=0.3)
 
-            print(f"✓ Saved to {output_path}")
+                output_path = os.path.join(args.output_dir, f"{ticker}_{args.period}.png")
+                plt.savefig(output_path, dpi=150, bbox_inches="tight")
+                plt.close()
+
+            print(f"[OK] Saved to {output_path}")
 
         except Exception as e:
-            print(f"❌ Error: {e}")
+            print(f"[ERROR] {e}")
 
     print(f"\nCompleted! Charts saved to {args.output_dir}")
     return 0
@@ -460,10 +481,10 @@ Examples:
   # Filter by price range
   stockcharts-rsi-divergence --min-price 10 --max-price 100
 
-  # Filter by price and volume (swing trading)
+  # Filter by price and liquidity
   stockcharts-rsi-divergence --min-price 10 --min-volume 500000
 
-  # Day trading setup with high volume
+  # Hourly-scale work: restrict to the most liquid names
   stockcharts-rsi-divergence --type bullish --min-volume 2000000
 
   # Use custom RSI period
@@ -1027,11 +1048,11 @@ Examples:
             fig.savefig(output_path, dpi=150, bbox_inches="tight")
             plt.close(fig)
 
-            print(f"✓ Saved to {output_path}")
+            print(f"[OK] Saved to {output_path}")
             success_count += 1
 
         except Exception as e:
-            print(f"❌ Error: {e}")
+            print(f"[ERROR] {e}")
 
     print(f"\nCompleted! {success_count}/{len(tickers)} charts saved to {args.output_dir}")
     return 0
@@ -1498,13 +1519,577 @@ Examples:
 
             regime = result["regime"]
             regime_display = "Risk-On" if regime == "risk-on" else "Risk-Off"
-            print(f"✓ Saved ({regime_display})")
+            print(f"[OK] Saved ({regime_display})")
             success_count += 1
 
         except Exception as e:
-            print(f"❌ Error: {e}")
+            print(f"[ERROR] {e}")
 
     print(f"\nCompleted! {success_count}/{len(tickers)} charts saved to {args.output_dir}")
+    return 0
+
+
+def main_cache() -> int:
+    """Manage the local OHLC Parquet cache.
+
+    Returns:
+        int: 0 on success.
+    """
+    parser = argparse.ArgumentParser(
+        description="Manage StockCharts OHLC data cache",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  stockcharts-cache                # show cache statistics
+  stockcharts-cache stats          # same as above
+  stockcharts-cache clear          # delete all cached data
+  stockcharts-cache clear --ticker AAPL        # clear one ticker
+  stockcharts-cache clear --interval 1wk       # clear weekly caches only
+        """,
+    )
+    sub = parser.add_subparsers(dest="command")
+    sub.add_parser("stats", help="Show cache statistics")
+    clear_p = sub.add_parser("clear", help="Clear cached data")
+    clear_p.add_argument("--ticker", default=None, help="Clear only this ticker")
+    clear_p.add_argument("--interval", default=None, help="Clear only this interval (1d, 1wk)")
+    args = parser.parse_args()
+
+    from stockcharts.data.cache import cache_stats, clear_cache
+
+    if args.command == "clear":
+        deleted = clear_cache(ticker=args.ticker, interval=args.interval)
+        print(f"Deleted {deleted} cache file(s).")
+    else:
+        stats = cache_stats()
+        print(f"Tickers : {stats['tickers']}")
+        print(f"Files   : {stats['files']}")
+        print(f"Size    : {stats['size_mb']} MB")
+
+    return 0
+
+
+def main_yields() -> int:
+    """Track Treasury yields and the macro stress watchlist.
+
+    Fetches the Treasury par-yield curve, FRED macro series, auction results
+    and New York Fed repo data, then evaluates each watchlist row against its
+    configured thresholds.
+
+    Returns:
+        Process exit code.
+    """
+    parser = argparse.ArgumentParser(
+        description="Track Treasury yields and macro stress indicators",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Print the watchlist
+  stockcharts-yields
+
+  # Include the scenario checklists and key dates
+  stockcharts-yields --scenario all
+
+  # Update a hand-entered value
+  stockcharts-yields --set hyperscaler_coverage=1.35 --set-date 2026-09-20
+
+  # Export the watchlist and skip the slower equity fetch
+  stockcharts-yields --output watchlist.csv --no-equities
+
+  # Machine-readable output
+  stockcharts-yields --json
+
+  # Download 10 years once into the local cache, then run fast forever
+  stockcharts-yields --backfill 10
+        """,
+    )
+
+    parser.add_argument(
+        "--lookback-days", type=int, default=730, help="History to request (default: 730)"
+    )
+    parser.add_argument(
+        "--set",
+        action="append",
+        default=[],
+        metavar="KEY=VALUE",
+        dest="set_values",
+        help="Set a hand-entered value; repeatable",
+    )
+    parser.add_argument("--set-date", help="As-of date for --set values (YYYY-MM-DD)")
+    parser.add_argument("--set-note", default="", help="Provenance note for --set values")
+    parser.add_argument(
+        "--scenario",
+        choices=["A", "B", "C", "D", "all", "none"],
+        default="none",
+        help="Also print scenario checklists (default: none)",
+    )
+    parser.add_argument(
+        "--no-equities",
+        action="store_true",
+        help="Skip the yfinance fetch, which drops the Brent and ERP rows",
+    )
+    parser.add_argument(
+        "--backfill",
+        type=int,
+        metavar="YEARS",
+        help="Download this many years of history into the local cache and exit. "
+        "Slow once; afterwards the dashboard reads from disk.",
+    )
+    parser.add_argument("--output", help="Write the watchlist to a CSV file")
+    parser.add_argument("--json", action="store_true", dest="as_json", help="Emit JSON")
+    parser.add_argument("--no-disclaimer", action="store_true", help="Suppress the disclaimer line")
+    parser.add_argument("--version", action="store_true", help="Print package version and exit")
+
+    args = parser.parse_args()
+
+    if args.version:
+        from stockcharts import __version__
+
+        print(f"stockcharts {__version__}")
+        return 0
+
+    _print_disclaimer_once(args)
+
+    import json as _json
+    from datetime import date as _date
+
+    from stockcharts.macro.config import DISCLAIMER, KEY_DATES, SCENARIOS
+    from stockcharts.macro.manual import set_manual_value
+    from stockcharts.macro.snapshot import (
+        auto_scenario_signs,
+        build_snapshot,
+        evaluate_watchlist,
+    )
+
+    as_of = None
+    if args.set_date:
+        try:
+            as_of = _date.fromisoformat(args.set_date)
+        except ValueError:
+            print(f"[ERROR] Invalid --set-date: {args.set_date!r}", file=sys.stderr)
+            return 2
+
+    for assignment in args.set_values:
+        if "=" not in assignment:
+            print(f"[ERROR] --set expects KEY=VALUE, got {assignment!r}", file=sys.stderr)
+            return 2
+        key, _, raw = assignment.partition("=")
+        try:
+            set_manual_value(key.strip(), float(raw), as_of=as_of, note=args.set_note)
+        except (KeyError, ValueError) as error:
+            print(f"[ERROR] {error}", file=sys.stderr)
+            return 2
+        print(f"[OK] {key.strip()} = {raw}")
+
+    if args.backfill:
+        from stockcharts.macro.backfill import backfill_history
+
+        return backfill_history(years=args.backfill)
+
+    snapshot = build_snapshot(
+        lookback_days=args.lookback_days, include_equities=not args.no_equities
+    )
+    rows = evaluate_watchlist(snapshot)
+
+    if args.as_json:
+        print(
+            _json.dumps(
+                {
+                    "fetched_at": snapshot.fetched_at,
+                    "expected_short_rate": snapshot.expected_short_rate(),
+                    "spread_2s10s_bp": snapshot.curve_spread_bp(2.0, 10.0),
+                    "rows": [
+                        {
+                            "key": r.key,
+                            "label": r.label,
+                            "now": r.now,
+                            "status": r.status,
+                            "reason": r.reason,
+                            "as_of": r.as_of.isoformat() if r.as_of else None,
+                            "source": r.source,
+                        }
+                        for r in rows
+                    ],
+                    "auto_signs": auto_scenario_signs(snapshot),
+                    "errors": snapshot.errors,
+                },
+                indent=2,
+            )
+        )
+        return 0
+
+    marks = {"ok": "[ ok   ]", "watch": "[ WATCH]", "alert": "[ ALERT]", "unknown": "[  --  ]"}
+    ten_year = snapshot.tenor(10.0)
+    expected = snapshot.expected_short_rate()
+    premium = snapshot.latest("term_premium_10y")
+
+    print()
+    print("=" * 104)
+    print(f"TREASURY YIELD WATCHLIST    fetched {snapshot.fetched_at}")
+    print("=" * 104)
+    if ten_year is not None:
+        line = f"10y {ten_year:.2f}%"
+        if expected is not None and premium is not None:
+            line += f"  =  expected short rate {expected:.2f}%  +  term premium {premium:.2f}%"
+        print(line)
+    spread = snapshot.curve_spread_bp(2.0, 10.0)
+    if spread is not None:
+        print(f"2s10s {spread:+.0f}bp")
+    print("-" * 104)
+    print(f"{'INDICATOR':<28} {'NOW':<20} {'STATUS':<9} {'AS OF':<11} REASON")
+    print("-" * 104)
+    for row in rows:
+        as_of_text = row.as_of.isoformat() if row.as_of else "--"
+        print(f"{row.label:<28} {row.now:<20} {marks[row.status]:<9} {as_of_text:<11} {row.reason}")
+    print("-" * 104)
+
+    counts = {level: sum(1 for r in rows if r.status == level) for level in marks}
+    print(
+        f"{counts['alert']} alert, {counts['watch']} watch, "
+        f"{counts['ok']} ok, {counts['unknown']} no data"
+    )
+
+    if args.scenario != "none":
+        auto = auto_scenario_signs(snapshot)
+        wanted = [s for s in SCENARIOS if args.scenario in ("all", s.key)]
+        for scenario in wanted:
+            met = sum(
+                1
+                for sign in scenario.signs
+                if auto.get(sign.key, snapshot.manual.is_ticked(scenario.key, sign.key))
+            )
+            print()
+            print(f"SCENARIO {scenario.key}: {scenario.name}  ({scenario.likelihood})")
+            print(f"  {scenario.description}")
+            print(f"  signs met: {met}/{len(scenario.signs)}")
+            for sign in scenario.signs:
+                if sign.key in auto:
+                    state = "[x]" if auto[sign.key] else "[ ]"
+                    label = f"{sign.label} (auto)"
+                else:
+                    ticked = snapshot.manual.is_ticked(scenario.key, sign.key)
+                    state = "[x]" if ticked else "[ ]"
+                    label = sign.label
+                print(f"    {state} {label}")
+
+        print()
+        print("KEY DATES")
+        today = _date.today()
+        for entry in KEY_DATES:
+            delta = (entry.day - today).days
+            when = f"in {delta}d" if delta >= 0 else f"{-delta}d ago"
+            print(f"    {entry.day.isoformat()}  {when:<9} {entry.label}")
+
+    if snapshot.errors:
+        print()
+        print("DATA ISSUES")
+        for issue in snapshot.errors:
+            print(f"    [WARN] {issue}")
+
+    if args.output:
+        frame = pd.DataFrame(
+            [
+                {
+                    "indicator": r.label,
+                    "now": r.now,
+                    "concerning": r.concerning,
+                    "status": r.status,
+                    "reason": r.reason,
+                    "as_of": r.as_of.isoformat() if r.as_of else "",
+                    "source": r.source,
+                }
+                for r in rows
+            ]
+        )
+        frame.to_csv(args.output, index=False)
+        print(f"[OK] Wrote {args.output}")
+
+    print()
+    print(DISCLAIMER)
+    return 0
+
+
+_LOOKBACK_DAYS: dict[str, int] = {
+    "5d": 5,
+    "1mo": 31,
+    "3mo": 92,
+    "6mo": 183,
+    "1y": 366,
+    "2y": 731,
+    "5y": 1827,
+    "10y": 3653,
+    "20y": 7305,
+    "ytd": 366,
+    "max": 0,
+}
+
+_MIN_SEGMENT_BY_INTERVAL: dict[str, int] = {"1d": 21, "1wk": 8, "1mo": 3}
+
+
+def _trim_to_lookback(df: "pd.DataFrame", lookback: str) -> "pd.DataFrame":
+    """Trim a frame to the requested lookback window.
+
+    The OHLC cache is keyed on ticker and interval only, so a warm cache makes
+    ``fetch_ohlc`` return its full stored history regardless of ``lookback``.
+    Trimming here keeps the requested window honest either way.
+
+    Args:
+        df: Fetched OHLC frame indexed by date.
+        lookback: Lookback token such as ``"5y"``.
+
+    Returns:
+        The trimmed frame.
+    """
+    import pandas as pd
+
+    days = _LOOKBACK_DAYS.get(lookback, 0)
+    if days <= 0 or df.empty:
+        return df
+    cutoff = pd.Timestamp(df.index[-1]) - pd.Timedelta(days=days)
+    return df[df.index >= cutoff]
+
+
+def main_regime() -> int:
+    """Label bull, bear and sideways regimes on a price chart.
+
+    Segments a price series with aeon, classifies each segment by its
+    annualised log-price slope, shades the regimes on a chart and prints the
+    pivot table.
+
+    Returns:
+        Process exit code.
+    """
+    parser = argparse.ArgumentParser(
+        description="Label bull/bear/sideways regimes on a price chart",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Five years of daily bars, auto regime count
+  stockcharts-regime AAPL --lookback 5y
+
+  # Coarser: no regime shorter than three months
+  stockcharts-regime SPY --lookback 10y --min-segment 63
+
+  # Allow a wider sideways dead band
+  stockcharts-regime QQQ --lookback 5y --sideways-band 0.20
+
+  # Weekly bars, export the segment table
+  stockcharts-regime TLRY --lookback 5y --interval 1wk --output regimes.csv
+
+NOTE: labels are fitted retrospectively on the whole series. The most recent
+regime is the least stable and can move or disappear as new bars arrive.
+        """,
+    )
+
+    parser.add_argument("ticker", help="Ticker symbol to segment")
+    parser.add_argument("--lookback", default="5y", help="History to analyse (default: 5y)")
+    parser.add_argument(
+        "--interval",
+        default="1d",
+        choices=["1d", "1wk", "1mo"],
+        help="Bar aggregation (default: 1d)",
+    )
+    parser.add_argument(
+        "--method",
+        default="ggs",
+        choices=["ggs"],
+        help="Segmentation algorithm (only 'ggs' is supported)",
+    )
+    parser.add_argument("--k-max", type=int, default=None, help="Max change points (default: auto)")
+    parser.add_argument(
+        "--min-segment",
+        type=int,
+        default=None,
+        help="Minimum bars per regime (default: by interval, 21 for daily)",
+    )
+    parser.add_argument("--vol-window", type=int, default=20, help="Volatility window")
+    parser.add_argument(
+        "--sideways-band",
+        type=float,
+        default=0.10,
+        help="Annualised slope within +/- this is sideways (default: 0.10)",
+    )
+    parser.add_argument("--seed", type=int, default=0, help="Segmenter random seed")
+    parser.add_argument("--log-price", action="store_true", help="Log price axis")
+    parser.add_argument("--output-dir", default="charts/regimes", help="Directory for the PNG")
+    parser.add_argument("--output", help="Write the segment table to a CSV file")
+    parser.add_argument("--no-chart", action="store_true", help="Skip the PNG")
+    parser.add_argument("--no-disclaimer", action="store_true", help="Suppress the disclaimer line")
+    parser.add_argument("--version", action="store_true", help="Print version and exit")
+
+    args = parser.parse_args()
+
+    if args.version:
+        from stockcharts import __version__
+
+        print(f"stockcharts {__version__}")
+        return 0
+
+    _print_disclaimer_once(args)
+
+    import numpy as np
+
+    from stockcharts.charts.spans import label_runs, shade_spans_mpl
+    from stockcharts.indicators.segmentation import (
+        PERIODS_PER_YEAR,
+        RETROSPECTIVE_WARNING,
+        detect_regimes,
+    )
+
+    ticker = args.ticker.upper()
+    try:
+        data = fetch_ohlc(ticker, interval=args.interval, lookback=args.lookback)
+    except Exception as error:
+        print(f"[ERROR] Could not fetch {ticker}: {error}", file=sys.stderr)
+        return 1
+
+    data = _trim_to_lookback(data, args.lookback)
+    if data.empty:
+        print(f"[ERROR] No data for {ticker}", file=sys.stderr)
+        return 1
+
+    min_segment = args.min_segment
+    if min_segment is None:
+        min_segment = _MIN_SEGMENT_BY_INTERVAL.get(args.interval, 21)
+
+    result = detect_regimes(
+        data,
+        method=args.method,
+        k_max=args.k_max,
+        min_segment=min_segment,
+        vol_window=args.vol_window,
+        sideways_band=args.sideways_band,
+        periods_per_year=PERIODS_PER_YEAR.get(args.interval, 252),
+        random_state=args.seed,
+    )
+    segments = result["segments"]
+    meta = result["meta"]
+
+    print()
+    print(
+        f"{ticker}  interval={args.interval}  lookback={args.lookback}  "
+        f"{meta['n_bars']} bars  method={meta['method']}  "
+        f"k_max={meta['k_max']}  min_segment={min_segment}  seed={args.seed}"
+    )
+    if meta["insufficient_data"]:
+        print("[WARN] Not enough history to separate regimes; showing one segment.")
+    print()
+
+    header = (
+        f"  {'#':>2}  {'START':<12}{'END':<12}{'LABEL':<10}{'BARS':>6}"
+        f"{'SLOPE/yr':>10}{'RETURN':>9}{'VOL':>7}{'MAXDD':>8}{'CONF':>6}"
+    )
+    print(header)
+    print("  " + "-" * (len(header) - 2))
+    for number, segment in enumerate(segments, start=1):
+        provisional = "  (provisional)" if segment["provisional"] else ""
+        print(
+            f"  {number:>2}  {segment['start'].date()!s:<12}{segment['end'].date()!s:<12}"
+            f"{segment['label']:<10}{segment['n_bars']:>6}"
+            f"{segment['slope_ann']:>+10.2f}{segment['cum_return'] * 100:>+8.1f}%"
+            f"{segment['vol_ann'] * 100:>6.0f}%{segment['max_drawdown'] * 100:>7.1f}%"
+            f"{segment['confidence']:>6.2f}{provisional}"
+        )
+
+    if result["pivots"]:
+        print()
+        print("  Pivots (regime changes):")
+        for pivot in result["pivots"]:
+            print(
+                f"    {pivot['date'].date()}  {pivot['from']:>8} -> "
+                f"{pivot['to']:<8} @ {pivot['price']:.2f}"
+            )
+
+    if segments:
+        last = segments[-1]
+        print()
+        print(
+            f"  Current ({last['end'].date()}): {last['label'].upper()}  "
+            f"(provisional - retrospective label, confidence {last['confidence']:.2f})"
+        )
+    print(f"  [Retrospective] {RETROSPECTIVE_WARNING}")
+
+    if args.output:
+        frame = pd.DataFrame(segments).assign(ticker=ticker)
+        columns = [
+            "ticker",
+            "start",
+            "end",
+            "n_bars",
+            "label",
+            "cum_return",
+            "slope_ann",
+            "t_stat",
+            "confidence",
+            "vol_ann",
+            "max_drawdown",
+            "provisional",
+        ]
+        frame[columns].to_csv(args.output, index=False)
+        print(f"  [OK] Wrote {args.output}")
+
+    if not args.no_chart and segments:
+        os.makedirs(args.output_dir, exist_ok=True)
+        fig, axes = plt.subplots(
+            2, 1, figsize=(14, 9), sharex=True, gridspec_kw={"height_ratios": [3, 1]}
+        )
+        ax1, ax2 = axes
+
+        spans = label_runs(result["labels"])
+        # Draw the settled bands, then the provisional one at lower alpha with a
+        # hatch so the unstable right edge is visually distinct.
+        if len(spans) > 1:
+            shade_spans_mpl(ax1, spans[:-1], alpha=0.18, legend=True)
+        shade_spans_mpl(ax1, spans[-1:], alpha=0.09, hatch="//", legend=len(spans) == 1)
+
+        ax1.plot(data.index, data["Close"], color="#131722", linewidth=1.1, label=ticker)
+        for segment in segments:
+            prices = data["Close"].iloc[segment["start_pos"] : segment["end_pos"]]
+            if len(prices) < 2:
+                continue
+            fitted = np.exp(
+                np.polyval(
+                    np.polyfit(np.arange(len(prices)), np.log(prices.to_numpy()), 1),
+                    np.arange(len(prices)),
+                )
+            )
+            ax1.plot(prices.index, fitted, color="#2962ff", linewidth=1.0, alpha=0.7)
+        if args.log_price:
+            ax1.set_yscale("log")
+        ax1.set_ylabel("Price ($)")
+        ax1.set_title(
+            f"{ticker} - Retrospective Regime Segmentation "
+            f"({meta['method']}, k_max={meta['k_max']}, "
+            f"min_segment={min_segment}, seed={args.seed})"
+        )
+        ax1.legend(loc="upper left", fontsize=8)
+        ax1.grid(True, alpha=0.3)
+
+        returns = np.log(data["Close"]).diff()
+        ax2.plot(
+            data.index,
+            returns.rolling(args.vol_window).std() * np.sqrt(252) * 100,
+            color="#ff9800",
+            linewidth=1.0,
+            label=f"{args.vol_window}d vol (ann %)",
+        )
+        ax2.set_ylabel("Vol (%)")
+        ax2.legend(loc="upper left", fontsize=8)
+        ax2.grid(True, alpha=0.3)
+
+        fig.text(
+            0.5,
+            0.005,
+            RETROSPECTIVE_WARNING,
+            ha="center",
+            fontsize=7,
+            color="gray",
+            wrap=True,
+        )
+        path = os.path.join(args.output_dir, f"{ticker}_regimes_{args.interval}.png")
+        fig.savefig(path, dpi=150, bbox_inches="tight")
+        plt.close(fig)
+        print(f"  [OK] Wrote {path}")
+
     return 0
 
 

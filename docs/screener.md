@@ -93,11 +93,72 @@ AVGO    green  338.72   353.09    2025-10-13  1d      6           92.3
 AAPL    red    253.25   248.07    2025-10-13  1d      2           28.6
 ```
 
-## Trading Style Guidance
-- Bullish daily green: potential continuation.
-- Weekly red emerging: possible broader weakness.
-- High run percentile + divergence: watch for reversal setups.
-- Low run percentile after color flip: monitor for early momentum follow-through.
-- Combine with RSI divergence for confirmation.
+## Reading the output
+- A high run percentile means the current run is long relative to that
+  series' own history, so it is closer to the tail of its distribution.
+- A low run percentile just after a colour change means the new run is
+  young by the same measure.
+- Counting how much of the cross-section shares a state is the
+  market-level reading; a single name's state is close to noise.
+- The run percentile is a rank within the fetched window, so it moves
+  with `--lookback`. Compare percentiles only across equal windows.
 
-See `docs/trading_styles.md` for deeper strategy notes.
+See [`timeframes.md`](timeframes.md) for period, lookback and detector
+sensitivity guidance.
+
+## SEC Insider-Trading Screening
+
+The SEC insider module reads Form 4 filings and compares an equal-length
+recent window with the preceding baseline window. By default, the activity
+numerator includes open-market purchases (`P`) and sales (`S`). The two
+screening ratios are:
+
+```text
+insider volume ratio   = insider shares transacted / total market shares traded
+insider holdings ratio = insider shares transacted / latest total insider holdings
+```
+
+```python
+from stockcharts.screener.sec_insider import screen_insider_trading
+
+result = screen_insider_trading(
+    "AAPL",
+    recent_days=30,
+    min_volume_increase=2.0,
+    min_holding_increase=2.0,
+)
+if result:
+    print(result.volume_ratio_increase, result.holding_ratio_increase)
+```
+
+Set `SEC_USER_AGENT` to a descriptive value containing a contact email before
+making SEC requests. Use `SECClient(request_delay=0.2)` when scanning a larger
+universe, and pass it to `screen_insider_universe` to reuse its in-memory
+caches.
+
+### Zero baselines
+
+`volume_ratio_increase` and `holding_ratio_increase` are `None` whenever the
+comparison has no finite value. The companion `volume_increase_unbounded` and
+`holding_increase_unbounded` flags say why:
+
+| increase | unbounded | meaning |
+| --- | --- | --- |
+| a number | `False` | ordinary recent-to-baseline multiple |
+| `1.0` | `False` | no activity in either window |
+| `None` | `True` | zero baseline, positive recent activity |
+| `None` | `False` | a ratio could not be computed (no market data) |
+
+An unbounded increase passes any `min_*_increase` threshold, so a ticker whose
+insiders resume trading after a quiet baseline still surfaces. Rank those
+tickers by `recent_insider_volume_ratio` rather than by the increase, which
+carries no magnitude.
+
+### Holdings lookback
+
+Holdings are a point-in-time level, not a flow, so `holdings_lookback_days`
+(default 365) searches further back than the screening windows for the last
+reported holding of each insider. Without it, any window containing no Form 4
+filings reads as zero insider holdings — a reporting gap, not a real zero —
+which leaves `holding_ratio_increase` undefined. Lower it to cut SEC requests
+on large scans, at the cost of more undefined holding ratios.

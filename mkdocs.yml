@@ -13,9 +13,10 @@ nav:
       - Heiken Ashi Screener: screener.md
       - RSI Divergence Screener: rsi_divergence.md
       - Beta Regime Screener: beta_regime.md
+  - Treasury Yield Tracker: treasury_yields.md
   - Parameters: parameters.md
   - Volume Filtering: volume.md
-  - Trading Styles: trading_styles.md
+  - Timeframes and Sensitivity: timeframes.md
   - API Reference:
       - Overview: api/index.md
       - Divergence Detection: api/divergence.md
@@ -25,6 +26,7 @@ nav:
       - Screener Functions: api/screener.md
       - Beta Regime Screener: api/beta_regime.md
       - Data Fetching: api/data.md
+      - Treasury Macro: api/macro.md
       - Heiken Ashi Runs: api/heiken_runs.md
   - Contributing: contributing.md
   - Copilot Guide: copilot.md
